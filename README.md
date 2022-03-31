@@ -1,5 +1,5 @@
-# EclecticIQ Endpoint Security Platform (ER) - Community Edition
-EclecticIQ ER leverages the [Osquery](https://osquery.io/) tool, with [EclecticIQ Extension](https://github.com/EclecticIQ/osq-ext-bin) to provide endpoint visibility and monitoring at scale. To get the details of the architecture of the full platform, please read the [platform docs](https://github.com/eclecticiq/eiq-er-docs). This repository provides the community release of the platform which focuses on the Osquery based agent management to provide visbility into endpoint activities, query configuration management, a live query interface and alerting capabilities based on security critical events.
+# EclecticIQ Endpoint Response (ER) - Community Edition
+EclecticIQ ER leverages the [Osquery](https://osquery.io/) tool, with [EclecticIQ Extension](https://github.com/EclecticIQ/osq-ext-bin) to provide endpoint visibility and monitoring at scale. To get the details of the architecture of the full platform, please read the [platform docs](https://github.com/EclecticIQ/eiq-er-docs). This repository provides the community release of the platform which focuses on the Osquery based agent management to provide visbility into endpoint activities, query configuration management, a live query interface and alerting capabilities based on security critical events.
 
 ## Prerequisites
 - git client software
@@ -18,7 +18,7 @@ server. Please ensure that the following commands are executed from a root/admin
 
 1.  Clone this repository.
 
-    ```~/Downloads$ git clone https://github.com/eclecticiq/eiq-er-ce.git```
+    ```~/Downloads$ git clone https://github.com/EclecticIQ/eiq-er-ce.git```
      ```<snip>
     Cloning into 'plgx-esp'...
    
@@ -145,7 +145,7 @@ server. Please ensure that the following commands are executed from a root/admin
 
 1.  Clone this repository into a new directory.
 
-    ```~/Downloads$ git clone https://github.com/eclecticiq/eiq-er-ce.git```
+    ```~/Downloads$ git clone https://github.com/EclecticIQ/eiq-er-ce.git```
      ```<snip>
     Cloning into 'plgx-esp'...
    
@@ -269,7 +269,7 @@ server. Please ensure that the following commands are executed from a root/admin
 9.  Log on to the server using the credentials provided above at step 5a.
 
 10.  Provision the clients. For more information, see [Provisioning the EclecticIQ
-    Client for Endpoints](https://github.com/eclecticiq/eiq-er-docs/tree/master/03_Provisioning_Polylogyx_Client).
+    Client for Endpoints](https://github.com/EclecticIQ/eiq-er-docs/tree/master/03_Provisioning_Polylogyx_Client).
 
 
 ### Upgrading the agent
@@ -293,7 +293,7 @@ existing Docker images and containers.
 ## Uninstalling the Agent
 -------------------------
 
-Agent from the endpoints can be uninstalled following the [instructions here](https://github.com/eclecticiq/eiq-er-docs/tree/master/03_Provisioning_Polylogyx_Client#uninstalling-the-client). If for any reasons these instructions do not work, then a brute force clean could be accomplished on the Windows sytems using _agent_cleanup.bat_ file provided as a part of this repository. The batch file can be downloaded on the target system and invoked from an administrator privileged command prompt.
+Agent from the endpoints can be uninstalled following the [instructions here](https://github.com/EclecticIQ/eiq-er-docs/tree/master/03_Provisioning_Polylogyx_Client#uninstalling-the-client). If for any reasons these instructions do not work, then a brute force clean could be accomplished on the Windows sytems using _agent_cleanup.bat_ file provided as a part of this repository. The batch file can be downloaded on the target system and invoked from an administrator privileged command prompt.
 
 
 ## EclecticIQ ER Components
@@ -311,7 +311,7 @@ EclecticIQ ER leverages osquery's TLS configuration, logger, and distributed rea
 Osquery is cross platform agent that supports 64 bit variants of Windows (7 and above), MacOS and all the popular Linux distributions (Ubuntu, Centos, RedHat etc). EclecticIQ ER's agent is built upon Osquery and therefore the supported endpoints are the ones as supported by Osquery.
 
 ## EclecticIQ ER API SDK
-EclecticIQ ER can be programatically interacted with using the extensive  [REST API](https://github.com/eclecticiq/eiq-er-docs/tree/master/13_Rest_API) interface. This allows for multiple use case like Incident Response, Threat Hunting, Compromise Assessment, Compliance checks etc to be easily served with the platform. This also provides an easy for integration with [SOAR platforms](https://youtu.be/XbpleymXpSg) 
+EclecticIQ ER can be programatically interacted with using the extensive  [REST API](https://github.com/EclecticIQ/eiq-er-docs/tree/master/13_Rest_API) interface. This allows for multiple use case like Incident Response, Threat Hunting, Compromise Assessment, Compliance checks etc to be easily served with the platform. This also provides an easy for integration with [SOAR platforms](https://youtu.be/XbpleymXpSg) 
 
 ## Integration with Big Data/Analytic systems
 EclecticIQ ER is packaged with an rSysLog container. This container can be configured to stream the query results and other logs from the endpoint population to the back-end systems like Splunk, ELK, GrayLog etc for cross-product correlation, alert enrichments and other SIEM related use cases.
@@ -322,4 +322,4 @@ To configure rsyslog forwarding modify the [rsyslogd.conf](rSysLogF/rsyslogd.con
 Please read the [LICENSE](LICENSE) file for details on the license.
 
 ## EclecticIQ ER - Enterprise Edition
-EclecticIQ ER comes with an enterprise flavor with advanced set of features and dedicated support. More about the enterprise edition of ER can be learned [here](https://github.com/eclecticiq/eiq-er-docs)  or send an email to support@eclecticiq.com
+EclecticIQ ER comes with an enterprise flavor with advanced set of features and dedicated support. More about the enterprise edition of ER can be learned [here](https://github.com/EclecticIQ/eiq-er-docs)  or send an email to support@eclecticiq.com
