@@ -4,7 +4,7 @@ import { CommonVariableService } from '../../../dashboard/_services/commonvariab
 import Swal from 'sweetalert2';
 import { Location } from '@angular/common';
 import { Title } from '@angular/platform-browser';
-
+import { AuthorizationService } from '../../../dashboard/_services/Authorization.service';
 
 @Component({
   selector: 'app-antivirus-engines',
@@ -19,16 +19,20 @@ export class AntivirusEnginesComponent implements OnInit {
  av_engines_data_table4={}
  av_engines={}
  apikey_data:any;
- ProjectName=this.commonvariable.APP_NAME
+ project_name=this.commonvariable.APP_NAME
+ ProductName=this.commonvariable.ProductName
+ hasAcess=this.authorizationService.hasAccess()
+ role={'adminAccess':this.authorizationService.adminLevelAccess,'userAccess':this.authorizationService.userLevelAccess};
   constructor(
     private commonapi: CommonapiService,
     private commonvariable: CommonVariableService,
     private _location: Location,
     private titleService: Title,
+    private authorizationService: AuthorizationService,
   ) { }
 
   ngOnInit() {
-    this.titleService.setTitle(this.commonvariable.APP_NAME+"-"+"Antivirus-Engines");
+    this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"VT-configuration");
     this.commonapi.getAntiVirusEngines().subscribe((res: any) => {
         $('.hide_av_engines_data').hide();
         if( res.data.min_match_count && res.data.av_engines){
@@ -37,7 +41,8 @@ export class AntivirusEnginesComponent implements OnInit {
           $('.no_data').append('No data Present')
         }
       this.av_engines_data['min_match_count']=res.data.min_match_count
-      // this.av_engines_data['av_engines']=res.data.av_engines
+      this.av_engines_data['av_engines']=res.data.av_engines
+      this.av_engines_data['vt_scan_retention_period']=res.data.vt_scan_retention_period
       var keys =  Object.keys(res.data.av_engines);
       let length = Math.ceil(keys.length/4)
       keys=keys.sort()

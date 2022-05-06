@@ -13,10 +13,10 @@ import { Router, RouterModule } from '@angular/router';
 import { DateAgoPipe } from '../dashboard/pipes/date-ago.pipe';
 import { SearchPipe } from '../dashboard/pipes/search.pipe';
 
-
+import { AppHasRoleDirective } from '../dashboard/_services/app-has-role.directive';
 
 @NgModule({
-  declarations: [DateAgoPipe,SearchPipe],
+  declarations: [DateAgoPipe,SearchPipe,AppHasRoleDirective],
   imports: [
     CommonModule,
     FormsModule,
@@ -29,7 +29,8 @@ import { SearchPipe } from '../dashboard/pipes/search.pipe';
     NgJsonEditorModule,
     NgxPaginationModule,
     RouterModule,
+
   ],
-  exports:[DateAgoPipe,SearchPipe]
+  exports:[DateAgoPipe,SearchPipe,AppHasRoleDirective]
 })
 export class GlobalModule { }

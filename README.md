@@ -4,7 +4,7 @@ EclecticIQ ER leverages the [Osquery](https://osquery.io/) tool, with [EclecticI
 ## Prerequisites
 - git client software
 - Internet connectivity
-- 5000 and 9000 ports should be available and accessible through firewall
+- 443 and 9000 ports should be available and accessible through firewall
 - Docker(18.03.1-CE or above) and [docker-compose (1.21.1 or above)](https://docs.docker.com/compose/install/#install-compose)
 - node and npm
 
@@ -20,14 +20,14 @@ server. Please ensure that the following commands are executed from a root/admin
 
     ```~/Downloads$ git clone https://github.com/EclecticIQ/eiq-er-ce.git```
      ```<snip>
-    Cloning into 'plgx-esp'...
+    Cloning into 'eiq-er-ce'...
    
 2.  Switch to the folder where the repository is cloned.
 
-    ```~/Downloads\$ cd plgx-esp/```
+    ```~/Downloads\$ cd eiq-er-ce/```
 3.  Enter the certificate-generate.sh script to generate certificates for
     osquery.  
-    ```~/Downloads/plgx-esp$ sh ./certificate-generate.sh <IP address>```
+    ```~/Downloads/eiq-er-ce$ sh ./certificate-generate.sh <IP address>```
     ```x.x.x.x
     Generating a 2048 bit RSA private key
     .........................................................................................+++
@@ -49,8 +49,8 @@ server. Please ensure that the following commands are executed from a root/admin
     VT_API_KEY=<VirusTotal Api Key> 
     IBMxForceKey=<IBMxForce Key> 
     IBMxForcePass=<IBMxForce Pass>
-    PURGE_DATA_DURATION=<number of days>  
-    THREAT_INTEL_LOOKUP_FREQUENCY=<number of minutes>
+    DATA_RETENTION_DAYS=<number of days>  
+    THREAT_INTEL_ALERT_FREQUENCY=<number of minutes>
      ```   
 | Parameter | Description                                                                                                                                                                                  |
 |-----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -61,8 +61,8 @@ server. Please ensure that the following commands are executed from a root/admin
 | VT_API_KEY       | Represents the VirusTotal API key.                                                                            | 
 | IBMxForceKey       | Represents the IBMxForce key.                                                                            | 
 | IBMxForcePass       | Specifies the IBMxForce pass.                                                                            | 
-| PURGE_DATA_DURATION       | Specifies the frequency (in number of days) for purging the data.                                                                            | 
-| THREAT_INTEL_LOOKUP_FREQUENCY       | Specifies the frequency (in minutes) for fetching threat intelligence data.                                                                            |   
+| DATA_RETENTION_DAYS       | Specifies the frequency (in number of days) for purging the data.                                                                            | 
+| THREAT_INTEL_ALERT_FREQUENCY       | Specifies the frequency (in minutes) for fetching threat intelligence data.                                                                            |   
     2. Save the file.
     
 5. Generating dist file using angular 8
@@ -96,7 +96,7 @@ server. Please ensure that the following commands are executed from a root/admin
 				
     b. Installing angular packages using npm
 	```
-        npm install -g @angular/cli@8.3.19 
+        sudo npm install -g @angular/cli@8.3.19 
     ```
 
     c. cd to the angular folder
@@ -111,12 +111,12 @@ server. Please ensure that the following commands are executed from a root/admin
 
     e. Installing gzipper to  generate the compressed files
     ```
-        npm i gzipper@3.7.0 -g
+        sudo npm i gzipper@3.7.0 -g
     ```
 
     f. Creating dist folder using gzipper 
     ```
-        ng build --prod --stats-json && sudo gzipper --verbose ../dist
+        sudo ng build --prod --stats-json && sudo gzipper --verbose ../dist
     ```
     g. cd to the extracted folder
     ```
@@ -125,14 +125,14 @@ server. Please ensure that the following commands are executed from a root/admin
         
 6.  Run the following command to start building containers using docker-compose.
 
-    ```docker-compose -p 'plgx-esp' up -d```
+    ```docker-compose -p 'eiq-er' up -d```
     
     Typically, this takes approximately 10-15 minutes. The following lines appear on
     the screen when Docker starts:
-    ````Starting plgx-esp_rabbit1_1  ... done
-        Starting plgx-esp_postgres_1 ... done
-        Starting plgx-esp_plgx-esp_1     ... done
-        Attaching to plgx-esp_rabbit1_1, plgx-esp_postgres_1, plgx-esp_plgx-esp_1
+    ````Starting eiq-er_rabbit1_1  ... done
+        Starting eiq-er_postgres_1 ... done
+        Starting eiq-er_plgx-esp_1     ... done
+        Attaching to eiq-er_rabbit1_1, eiq-er_postgres_1, eiq-er_plgx-esp_1
         .
         .
         .
@@ -147,11 +147,11 @@ server. Please ensure that the following commands are executed from a root/admin
 
     ```~/Downloads$ git clone https://github.com/EclecticIQ/eiq-er-ce.git```
      ```<snip>
-    Cloning into 'plgx-esp'...
+    Cloning into 'eiq-er-ce'...
    
 2.  Switch to the folder where the repository is cloned.
 
-    ```~/Downloads\$ cd plgx-esp/```
+    ```~/Downloads\$ cd eiq-er-ce/```
 3.  Execute the command to copy existing certs setting up the flags for osquery.
 
     sudo bash upgrade_script.sh --path < Path to the existing installation directory >
@@ -167,8 +167,8 @@ server. Please ensure that the following commands are executed from a root/admin
     VT_API_KEY=<VirusTotal Api Key> 
     IBMxForceKey=<IBMxForce Key> 
     IBMxForcePass=<IBMxForce Pass>
-    PURGE_DATA_DURATION=<number of days>  
-    THREAT_INTEL_LOOKUP_FREQUENCY=<number of minutes>
+    DATA_RETENTION_DAYS=<number of days>  
+    THREAT_INTEL_ALERT_FREQUENCY=<number of minutes>
      ```   
 | Parameter | Description                                                                                                                                                                                  |
 |-----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -179,8 +179,8 @@ server. Please ensure that the following commands are executed from a root/admin
 | VT_API_KEY       | Represents the VirusTotal API key.                                                                            | 
 | IBMxForceKey       | Represents the IBMxForce key.                                                                            | 
 | IBMxForcePass       | Specifies the IBMxForce pass.                                                                            | 
-| PURGE_DATA_DURATION       | Specifies the frequency (in number of days) for purging the data.                                                                            | 
-| THREAT_INTEL_LOOKUP_FREQUENCY       | Specifies the frequency (in minutes) for fetching threat intelligence data.                                                                            |   
+| DATA_RETENTION_DAYS       | Specifies the frequency (in number of days) for purging the data.                                                                            | 
+| THREAT_INTEL_ALERT_FREQUENCY       | Specifies the frequency (in minutes) for fetching threat intelligence data.                                                                            |   
     2. Save the file.
     
 5. Generating dist file using angular 8
@@ -214,7 +214,7 @@ server. Please ensure that the following commands are executed from a root/admin
 				
     b. Installing angular packages using npm
 	```
-        npm install -g @angular/cli@8.3.19 
+        sudo npm install -g @angular/cli@8.3.19 
     ```
 
     c. cd to the angular folder
@@ -229,12 +229,12 @@ server. Please ensure that the following commands are executed from a root/admin
 
     e. Installing gzipper to  generate the compressed files
     ```
-        npm i gzipper@3.7.0 -g
+        sudo npm i gzipper@3.7.0 -g
     ```
 
     f. Creating dist folder using gzipper 
     ```
-        ng build --prod --stats-json && sudo gzipper --verbose ../dist
+        sudo ng build --prod --stats-json && sudo gzipper --verbose ../dist
     ```
     g. cd to the extracted folder
     ```
@@ -259,7 +259,7 @@ server. Please ensure that the following commands are executed from a root/admin
 7.  Log on to server using following URL using the latest version of Chrome or
     Firefox browser.
     
-    ```https://<ip address>:5000/manage```
+    ```https://<ip address>```
 
     In the syntax, `<IP address>` is the IP address of the system on which the
     EclecticIQ server is hosted. This is the IP address you specified in step 3.
@@ -274,7 +274,7 @@ server. Please ensure that the following commands are executed from a root/admin
 
 ### Upgrading the agent
 
-Download the latest CPT (v 3.0.0.0) and choose from the below upgrade options.
+Download the latest CPT and choose from the below upgrade options.
 
 1. Shallow Upgrade : plgx_cpt.exe -g s ( Updates extension and binary and keeps the existing data).
 2. Deep Upgrade : plgx_cpt.exe -g d ( Updates extension and binary and cleans the existing data)
@@ -298,6 +298,7 @@ Agent from the endpoints can be uninstalled following the [instructions here](ht
 
 ## EclecticIQ ER Components
 - plgx-esp - Manages requests coming from endpoint
+- celery - Asynchronous tasks worker for rule matching with results and other back ground tasks defined.
 - plgx-esp-ui - Mangement server for taking actions, modifying properties  of an endpoint.
 - RabbitMQ
 - nginx

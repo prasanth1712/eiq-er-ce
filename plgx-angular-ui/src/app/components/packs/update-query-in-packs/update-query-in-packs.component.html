@@ -50,11 +50,11 @@
            <div class="col-10">
             <input type="hidden" formControlName="sql" name="sql" id="sql" value="">
             <input type="hidden" name="live_query_val" id="live_query_val" value="{{this.query_data}}">
-            
+
             <div class="query-editor">
               <section class="query-editor__wrapper">
                 <div id="js-query-editor" class="query-editor__flex-editor" style="flex-basis: calc((25vh));">
-                  <ace-editor 
+                  <ace-editor
                   #editor style="height:70px;">
                   </ace-editor>
                 </div>
@@ -63,13 +63,13 @@
             <!-- <div class="query-editor">
               <section class="query-editor__wrapper"> -->
                 <!-- <div id="js-query-editor" class="query-editor__flex-editor" style="flex-basis: calc((25vh));">
-                  <ace-editor 
+                  <ace-editor
                     #editor style="height:150px;">
                   </ace-editor>
                 </div> -->
                 <!-- <div id="js-query-editor" class="query-editor__flex-editor" style="flex-basis: calc((25vh));"> -->
                   <!-- <div class="query-editor__editor ace_editor ace_focus" id="live-query-editor"></div> -->
-                  <!-- <ace-editor 
+                  <!-- <ace-editor
                     #editor style="height:150px;">
                   </ace-editor>
                 </div>
@@ -100,7 +100,7 @@
            </div>
          </div>
          <div class="form-group row required">
-           <label class="col-2 col-form-label" for="interval">Interval</label>
+           <label class="col-2 col-form-label" for="interval">Interval <span class="intrvl-fnt-md">(in secs)</span></label>
            <div class="col-10">
              <!-- <input class="form-control" id="interval" min="1" name="interval" type="number" value="{{queriesdata_data.interval}}"> -->
              <input type="number" id="interval" min="1" formControlName="interval" class="form-control" [(ngModel)]="queriesdata_data.interval" value="{{queriesdata_data.interval}}" [ngClass]="{ 'is-invalid': submitted && f.interval.errors }">
@@ -154,13 +154,13 @@
           <label class="col-2 col-form-label">packs</label>
           <div class="col-10">
             <angular2-multiselect [data]="dropdownPacknameList" [(ngModel)]="selectedPacknameItems" formControlName="packs"
-                [settings]="dropdownPacknameSettings" 
-                (onSelect)="onItemSelect($event)" 
+                [settings]="dropdownPacknameSettings"
+                (onSelect)="onItemSelect($event)"
                 (onDeSelect)="OnItemDeSelect($event)"
                 (onSelectAll)="onSelectAll($event)"
                 (onDeSelectAll)="onDeSelectAll($event)">
             </angular2-multiselect>
-           
+
           </div>
         </div>
          <!-- <div class="form-group row">

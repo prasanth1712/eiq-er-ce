@@ -12,7 +12,9 @@ down_revision = ${repr(down_revision)}
 
 from alembic import op
 import sqlalchemy as sa
-import polylogyx.database
+import polylogyx.db.database
+import flask_authorize
+
 ${imports if imports else ""}
 
 def upgrade():

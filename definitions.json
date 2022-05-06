@@ -67,7 +67,7 @@
       "vhost": "/",
       "destination": "result_log_queue",
       "destination_type": "queue",
-      "routing_key": "v1",
+      "routing_key": "default",
       "arguments": {}
     }
   ]

@@ -6,6 +6,12 @@
     color: crimson;
     /* overflow-y: scroll; */
     }
+    .liveterminal{
+      color:white;
+      background-color:black;
+      margin-top:10px;
+      margin-left:15px
+    }
     .form--label {
     color: #22282c;
     font-weight: 500;
@@ -39,7 +45,13 @@
     /* width: 200px; */
     float: right;
     }
-   
+    tabs-line-success.nav.nav-tabs .nav-link:hover, .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link.active,.nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link:hover, .nav-tabs.nav-tabs-line.nav-tabs-line-success a.nav-link.active {
+    color: #30B0A4;
+    border-bottom: 1px solid #30B0A4;
+    font-weight: 500;
+    }
+
+
     .kt-notification .conf-div .active {
     background-color: #f7f8fa;
     }
@@ -71,10 +83,7 @@
     height: 50px;
     padding: 15px;
     cursor: pointer;
-    background-image: linear-gradient(to right, #b8bccc , #ffffff)!important;
-    color: #282829;
     font-size: 15px;
-    font-family: monospace;
     }
     .desc-background_packs {
     font-size: 100%;
@@ -88,9 +97,9 @@
     .right-conf-query {
     display: none;
     }
-    .show {
-    display: block;
-    }
+    // .show {
+    // display: block;
+    // }
 
     .overflow {
   overflow: hidden;
@@ -141,13 +150,13 @@
    width: 15px;height: 17px;margin-top: 9px;margin-left: 10px;margin-right: 4px;color: #0000ffc7;
  }
  .ex_version{
-   height: 18px;padding-left: 6px;margin-top: 9px;margin-right:5px
+   height: 20px;padding-left: 3px;margin-top: 9px;margin-right: 5px;
  }
  .enrolled{
-   margin: 12px;color: #0000ffc7;margin-left:8px;margin-right:9px
+   margin: 12px;color: #0000ffc7;margin-left:9px;margin-right:9px
  }
  .lastseen{
-   color: #0000ffc7;padding-right: 5px;margin-top:13px; padding-left:6px;
+   color: #0000ffc7;padding-right: 5px;margin-top:13px; padding-left:5px;
  }
  .lastseen_menu{
    margin-top: -17px;width: 260px;
@@ -240,7 +249,7 @@
  }
 
     @import "~node_modules/ngx-chips/core/styles/core/_core.scss";
-$foundation-primary: #30B0A4;
+$foundation-primary: #52B2A8;
 $foundation-primary-dark: darken($foundation-primary, 10%);
 $font-family: "Poppins", sans-serif !important;
 
@@ -316,6 +325,164 @@ $foundation-icon-theme: (
     -ms-flex: 0 0 75%;
     flex: 0 0 75%;
     max-width: 75%;}
-    .active_data {
-        background-color: #f7f8fa;
-        } 
+
+.active_data {
+    background-color: #f7f8fa;
+}
+.description_ex {
+  color: #9da2bf;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 11px;
+  font-family: system-ui;
+}
+// ::ng-deep .swal-text{
+//   height: 200px !important;
+//   overflow-y: scroll !important;
+//   font-size: 13px !important;
+//   width: 100%;
+// }
+// ::ng-deep .swal-text2{
+//   height: 200px !important;
+//   overflow-y: scroll !important;
+// }
+::ng-deep .swal-footer {
+  background-color: rgb(245, 248, 250);
+  margin-top: 32px;
+  border-top: 1px solid #E9EEF1;
+  overflow: hidden;
+}
+::ng-deep .swal-title{
+  font-size: 15px;
+}
+
+.fa-plus:before {
+  content: "\f067";
+}
+.fa-minus:before {
+  content: "\f068";
+}
+.collapsible:after {
+  content: '\002B';
+  float: left;
+  margin-right: 15px;
+}
+
+.active_1:after {
+  content: "\2212";
+}
+
+.collapsed:hover {
+  color: #2739c1;
+}
+.accordion .card-header:after {
+  font-family: 'FontAwesome';
+  margin-right: 15px;
+  content: "-";
+  float: left;
+  font-size: 1rem;
+  font-weight: 100;
+
+}
+.accordion .card-header.collapsed:after {
+  content: "+";
+}
+.lbl-wt{
+  font-weight: 500 !important;
+}
+.btn-custm{
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+.rad-fnt{
+  font-style: normal !important;
+}
+.show_1{
+  overflow: visible_1;
+  height: auto;
+}
+// .container {
+//   font-size: 16px;
+//   line-height: 16px;
+//   height: 45px;
+//   overflow: hidden;
+// }
+.hideChildren>div{
+  display: none;
+}
+
+table.dataTable thead th, table.dataTable thead td {
+
+  border-bottom: 1px solid #ebedf2;}
+  table.dataTable {
+    border-bottom: 1px solid #ebedf2;}
+
+
+::ng-deep .assignedConfig .config_list_dropdown .cuppa-dropdown .selected-list .c-btn {
+      width: 160px !important;
+}
+::ng-deep div.dataTables_wrapper div.dataTables_filter input {
+      width: 160px;
+}
+::ng-deep #response_table_wrapper .btn{
+  margin-left:10px;
+  padding-bottom:5px;
+  padding-top:5px;
+}
+.ridge {border-style: ridge;color:#ebedf2;border-width: 1px;}
+.spinner-border{width:1.5rem;height:1.5rem}
+.help:hover:before,
+.help:focus:before{
+  position:absolute;
+  width:0;
+  height:0;
+  border:4px solid transparent;
+  border-right-color:#3a3a3a;
+  border-right-color:rgba(0,0,0,.5);
+  border-left:0;
+  top:0;
+  bottom:0;
+  margin:auto 0;
+  left:20px;
+}
+.help:hover:after,
+.help:focus:after{
+  content:attr(aria-label);
+  position:absolute;
+  top:180px;
+  left: 0px;
+  height:25px;
+  font-size: 12px;
+  padding:4px 5px;
+  font-weight:400;
+  text-align:left;
+  background:#3a3a3a;
+  background:rgba(0,0,0,.8);
+  border-radius:3px;
+  white-space:nowrap;
+  color:#fff;
+}
+:host ::ng-deep json-editor,
+:host ::ng-deep json-editor .jsoneditor,
+:host ::ng-deep json-editor > div,
+:host ::ng-deep json-editor jsoneditor-outer {
+  height: 500px;
+}
+.bg-clr:hover{
+  color:#fff !important
+}
+@media(max-width: 1500px) {
+  .td-wd{
+    width: 55%;
+  }
+}
+@media(min-width:1300px) and (max-width: 1400px) {
+  .td-wd{
+    width: 50%;
+  }
+}
+@media(min-width:1000px) and (max-width:1300px) {
+  .td-wd{
+    width: 40%;
+  }
+}

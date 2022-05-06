@@ -1,23 +1,27 @@
 # -*- coding: utf-8 -*-
 import datetime as dt
-import json, os, sqlite3, ast, string, threading, pkg_resources, requests, six
+import ssl
+
+import pika
+
+import json, os, sqlite3, string, threading, pkg_resources, requests, base64
 from collections import namedtuple
 from functools import wraps
 
 from operator import itemgetter
-from os.path import basename, join, splitext
-from sqlalchemy import and_, or_
+from os.path import join
+from sqlalchemy import and_, or_, not_
 
 from flask_mail import Message, Mail
-from flask import current_app, flash, request, abort, jsonify, g
-
+from flask import current_app, flash, request, abort
 
 from polylogyx.constants import PolyLogyxServerDefaults, DEFAULT_PLATFORMS
 from polylogyx.database import db
 from polylogyx.models import (
     DistributedQuery, DistributedQueryTask, HandlingToken,
     Node, Pack, Query, ResultLog, querypacks,
-    Options, Settings, AlertEmail, Tag, User, DefaultFilters, DefaultQuery, Config)
+    Options, Settings, AlertEmail, Tag, User, DefaultFilters, DefaultQuery, Config, NodeConfig)
+
 
 Field = namedtuple('Field', ['name', 'action', 'columns', 'timestamp'])
 
@@ -25,6 +29,10 @@ Field = namedtuple('Field', ['name', 'action', 'columns', 'timestamp'])
 schema = pkg_resources.resource_string('polylogyx', join('resources', 'osquery_schema.sql'))
 schema = schema.decode('utf-8')
 schema = [x for x in schema.strip().split('\n') if not x.startswith('--')]
+
+extension_schema = pkg_resources.resource_string('polylogyx', join('resources', 'extension_schema.sql'))
+extension_schema = extension_schema.decode('utf-8')
+extension_schema = [x for x in extension_schema.strip().split('\n') if not x.startswith('--')]
 
 # SQLite in Python will complain if you try to use it from multiple threads.
 # We create a threadlocal variable that contains the DB, lazily initialized.
@@ -43,7 +51,7 @@ def send_test_mail(settings):
     test_app.config['MAIL_USE_TLS'] = settings['use_tls']
 
     content = """Test message"""
-    subject = "Sent from PolyLogyx-ESP"
+    subject = "Sent from EclecticIQ Endpoint Response"
     return send_mail(test_app, content, subject)
 
 
@@ -72,34 +80,27 @@ def assemble_additional_configuration(node):
     configuration['queries'] = assemble_queries(node)
     configuration['packs'] = assemble_packs(node)
     configuration['tags'] = [tag.value for tag in node.tags]
-    configuration=merge_two_dicts(configuration,assemble_filters(node))
     return configuration
 
 
 def assemble_configuration(node):
-    configuration = {}
-    configuration['options'] = assemble_options(node)
-    configuration['file_paths'] = assemble_file_paths(node)
-    configuration['queries'] = assemble_schedule(node)
+    from polylogyx.dao.v1 import configs_dao
+    config = configs_dao.get_config_of_node(node)
+    configuration = assemble_filters(config)
+    configuration['options'] = assemble_options(node, configuration)
+    configuration['schedule'] = assemble_schedule(node, config)
     configuration['packs'] = assemble_packs(node)
-    configuration['filters'] = assemble_filters(node)
-    return configuration
+    if config:
+        config_details = {'id': config.id, 'name': config.name}
+    else:
+        config_details = {}
+    return configuration, config_details
 
 
-def get_additional_config(node):
-    configuration = {}
-    configuration['queries'] = assemble_schedule(node)
-    configuration['packs'] = assemble_packs(node)
-    configuration['tags'] = [tag.value for tag in node.tags]
-    return configuration
-
-
-def assemble_options(node):
-    options = {}
+def assemble_options(node, configuration):
+    options = {'disable_watchdog': True, 'logger_tls_compress': True}
 
     # https://github.com/facebook/osquery/issues/2048#issuecomment-219200524
-    options['disable_watchdog'] = True
-    options['logger_tls_compress'] = True
     if current_app.config['POLYLOGYX_EXPECTS_UNIQUE_HOST_ID']:
         options['host_identifier'] = 'uuid'
     else:
@@ -110,14 +111,8 @@ def assemble_options(node):
     if existing_option:
         existing_option_value = json.loads(existing_option.option)
         options = merge_two_dicts(options, existing_option_value)
+    options.update(configuration.get('options', {}))
     return options
-
-
-def assemble_file_paths(node):
-    file_paths = {}
-    for file_path in node.file_paths.options(db.lazyload('*')):
-        file_paths.update(file_path.to_dict())
-    return file_paths
 
 
 def assemble_queries(node, config_json=None):
@@ -128,30 +123,18 @@ def assemble_queries(node, config_json=None):
         if config_json:
             schedule = merge_two_dicts(schedule, config_json.get('schedule'))
     else:
-        schedule=[]
+        schedule = []
         for query in node.queries.options(db.lazyload('*')):
             schedule.append(query.to_dict())
     return schedule
 
 
-def assemble_schedule(node):
+def assemble_schedule(node, config=None):
     schedule = {}
     for query in node.queries.options(db.lazyload('*')):
         schedule[query.name] = query.to_dict()
-    platform = node.platform
-    if platform not in DEFAULT_PLATFORMS:
-        platform = 'linux'
-    is_x86 = False
-    if node.node_info and 'cpu_type' in node.node_info and node.node_info['cpu_type'] == DefaultQuery.ARCH_x86:
-        is_x86 = True
-
-    query = db.session.query(DefaultQuery).join(Config).filter(Config.is_active == True).filter(
-        DefaultQuery.platform == platform).filter(DefaultQuery.status == True)
-    if is_x86:
-        queries = query.filter(DefaultQuery.arch == DefaultQuery.ARCH_x86).all()
-    else:
-        queries = query.filter(
-            or_(DefaultQuery.arch == None, DefaultQuery.arch != DefaultQuery.ARCH_x86)).all()
+    queries = db.session.query(DefaultQuery).filter(
+        DefaultQuery.config == config).filter(DefaultQuery.status).all()
 
     for default_query in queries:
         schedule[default_query.name] = default_query.to_dict()
@@ -176,13 +159,13 @@ def assemble_packs(node, config_json=None):
 
 
 def assemble_distributed_queries(node):
-    '''
+    """
     Retrieve all distributed queries assigned to a particular node
     in the NEW state. This function will change the state of the
     distributed query to PENDING, however will not commit the change.
     It is the responsibility of the caller to commit or rollback on the
     current database session.
-    '''
+    """
     now = dt.datetime.utcnow()
     pending_query_count = 0
     query_recon_count = db.session.query(db.func.count(DistributedQueryTask.id)) \
@@ -237,22 +220,12 @@ def assemble_distributed_queries(node):
     return queries
 
 
-def assemble_filters(node):
-    platform = node.platform
-    if platform not in DEFAULT_PLATFORMS:
-        platform = 'linux'
-    is_x86 = False
-    if node.node_info and 'cpu_type' in node.node_info and node.node_info['cpu_type'] == DefaultFilters.ARCH_x86:
-        is_x86 = True
-    query = DefaultFilters.query.filter(DefaultFilters.platform == platform).join(Config).filter(Config.is_active == True)
-
-    if is_x86:
-        default_filters_obj=query.filter(DefaultFilters.arch == DefaultFilters.ARCH_x86).first()
-    else:
-        default_filters_obj=query.filter(
-            and_(DefaultFilters.arch != DefaultFilters.ARCH_x86)).first()
+def assemble_filters(config):
+    default_filters_obj = DefaultFilters.query.filter(DefaultFilters.config == config).first()
     if default_filters_obj:
         return default_filters_obj.filters
+    else:
+        return {}
 
 
 def create_tags(*tags):
@@ -301,96 +274,46 @@ def merge_two_dicts(x, y):
     return z
 
 
-def get_node_health(node):
-    checkin_interval = current_app.config['POLYLOGYX_CHECKIN_INTERVAL']
-    if isinstance(checkin_interval, (int, float)):
-        checkin_interval = dt.timedelta(seconds=checkin_interval)
-    if (dt.datetime.utcnow() - node.last_checkin) > checkin_interval:
-        return u'danger'
-    else:
-        return ''
-
-
-# Not super-happy that we're duplicating this both here and in the JS, but I
-# couldn't think of a nice way to pass from JS --> Python (or the other
-# direction).
-PRETTY_OPERATORS = {
-    'equal': 'equals',
-    'not_equal': "doesn't equal",
-    'begins_with': 'begins with',
-    'not_begins_with': "doesn't begins with",
-    'contains': 'contains',
-    'not_contains': "doesn't contain",
-    'ends_with': 'ends with',
-    'not_ends_with': "doesn't end with",
-    'is_empty': 'is empty',
-    'is_not_empty': 'is not empty',
-    'less': 'less than',
-    'less_or_equal': 'less than or equal',
-    'greater': 'greater than',
-    'greater_or_equal': 'greater than or equal',
-    'matches_regex': 'matches regex',
-    'not_matches_regex': "doesn't match regex",
-}
-
-
-
-PRETTY_FIELDS = {
-    'query_name': 'Query name',
-    'action': 'Action',
-    'host_identifier': 'Host identifier',
-    'timestamp': 'Timestamp',
-}
-
-
-
-# Since 'string.printable' includes control characters
-PRINTABLE = string.ascii_letters + string.digits + string.punctuation + ' '
-
-
-def quote(s, quote='"'):
-    buf = [quote]
-    for ch in s:
-        if ch == quote or ch == '\\':
-            buf.append('\\')
-            buf.append(ch)
-        elif ch == '\n':
-            buf.append('\\n')
-        elif ch == '\r':
-            buf.append('\\r')
-        elif ch == '\t':
-            buf.append('\\t')
-        elif ch in PRINTABLE:
-            buf.append(ch)
-        else:
-            # Hex escape
-            buf.append('\\x')
-            buf.append(hex(ord(ch))[2:])
-
-    buf.append(quote)
-    return ''.join(buf)
-
-
-def _carve(string):
-    return str(string).title()
-
-
 def create_mock_db():
+    from polylogyx.extra_sql_methods import _carve, _split, _concat, _concat_ws, _regex_split, _regex_match, \
+        _inet_aton, _community_id_v1, _to_base64, _from_base64, _conditional_to_base64, _sqrt, _log, _log10, _ceil, \
+        _floor, _power, _sin, _cos, _cot, _tan, _asin, _acos, _atan, _degrees, _radians, _pi
+    from polylogyx.constants import PolyLogyxServerDefaults
+
     mock_db = sqlite3.connect(':memory:')
     mock_db.create_function("carve", 1, _carve)
+    mock_db.create_function("SPLIT", 3, _split)
+    mock_db.create_function("concat", -1, _concat)
+    mock_db.create_function("concat_ws", -1, _concat_ws)
+    mock_db.create_function("regex_split", 3, _regex_split)
+    mock_db.create_function("regex_match", 3, _regex_match)
+    mock_db.create_function("inet_aton", 1, _inet_aton)
+    mock_db.create_function("community_id_v1", -1, _community_id_v1)
+    mock_db.create_function("to_base64", 1, _to_base64)
+    mock_db.create_function("from_base64", 1, _from_base64)
+    mock_db.create_function("conditional_to_base64", 1, _conditional_to_base64)
+    mock_db.create_function("sqrt", 1, _sqrt)
+    mock_db.create_function("log", 1, _log)
+    mock_db.create_function("log10", 1, _log10)
+    mock_db.create_function("ceil", 1, _ceil)
+    mock_db.create_function("floor", 1, _floor)
+    mock_db.create_function("power", 1, _power)
+    mock_db.create_function("sin", 1, _sin)
+    mock_db.create_function("cos", 1, _cos)
+    mock_db.create_function("tan", 1, _tan)
+    mock_db.create_function("asin", 1, _asin)
+    mock_db.create_function("acos", 1, _acos)
+    mock_db.create_function("atan", 1, _atan)
+    mock_db.create_function("cot", 1, _cot)
+    mock_db.create_function("degrees", 1, _degrees)
+    mock_db.create_function("radians", 1, _radians)
 
     for ddl in schema:
         mock_db.execute(ddl)
+    for ddl in extension_schema:
+        mock_db.execute(ddl)
     cursor = mock_db.cursor()
     cursor.execute("SELECT name,sql FROM sqlite_master WHERE type='table';")
-    from polylogyx.constants import PolyLogyxServerDefaults
-
-    extra_schema = current_app.config.get('POLYLOGYX_EXTRA_SCHEMA', [])
-    optimized_extra_schema = current_app.config.get('POLYLOGYX_EXTRA_SCHEMA_OPTIMIZED', [])
-    if optimized_extra_schema and not optimized_extra_schema[0] in extra_schema:
-        extra_schema.extend(optimized_extra_schema)
-    for ddl in extra_schema:
-        mock_db.execute(ddl)
     for osquery_table in cursor.fetchall():
         PolyLogyxServerDefaults.POLYLOGYX_OSQUERY_SCHEMA_JSON[osquery_table[0]] = osquery_table[1]
     return mock_db
@@ -402,127 +325,18 @@ def validate_osquery_query(query):
     if db is None:
         db = create_mock_db()
         osquery_mock_db.db = db
-
     try:
         db.execute(query)
     except sqlite3.Error:
-        current_app.logger.exception("Invalid query: %s", query)
+        current_app.logger.info("Invalid query: %s", query)
         return False
     except sqlite3.Warning:
-        current_app.logger.exception("Invalid query: %s Only one query can be executed a time!", query)
+        current_app.logger.info("Invalid query: %s Only one query can be executed a time!", query)
         return False
-
+    except sqlite3.OperationalError:
+        current_app.logger.info("Invalid query: %s", query)
+        return False
     return True
-
-
-def learn_from_result(result, node):
-    if not result['data']:
-        return
-
-    capture_columns = set(
-        map(itemgetter(0),
-            current_app.config['POLYLOGYX_CAPTURE_NODE_INFO']
-            )
-    )
-
-    if not capture_columns:
-        return
-
-    node_info = node.get('node_info', {})
-    orig_node_info = node_info.copy()
-
-    for _, action, columns, _, in extract_results(result):
-        # only update columns common to both sets
-        for column in capture_columns & set(columns):
-
-            cvalue = node_info.get(column)  # current value
-            value = columns.get(column)
-
-            if action == 'removed' and (cvalue is None or cvalue != value):
-                pass
-            elif action == 'removed' and cvalue == value:
-                node_info.pop(column)
-            elif action == 'added' and (cvalue is None or cvalue != value):
-                node_info[column] = value
-
-    # only update node_info if there's actually a change
-
-    if orig_node_info == node_info:
-        return
-
-    node = Node.get_by_id(node['id'])
-    node.update(node_info=node_info)
-    return
-
-
-def process_result(result, node):
-    if not result['data']:
-        current_app.logger.error("No results to process from %s", node)
-        return
-    subject_dn = []
-    for name, action, columns, timestamp, in extract_results(result):
-        if 'subject_dn' in columns and columns['subject_dn'] and columns['subject_dn'] != '':
-            subject_dn.append(columns['subject_dn'])
-        yield ResultLog(name=name,
-                        action=action,
-                        columns=columns,
-                        timestamp=timestamp,
-                        node_id=node.id)
-
-
-def extract_results(result):
-    """
-    extract_results will convert the incoming log data into a series of Fields,
-    normalizing and/or aggregating both batch and event format into batch
-    format, which is used throughout the rest of polylogyx.
-    """
-    if not result['data']:
-        return
-
-    timefmt = '%a %b %d %H:%M:%S %Y UTC'
-    strptime = dt.datetime.strptime
-
-    for entry in result['data']:
-        name = entry['name']
-        timestamp = strptime(entry['calendarTime'], timefmt)
-
-        if 'columns' in entry:
-            yield Field(name=name,
-                        action=entry['action'],
-                        columns=entry['columns'],
-                        timestamp=timestamp)
-
-        elif 'diffResults' in entry:
-            added = entry['diffResults']['added']
-            removed = entry['diffResults']['removed']
-            for (action, items) in (('added', added), ('removed', removed)):
-                # items could be "", so we're still safe to iter over
-                # and ensure we don't return an empty value for columns
-                for columns in items:
-                    yield Field(name=name,
-                                action=action,
-                                columns=columns,
-                                timestamp=timestamp)
-
-        elif 'snapshot' in entry:
-            for columns in entry['snapshot']:
-                yield Field(name=name,
-                            action='snapshot',
-                            columns=columns,
-                            timestamp=timestamp)
-
-        else:
-            current_app.logger.error("Encountered a result entry that "
-                                     "could not be processed! %s",
-                                     json.dumps(entry))
-
-
-class DateTimeEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, dt.datetime):
-            return o.isoformat()
-
-        return json.JSONEncoder.default(self, o)
 
 
 def is_token_logged_out(loggedin_token):
@@ -537,7 +351,11 @@ def is_token_logged_out(loggedin_token):
 def require_api_key(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if User.verify_auth_token(request.headers.environ.get('HTTP_X_ACCESS_TOKEN')) and is_token_logged_out(request.headers.environ.get('HTTP_X_ACCESS_TOKEN')) is False:
+        from flask import g
+        current_user_logged_in = User.verify_auth_token(request.headers.environ.get('HTTP_X_ACCESS_TOKEN'))
+        if current_user_logged_in and current_user_logged_in.status is not False and \
+                is_token_logged_out(request.headers.environ.get('HTTP_X_ACCESS_TOKEN')) is False:
+            g.user = current_user_logged_in
             return f(*args, **kwargs)
         elif request.path.endswith('swagger.json'):
             return f(*args, **kwargs)
@@ -551,6 +369,118 @@ def require_api_key(f):
 
 
 def is_number_positive(number=None):
-    if number>0:
+    if number > 0:
         return True
-    else: return False
+    else:
+        return False
+
+
+def push_results_to_queue(results, object_id, exchange):
+    import pika
+    connection = pika.BlockingConnection(pika.ConnectionParameters(
+        host=current_app.config['RABBITMQ_HOST'], port=current_app.config['RABBITMQ_PORT'],
+        credentials=current_app.config['RABBIT_CREDS'], ssl=current_app.config['RABBITMQ_USE_SSL'],
+        ssl_options={"cert_reqs": ssl.CERT_NONE}))
+    channel = connection.channel()
+    channel.confirm_delivery()   # confirms True/False about the message delivery
+    exchange_string = exchange + str(object_id)
+    print(results)
+    try:
+        if channel.basic_publish(exchange=exchange_string, routing_key=exchange_string, body=json.dumps(results)):
+            current_app.logger.info("Results for id {} were published successfully".format(object_id))
+        else:
+            current_app.logger.info("Failure in publishing  Results for task id {}".format(object_id))
+    except Exception as e:
+        current_app.logger.error(e)
+    connection.close()
+
+
+def get_server_ip():
+    import os
+    server_ip = "localhost"
+    try:
+        file_path = os.path.abspath('.') + "/resources/linux/x64/osquery.flags"
+        with open(file_path, "r") as fi:
+            for ln in fi:
+                if ln.startswith("--tls_hostname="):
+                    SERVER_URL = (ln[len('--tls_hostname='):]).replace('\r', '').replace('\n', '').split(':')
+                    server_ip = SERVER_URL[0]
+    except Exception as e:
+        print("Unable to detect IP from the flags file -- {}".format(str(e)))
+    return server_ip
+
+
+def form_status_log_csv(results, node_id):
+    import csv
+    file_name = 'status_log_' + str(node_id) + '_' + str(dt.datetime.now()).replace(' ', '_') + '.csv'
+    file_path = current_app.config['BASE_URL'] + "/status_log/" + file_name
+
+    if results:
+        try:
+            results = [r for r in results]
+            headers = []
+            if not len(results) == 0:
+                first_record = results[0]
+                for key in first_record.keys():
+                    headers.append(str(key))
+            with open(file_path, mode='w') as csv_file:
+                writer = csv.DictWriter(csv_file, fieldnames=headers)
+                writer.writeheader()
+                for data in results:
+                    writer.writerow(data)
+            download_path = 'https://{0}/downloads/status_log/{1}'.format(get_server_ip(), file_name)
+
+            response = {
+                'status': 'success',
+                "message": "please fetch csv file from  download path",
+                "download_path": download_path
+            }
+        except Exception as e:
+            print(e)
+            response = {
+                'status': 'Failure',
+                "message": "Something went wrong,Please try again"
+            }
+    else:
+        response = {
+            'status': 'Failure',
+            "message": "No data found"
+        }
+
+    return response
+
+
+def check_for_rabbitmq_status():
+    try:
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=current_app.config['RABBITMQ_HOST'],
+                                                                       port=current_app.config['RABBITMQ_PORT'],
+                                                                       credentials=current_app.config['RABBIT_CREDS'],
+                                                                       ssl=current_app.config['RABBITMQ_USE_SSL'],
+                                                                       ssl_options={"cert_reqs": ssl.CERT_NONE}))
+        connection.close()
+        return True
+    except Exception as error:
+        current_app.logger.error(str(error))
+        return False
+
+
+def get_server_log_level():
+    url = current_app.config['ESP_SERVER_ADDRESS'] + '/log_setting'
+    requests.packages.urllib3.disable_warnings()
+    response = requests.get(url, verify=False, timeout=10)
+    return response.json()["log_level"]
+
+
+def set_server_log_level(level):
+    url = current_app.config['ESP_SERVER_ADDRESS'] + '/log_setting'
+    requests.packages.urllib3.disable_warnings()
+    response = requests.put(url, data=json.dumps({"log_level":level}), verify=False, timeout=10,
+                                    headers={"content-type": "application/json"})
+    return response.json()["log_level"]
+
+
+def is_password_strong(password):
+    if len(password) < 8 or password.lower() == password or password.upper() == password or password.isalnum() \
+            or not any(i.isdigit() for i in password):
+        return False
+    return True

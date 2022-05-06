@@ -15,11 +15,8 @@ import { HostsComponent } from '../components/hosts/hosts.component';
 import { HuntComponent } from '../components/hunt/hunt.component';
 import { IocComponent } from '../components/ioc/ioc.component';
 import { LiveQueriesComponent } from '../components/live-queries/live-queries.component';
-
-import { OptionsComponent } from '../components/options/options.component';
 import { PacksComponent } from '../components/packs/packs.component';
 import { QueriesComponent } from '../components/queries/queries.component';
-import { ReadmeComponent } from '../components/readme/readme.component';
 import { RuleComponent } from '../components/rule/rule.component';
 import { SearchComponent } from '../components/search/search.component';
 import { TagComponent } from '../components/tag/tag.component';
@@ -36,6 +33,7 @@ import { Ng2SearchPipeModule } from 'ng2-search-filter';
 import { DateAgoPipe } from './pipes/date-ago.pipe';
 // import { NodeFilterComponent } from './node-filter/node-filter.component';
 import {NgxPaginationModule} from 'ngx-pagination';
+import { AlertDataComponent } from '../components/alerts/alert-data/alert-data.component';
 import { AddRuleComponent } from '../components/rule/add-rule/add-rule.component';
 import { EditRuleComponent } from '../components/rule/edit-rule/edit-rule.component';
 import { UpdateQueryInPacksComponent } from '../components/packs/update-query-in-packs/update-query-in-packs.component';
@@ -63,7 +61,6 @@ import { GlobalModule } from '../global/global.module';
     // OptionsComponent,
     // PacksComponent,
     // QueriesComponent,
-    // ReadmeComponent,
     // RuleComponent,
     // SearchComponent,
     // TagComponent,

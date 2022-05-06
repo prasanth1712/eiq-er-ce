@@ -1,6 +1,11 @@
 
 /* @import url("../../../css/pack.css");
 @import url("../../../public/css/common.css"); */
+.btn-success.active{
+   color: #fff !important;
+   background-color: #518c24 !important;
+   border-color: #518c24 !important;
+ }
 
 .active {
    background-color: #f7f8fa;
@@ -12,8 +17,8 @@
    height: 50px;
    padding: 15px;
    cursor: pointer;
-   background-image: linear-gradient(to right, #b8bccc , #ffffff)!important;
-   color: #282829;
+   /* background-image: linear-gradient(to right, #b8bccc , #ffffff)!important;
+   color: #282829; */
    font-size: 15px;
    /* font-family: monospace; */
    }
@@ -66,4 +71,7 @@
       font-size: 1.1rem;
       font-weight: 600;
       color:  #464457;
+   }
+   ::ng-deep table thead{
+     display: none !important;
    }

@@ -7,7 +7,6 @@ from flask_restplus import Api
 
 from polylogyx.models import User, HandlingToken
 from polylogyx.blueprints import (nodes,distributed,configs,tags,alerts,packs,queries,schema,rules,carves,yara,iocs,common,email)
-
 from polylogyx.utils import require_api_key
 from .utils import *
 

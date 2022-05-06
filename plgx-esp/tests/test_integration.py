@@ -1,39 +1,19 @@
 # -*- coding: utf-8 -*-
 import pytest
-
 from flask import url_for
 from flask_login import current_user
 from werkzeug.routing import BuildError
 
-from polylogyx.users.mixins import NoAuthUserMixin
+# from polylogyx.users.mixins import NoAuthUserMixin
 
 
 class TestStandaloneApi:
-
-    def test_no_manager(self, testapi):
+    def test_no_manager(self, testapi, client):
         with pytest.raises(BuildError):
-            url_for('manage.index')
+            url_for("manage.index")
 
-        resp = testapi.get(url_for('api.index'))
+        resp = client.get(url_for("api.index"))
         assert resp.status_code == 204
 
-        resp = testapi.get('/path/does/not/exist', expect_errors=True)
-        assert resp.status_code == 400
-
-
-class TestNoAuth:
-
-    def test_noauth_user_mixin_is_authenticated(self, testapp):
-
-        assert current_user is not None
-        assert current_user.is_authenticated
-        assert current_user.is_active
-        assert not current_user.username  # no username for this faux user
-
-
-class TestDoormanAuth:
-    pass
-
-
-class TestGoogleAuth:
-    pass
+        resp = testapi.get("/pathdoesnotexist", expect_errors=True)
+        assert resp.status_code == 404

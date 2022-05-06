@@ -1,0 +1,1 @@
+0 * * * * /usr/sbin/logrotate --force /etc/logrotate.d/logrotate_nginx

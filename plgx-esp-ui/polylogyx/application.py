@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import base64
-import os, werkzeug
+import os
+from pathlib import Path
 
 import werkzeug
 from flask import Flask, current_app
@@ -9,18 +10,18 @@ from flask.json import jsonify
 
 from polylogyx.blueprints.v1.external_api import blueprint as external_api_v1
 from polylogyx.blueprints.external_api import blueprint as external_api
-
 from polylogyx.extensions import (
     bcrypt, db, ldap_manager, login_manager,
-    mail, make_celery, migrate, sentry
+    mail, make_celery, migrate, sentry, cache, authorize
 )
 from polylogyx.models import EmailRecipient, Settings
 from polylogyx.settings import ProdConfig
 from polylogyx.tasks import celery
+from datetime import datetime
 
 
 def create_app(config=ProdConfig):
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder='templates')
     CORS(app)
     app.config.from_object(config)
 
@@ -38,9 +39,8 @@ def register_blueprints(app):
     # if the POLYLOGYX_NO_MANAGER environment variable isn't set,
     # register the backend blueprint. This is useful when you want
     # to only deploy the api as a standalone service.
-    app.register_blueprint(external_api, url_prefix="/services/api/v0",name="external_api")
-
-    app.register_blueprint(external_api_v1, url_prefix="/services/api/v1",name="external_api")
+    app.register_blueprint(external_api, url_prefix="/services/api/v0", name="external_api")
+    app.register_blueprint(external_api_v1, url_prefix="/services/api/v1", name="external_api")
 
 
 def register_extensions(app):
@@ -61,7 +61,8 @@ def register_extensions(app):
         set_email_value(app)
     except:
         print('cannot connect to database')
-
+    cache.init_app(app)
+    authorize.init_app(app)
     mail.init_app(app)
     if app.config['ENFORCE_SSL']:
         # Due to architecture of flask-sslify,
@@ -74,21 +75,30 @@ def register_extensions(app):
 
 
 def register_loggers(app):
-    from logging.handlers import RotatingFileHandler
+    from logging.handlers import RotatingFileHandler,TimedRotatingFileHandler
     import logging
     import sys
+    import pathlib
 
     logfile = app.config['POLYLOGYX_LOGGING_FILENAME']
-
+    
     if logfile == '-':
         handler = logging.StreamHandler(sys.stdout)
     else:
-        handler = RotatingFileHandler(logfile, maxBytes=1024*1024, backupCount=10)
+        log_dir = pathlib.Path(app.config['POLYLOGYX_LOGGING_DIR'])
+        logfile = log_dir.joinpath(logfile)
+        max_size = app.config["POLYLOGYX_LOGFILE_SIZE"]
+        backup_cnt = app.config["POLYLOGYX_LOGFILE_BACKUP_COUNT"]
+        handler = RotatingFileHandler(logfile, maxBytes=max_size, backupCount=backup_cnt)
+        namer = lambda fn : str(fn).split(".")[0]+"_"+ datetime.now().strftime("%Y-%m-%d_%H-%M")
+        handler.namer=namer
+        #handler = TimedRotatingFileHandler(logfile,"midnight",1,10,'utf-8')
+        
 
-    levelname = app.config['POLYLOGYX_LOGGING_LEVEL']
+    level_name = app.config['POLYLOGYX_LOGGING_LEVEL']
 
-    if levelname in ('DEBUG', 'INFO', 'WARN', 'WARNING', 'ERROR', 'CRITICAL'):
-        handler.setLevel(getattr(logging, levelname))
+    if level_name in ('DEBUG', 'INFO', 'WARN', 'WARNING', 'ERROR', 'CRITICAL'):
+        app.logger.setLevel(getattr(logging, level_name))
 
     formatter = logging.Formatter(app.config['POLYLOGYX_LOGGING_FORMAT'])
     handler.setFormatter(formatter)
@@ -109,7 +119,7 @@ def register_errorhandlers(app):
 
     @app.errorhandler(werkzeug.exceptions.Unauthorized)
     def handle_unauthorised(e):
-        return jsonify({'status': "failure", 'message': 'Username/Password is/are wrong!'}), 200
+        return jsonify({'status':"failure", 'message':'Username/Password is/are wrong!'}), 200
 
     app.register_error_handler(401, handle_unauthorised)
 
@@ -132,23 +142,23 @@ def register_auth_method(app):
 def set_email_value(app):
     with app.app_context():
         from polylogyx.settings import Config as config
-        emailRecipients = db.session.query(EmailRecipient).filter(EmailRecipient.status == 'active').all()
-        emailRecipientList = []
+        email_recipients = db.session.query(EmailRecipient).filter(EmailRecipient.status == 'active').all()
+        email_recipient_list = []
         config.EMAIL_RECIPIENTS = None
-        if emailRecipients and len(emailRecipients) > 0:
-            for emailRecipient in emailRecipients:
-                emailRecipientList.append(emailRecipient.recipient)
-            config.EMAIL_RECIPIENTS = emailRecipientList
+        if email_recipients and len(email_recipients) > 0:
+            for emailRecipient in email_recipients:
+                email_recipient_list.append(emailRecipient.recipient)
+            config.EMAIL_RECIPIENTS = email_recipient_list
 
 
 def set_email_sender(app):
     with app.app_context():
-        emailSender = db.session.query(Settings).filter(Settings.name == 'email').first().setting
-        emailPassword = base64.b64decode(
+        email_sender = db.session.query(Settings).filter(Settings.name == 'email').first().setting
+        email_password = base64.b64decode(
             db.session.query(Settings).filter(Settings.name == 'password').first().setting)
-        smtpPort = db.session.query(Settings).filter(Settings.name == 'smtpPort').first().setting
-        smtpAddress = db.session.query(Settings).filter(Settings.name == 'smtpAddress').first().setting
-        current_app.config['MAIL_USERNAME'] = emailSender
-        current_app.config['MAIL_PASSWORD'] = emailPassword
-        current_app.config['MAIL_SERVER'] = smtpAddress
-        current_app.config['MAIL_PORT'] = int(smtpPort)
+        smtp_port = db.session.query(Settings).filter(Settings.name == 'smtpPort').first().setting
+        smtp_address = db.session.query(Settings).filter(Settings.name == 'smtpAddress').first().setting
+        current_app.config['MAIL_USERNAME'] = email_sender
+        current_app.config['MAIL_PASSWORD'] = email_password
+        current_app.config['MAIL_SERVER'] = smtp_address
+        current_app.config['MAIL_PORT'] = int(smtp_port)

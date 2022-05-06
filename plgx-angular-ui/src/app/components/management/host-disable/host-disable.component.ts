@@ -10,7 +10,7 @@ import { Location } from '@angular/common';
 import { DataTableDirective } from 'angular-datatables';
 import swal from 'sweetalert';
 import { Router, ActivatedRoute } from '@angular/router';
-
+import { AuthorizationService } from '../../../dashboard/_services/Authorization.service';
 class DataTablesResponse {
   data: any[];
   draw: number;
@@ -45,6 +45,7 @@ export class HostDisableComponent implements AfterViewInit, OnInit {
     hosts_removetags_val:any;
     temp_var:any;
     hosts_enable:any;
+    role={'adminAccess':this.authorizationService.adminLevelAccess,'userAccess':this.authorizationService.userLevelAccess}
   constructor(
     private titleService: Title,
     private commonapi: CommonapiService,
@@ -52,12 +53,12 @@ export class HostDisableComponent implements AfterViewInit, OnInit {
     private http: HttpClient,
     private _location: Location,
     private _router: Router,
-
+    private authorizationService: AuthorizationService,
 
   ) { }
 
   ngOnInit() {
-    this.titleService.setTitle(this.commonvariable.APP_NAME+"-"+"Removed Hosts");
+    this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Removed hosts");
 
     this.dtOptions = {
       pagingType: 'full_numbers',
@@ -69,7 +70,7 @@ export class HostDisableComponent implements AfterViewInit, OnInit {
         "search": "Search: "
       },
       ajax: (dataTablesParameters: any,callback) => {
-      
+
         var body = dataTablesParameters;
         console.log(body)
         body['enabled']="false";
@@ -80,18 +81,14 @@ export class HostDisableComponent implements AfterViewInit, OnInit {
         body['searchterm']=body.search.value;
 
       }
-    
-        console.log(body,"bodymm",body['searchterm'])
 
         if(body['searchterm']==undefined){
           body['searchterm']="";
         }
-       
-        // this.http.get<DataTablesResponse>(environment.api_url+"/hosts/list"+"?searchterm="+body['searchterm']+"&start="+body['start']+"&limit="+body['limit'],{ headers: {'x-access-token': localStorage.getItem('JWTkey')}}).subscribe(res =>{
-          this.http.post<DataTablesResponse>(environment.api_url+"/hosts", body,{ headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('JWTkey')}}).subscribe(res =>{
 
+        // this.http.get<DataTablesResponse>(environment.api_url+"/hosts/list"+"?searchterm="+body['searchterm']+"&start="+body['start']+"&limit="+body['limit'],{ headers: {'x-access-token': localStorage.getItem('JWTkey')}}).subscribe(res =>{
+          this.http.post<DataTablesResponse>(environment.api_url+"/hosts", body,{ headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('token')}}).subscribe(res =>{
           this.response_data = res ;
-          console.log(this.response_data)
         this.hostmainvalue_data = this.response_data.data.results;
           this.temp_var=true;
         if(this.hostmainvalue_data.length >0 &&  this.hostmainvalue_data!=undefined)
@@ -114,7 +111,7 @@ export class HostDisableComponent implements AfterViewInit, OnInit {
           $('.dataTables_paginate').hide();
           $('.dataTables_info').hide();
 
-        }       
+        }
           callback({
             recordsTotal: this.response_data.data.total_count,
             recordsFiltered: this.response_data.data.count,
@@ -158,14 +155,14 @@ export class HostDisableComponent implements AfterViewInit, OnInit {
         text: "Successfully Restored the Host",
         buttons: [false],
         timer:1500
-        })  
+        })
       setTimeout(() => {
         this._router.navigate(['./hosts']);
         },500);}
       })
       }
       })
-   
+
   }
   goBack(){
     this._location.back();
@@ -195,6 +192,12 @@ export class HostDisableComponent implements AfterViewInit, OnInit {
       swal({
         title: 'Are you sure?',
         text: "Want to delete the host "+ host_name,
+        content: {
+          element: "span",
+          attributes: {
+             innerHTML: "Note :Please make sure that you have uninstalled the agent on the host",
+          },
+        },
         icon: 'warning',
         buttons: ["Cancel", true],
         closeOnClickOutside: false,

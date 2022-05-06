@@ -6,9 +6,13 @@ export const environment = {
   // console.log(window.location.origin);
   production: false,
 
-  api_url:"https://localhost:5000/services/api/v1",
-  socket_url: 'wss://localhost:5000/distributed/result'
+  api_url:"https://localhost/esp-ui/services/api/v1",
+  socket_url: 'wss://localhost/distributed/result',
+  liveTerminal_response_socket_url: 'wss://localhost/websocket/action/result',
+  Statuslog_Export_Socketurl:"wss://localhost/websocket/csv/export"
 
+  // api_url:"https://localhost:5000/services/api/v0",
+  // socket_url: 'wss://localhost:5000/distributed/result'
 };
 
 /*'https://13.234.136.159:5000/services/api/v0'

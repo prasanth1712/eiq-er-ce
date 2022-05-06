@@ -30,13 +30,14 @@
 // import { UpdateQueriesInQueriesComponent } from './queries/update-queries-in-queries/update-queries-in-queries.component';
 // import { OptionsComponent} from './options/options.component';
 // import { SearchComponent} from './search/search.component';
-// import { ReadmeComponent} from './readme/readme.component';
 // import { LogoutComponent} from '../logout/logout.component';
 // import { NodesComponent } from './hosts/nodes/nodes.component';
 // import { NodeFilterComponent} from './node-filter/node-filter.component';
 // import { ActivityComponent } from './hosts/nodes/activity/activity.component';
 // import { QueryComponent} from './query/query.component';
 // import { QueryUpdateComponent} from './query-update/query-update.component';
+// import { Openc2Component} from './openc2/openc2.component';
+// import { AddOpenc2Component} from './openc2/add-openc2/add-openc2.component';
 // import { TaggedComponent } from './tag/tagged/tagged.component';
 // import { TestComponent } from './test/test.component';
 
@@ -63,7 +64,7 @@
 //             component: NodesComponent
 
 //             },
-//             { 
+//             {
 //               path: 'node-filter/:id/:value',
 //               component: NodeFilterComponent
 
@@ -195,10 +196,6 @@
 //             component: SearchComponent
 //           },
 //           {
-//             path:'readme',
-//             component: ReadmeComponent
-//           },
-//           {
 //             path:'logout',
 //             component: LogoutComponent
 //           }
@@ -220,7 +217,7 @@ import { DashboardComponent } from './dashboard.component';
 const routes: Routes = [
   {
     path: '',
-    component: DashboardComponent, 
+    component: DashboardComponent,
   }]
 
 

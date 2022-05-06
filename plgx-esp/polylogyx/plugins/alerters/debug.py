@@ -8,18 +8,17 @@ from .base import AbstractAlerterPlugin
 
 class DebugAlerter(AbstractAlerterPlugin):
     LEVEL_MAPPINGS = {
-        'debug': logging.DEBUG,
-        'info': logging.INFO,
-        'warn': logging.WARNING,
-        'error': logging.ERROR,
-        'critical': logging.CRITICAL,
+        "debug": logging.DEBUG,
+        "info": logging.INFO,
+        "warn": logging.WARNING,
+        "error": logging.ERROR,
+        "critical": logging.CRITICAL,
     }
 
     def __init__(self, config):
-        levelname = config.get('level', 'debug')
+        levelname = config.get("level", "debug")
         self.level = self.LEVEL_MAPPINGS.get(levelname, logging.DEBUG)
 
-    def handle_alert(self, node, match,intel_match):
+    def handle_alert(self, node, match, intel_match):
         # TODO(andrew-d): better message?
-        current_app.logger.log(self.level, 'Triggered alert: {0!r}'.format(match))
-
+        current_app.logger.log(self.level, "Triggered alert: {0!r}".format(match))

@@ -8,11 +8,8 @@ import {JsonEditorComponent, JsonEditorOptions} from 'ang-jsoneditor';
 import {CommonapiService} from '../../../dashboard/_services/commonapi.service';
 import { Location } from '@angular/common';
 import { saveAs } from 'file-saver';
-import Swal from 'sweetalert2';
-declare var $: any;
-import 'datatables.net';
-import {Datatablecolumndefs} from '../../../dashboard/_helpers/datatable-columndefs';
-
+import swal from 'sweetalert';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 class DataTablesResponse {
   data: any[];
   draw: number;
@@ -42,24 +39,45 @@ masterSelected:boolean;
 checklist:any;
 checkedList:any;
 rule_name:string;
-aggregated_data:any={};
-alert_selectedItem:any;
 responsedata:any;
+submitted = false;
+verdict: any;
+AlertId: any;
+multipleSelect:boolean=false;
+resolveAlertForm:FormGroup;
+alert_selectedItem:any;
+AggregatedId:any;
+aggregated_data:any={};
+aggregate_tab=[];
+aggregatedOptions: any = {};
+aggregateoutput:any;
+aggregatelist:any;
+dtTriggerAggregatedAlerts: Subject<any> = new Subject();
+myjson: any = JSON;
+aggregateTabLength:any;
   constructor(
     private _Activatedroute: ActivatedRoute,
     private http: HttpClient,
     private commonapi: CommonapiService,
     private router: Router,
     private _location: Location,
-    private columndefs: Datatablecolumndefs,
+    private formBuilder: FormBuilder,
   ) { }
 
   ngOnInit() {
-    $.fn.dataTable.ext.errMode = 'none';
-    this._Activatedroute.paramMap.subscribe(params => {
+     this._Activatedroute.paramMap.subscribe(params => {
       this.id = params.get('id');
     })
+    this.resolveAlertForm = this.formBuilder.group({
+      comment: '',
+      resolveAlert: ['', Validators.required],
+    })
     this.rule_name=localStorage.getItem('rule_name')
+    this.getAlert();
+    this.GetAggregatedDataFilterWithQueryName(null);
+  }
+
+  getAlert(){
     var that=this;
     this.dtOptions = {
       pagingType: 'full_numbers',
@@ -67,12 +85,13 @@ responsedata:any;
       serverSide: true,
       processing: false,
       searching: true,
+      destroy: true,
       dom: '<"pull-right"B><"pull-right"f><"pull-left"l>tip',
       buttons: [
         {
           text: 'Export',
           action: function ( e, dt, node, config ) {
-            that.exportAlerts(this.id);
+            that.exportAlerts(that.id);
           },
           className: 'export_button'
         }
@@ -97,7 +116,7 @@ responsedata:any;
         this.http.post<DataTablesResponse>(environment.api_url + "/alerts", body, {
           headers: {
             'Content-Type': 'application/json',
-            'x-access-token': localStorage.getItem('JWTkey')
+            'x-access-token': localStorage.getItem('token')
           }
         }).subscribe(res => {
           this.responsedata = res;
@@ -144,6 +163,8 @@ responsedata:any;
       columns: [{data: 'hostname'}]
     }
   }
+
+  get f() { return this.resolveAlertForm.controls; }
   ngAfterViewInit(): void {
     this.dtTrigger.next();
   }
@@ -160,96 +181,76 @@ responsedata:any;
         this.toggle = true;
       }, 100);
     }
-
+    onItemChange(value){
+      this.verdict = value;
+    }
+    resolveAlert(alertId,selectOption) {
+      this.AlertId = alertId;
+      this.multipleSelect = selectOption;
+      this.openResolveAlert();
+    }
+    multiResolveAlert(selectOption) {
+      this.multipleSelect = selectOption
+      this.openResolveAlert();
+    }
+    openResolveAlert(){
+      let modal = document.getElementById("resolveAlertModal");
+      modal.style.display = "block";
+    }
+    closeResolveAlert(){
+      this.submitted = false;
+      this.resolveAlertForm.reset()
+      let modal = document.getElementById("resolveAlertModal");
+      modal.style.display = "none";
+    }
     /*  Alerted Entry Json Editor End*/
 
       /* Start Resolve alert*/
-    resolveAlert(AlertId) {
-      let resolve_alerts_data={}
-      resolve_alerts_data["resolve"]=true
-      resolve_alerts_data['alert_ids']=AlertId
-      Swal.fire({
-        title: 'Are you sure?',
-        text: "Want to resolve the alert!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#518c24',
-        cancelButtonColor: '#d33',
-        confirmButtonText: "Yes,Resolve"
-      }).then((result) => {
-        if (result.value) {
-          this.commonapi.AlertsResolve(resolve_alerts_data).subscribe(res => {
-            if (res['status'] == "success") {
-              Swal.fire({
-                icon: 'success',
-                title: 'Resolved',
-                text: 'Alert has been successfully resolved',
-                timer: 2000,
-                showConfirmButton: false,
-              })
-            } else {
-              Swal.fire({
-                icon: "warning",
-                text: res['message'],
-              })
-            }
-            setTimeout(() => {
-              this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
-                // Destroy the table first
-                dtInstance.destroy();
-                // Call the dtTrigger to rerender again
-                this.dtTrigger.next();
-              });
-        },1500);
-          })
+      resolveAlertSubmitForm(){
+        this.submitted = true;
+        let resolveAlertsData={}
+        resolveAlertsData["resolve"]=true;
 
+        if(this.multipleSelect == false){   resolveAlertsData['alert_ids']=this.AlertId;     }
+        else{ resolveAlertsData['alert_ids']= this.checkedList; }
+
+        if(this.verdict == 'True Positive'){
+          resolveAlertsData['verdict'] = true;
         }
-      })
-    }
-    resolvedAllSelected() {
-      let resolve_alerts_data={}
-      resolve_alerts_data["resolve"]=true
-      resolve_alerts_data['alert_ids']=this.checkedList
-      if (this.checkedList.length == 0) {
-      }
-      else {
-        Swal.fire({
-          title: 'Are you sure?',
-          text: "Want to resolve the alerts!",
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#518c24',
-          cancelButtonColor: '#d33',
-          confirmButtonText: "Yes,Resolve"
-        }).then((result) => {
-          if (result.value) {
-              this.commonapi.AlertsResolve(resolve_alerts_data).subscribe(res => {
-                if (res['status'] == "success") {
-                  Swal.fire({
-                    icon: 'success',
-                    title: 'Resolved',
-                    text: 'Alerts has been successfully resolved',
-                    timer: 2000,
-                    showConfirmButton: false,
-                  })
-                } else {
-                  Swal.fire({
-                    icon: "warning",
-                    text: res['message'],
-                  })
-                }
+        else if(this.verdict == 'False Positive'){
+          resolveAlertsData['verdict'] = false;
+        }
+        resolveAlertsData['comment'] = this.f.comment.value;
+        // stop here if form is invalid
+        if (this.resolveAlertForm.invalid) {
+            return;
+        }
+        this.commonapi.AlertsResolve(resolveAlertsData).subscribe(res => {
+          if (res['status'] == "success") {
+            let modal = document.getElementById("resolveAlertModal");
+            modal.style.display = "none";
+            swal({
+              icon: 'success',
+              title: 'Resolved',
+              text: 'Alert has been successfully resolved',
+              buttons: [false],
+              timer: 3000
             })
-            setTimeout(() => {
-              this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
-                // Destroy the table first
-                dtInstance.destroy();
-                // Call the dtTrigger to rerender again
-                this.dtTrigger.next();
-              });
-        },1500);
-            }
-          })
-      }
+          } else {
+            swal({
+              icon: "warning",
+              text: res['message'],
+            })
+          }
+          setTimeout(() => {
+            this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
+              // Destroy the table first
+              dtInstance.destroy();
+              // Call the dtTrigger to rerender again
+              this.dtTrigger.next();
+            });
+          }, 2000);
+        })
       }
       /* END Resolve alert*/
       goBack() {
@@ -275,84 +276,19 @@ responsedata:any;
           this.checkedList.push(this.checklist[i].id);
         }
       }
-
-      // Start Aggregated alerts
-get_alerts_aggregated_data(id){
-  this.aggregated_data={}
-  this.commonapi.get_alerts_aggregated_data(id).subscribe((res: any) => {
-   for(const i in res.data){
-     if (!this.aggregated_data.hasOwnProperty(res.data[i].name)){
-      this.aggregated_data[res.data[i].name]=[]
-       }
-       this.aggregated_data[res.data[i].name].push(res.data[i].columns)
-    }
-    if(res.data.length!=0){
-      this.alerts_aggregated_data(res.data[0].name)
-    }else{
-      $("#alerts_aggretated_table").html('No results found');
-    }
+get_csv_data(id){
+  var payloadDict={"source":'rule',"rule_id":id}
+    this.commonapi.rule_alerts_export(payloadDict).subscribe(blob => {
+    saveAs(blob,"alert"+"_"+"rule"+'.csv');
   })
 }
-alerts_aggregated_data(key){
-  this.alert_selectedItem =key
-  // $('#alerts_aggretated_table').empty();
-  document.getElementById("alerts_aggretated_table").innerHTML = '';
-  var id="alerts_aggretated_table";
-  var div_table = $("<table></table>")
-      .attr("id", key + "_table")
-      .attr("style", "margin-left:auto;width:100%;overflow-x: scroll")
-      .attr("width", "100%;")
-      .addClass("table table-striped- table-bordered  table-checkable");
-        $("#"+id).append(div_table);
-      let values=this.aggregated_data[key]
-      var columns = [];
-  var keys =  Object.keys(values[0]);
-
-  var _result = this.columndefs.columnDefs(keys);
-  var column_defs = _result.column_defs;
-  columns = _result.column;
-            $(document).ready(function() {
-              div_table.DataTable({
-              dom: "Bfrtip",
-              bLengthChange:true,
-              data: values,
-              sPaginationType:"full_numbers",
-              "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
-              columns: columns,
-              paging:true,
-              buttons: [ {extend: 'csv',filename: function () { return key;}}],
-                "columnDefs":column_defs,
-                "language": {
-              "search": "Search: "
-            },
-            "initComplete": function (settings, json) {
-              div_table.wrap("<div style='overflow:auto; width:100%;position:relative;'></div>");
-            },
-            rowCallback: function(row, data, index){
-              $('td', row).css('background-color', 'white');
-            }
-            });
-          })
-
-}
-
-  // End Aggregated alerts
-  close_data(){
-    document.getElementById("alerts_aggretated_table").innerHTML = '';
-      }
-  get_csv_data(id){
-    var payloadDict={"source":'rule',"rule_id":id}
-      this.commonapi.rule_alerts_export(payloadDict).subscribe(blob => {
-      saveAs(blob,"alert"+"_"+"rule"+'.csv');
-    })
-  }
 
 
 /*  Export csv file for all the alert type*/
 exportAlerts(id){
 var payloadDict = {"source":'rule',"rule_id":id}
 var alert_name = JSON.stringify(payloadDict);
-var token_val = localStorage.getItem('JWTkey');
+var token_val = localStorage.getItem('token');
 var today = new Date();
 var currentDate = today.getDate()+"-"+(today.getMonth()+1)+"-"+today.getFullYear();
 $.ajax({
@@ -389,6 +325,105 @@ $.ajax({
 });
 return false;
 }
+
+// Start Aggregated alerts
+getAlertsAggregatedData(id){
+  this.AggregatedId = id;
+  this.aggregated_data = [];
+  $('.aggregated_table_data').hide();
+  this.commonapi.get_alerts_aggregated_data(id).subscribe((res: any) => {
+    $('.aggregation_loader').hide();
+    this.aggregateTabLength=res.data.length
+   for(const i in res.data){
+     this.aggregated_data.push(res.data[i].query_name)
+    }
+    if(this.aggregated_data!=0){
+      this.GetAggregatedDataFilterWithQueryName(this.aggregated_data[0]);
+    }else{
+
+    }
+  })
+}
+
+GetAggregatedDataFilterWithQueryName(name){
+  this.dtTriggerAggregatedAlerts.next();
+  $('.aggregated_table_data').show();
+  var that=this;
+  this.alert_selectedItem = name;
+  this.aggregatedOptions = {
+    pagingType: 'full_numbers',
+    pageLength: 10,
+    serverSide: true,
+    processing: true,
+    searching: true,
+    dom: '<"pull-right"B><"pull-right"f><"pull-left"l>tip',
+    buttons: [
+      {
+        text: 'Export',
+        attr:  {id: 'IdExport'},
+        action: function ( e, dt, node, config ) {
+          that.exportAggregatedData();
+        },
+      },
+    ],
+    destroy:true,
+    "language": {
+      "search": "Search: "
+    },
+    ajax: (dataTablesParameters: any, callback) => {
+      var body = dataTablesParameters;
+      var searchitem = '';
+      if(body.search.value!= ""  &&  body.search.value.length>=3){
+        searchitem=body.search.value;
+      }
+      if(body.search.value!="" && body.search.value.length<3){
+       return;
+      }
+      var payload = {
+	          "query_name":this.alert_selectedItem,
+	          "start":body['start'],
+            "limit":body['length'],
+            "searchterm":searchitem,
+      }
+      this.http.post<DataTablesResponse>(environment.api_url+"/alerts/"+this.AggregatedId+"/alerted_events", payload, { headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('token')}}).subscribe(res =>{
+        this.aggregateoutput = res;
+        this.aggregatelist = this.aggregateoutput.data.results;
+        if(this.aggregatelist.length >0 &&  this.aggregatelist!=undefined)
+        {
+          $('.dataTables_paginate').show();
+          $('.dataTables_info').show();
+        }
+        else{
+          if(body.search.value=="" || body.search.value == undefined){
+            this.errorMessage="No Data Found";
+          }
+          else{
+            this.errorMessage="No Matching Record Found";
+          }
+          $('.dataTables_paginate').hide();
+          $('.dataTables_info').hide();
+        }
+        callback({
+          recordsTotal: this.aggregateoutput.data.count,
+          recordsFiltered: this.aggregateoutput.data.count,
+          data: []
+        });
+      });
+    },
+
+    ordering: false,
+  }
+}
+exportAggregatedData(){
+  var queryName = this.alert_selectedItem;
+  var alertId = this.AggregatedId;
+  var today = new Date();
+  var currentDate = today.getDate()+"-"+(today.getMonth()+1)+"-"+today.getFullYear();
+  this.commonapi.alertedEventsExport(alertId,queryName).subscribe((res: any) => {
+    saveAs(res,  'alert'+'_'+this.alert_selectedItem+ '_' + currentDate + '.csv');
+  })
+}
+
 pagenotfound() {
     this.router.navigate(['/pagenotfound']);
 }

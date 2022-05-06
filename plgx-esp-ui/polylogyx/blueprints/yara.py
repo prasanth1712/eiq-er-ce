@@ -1,11 +1,11 @@
 import os
 from werkzeug import datastructures
+
 from flask_restplus import Namespace, Resource, marshal
 
 from .utils import *
 from polylogyx.utils import require_api_key
 from polylogyx.wrappers import parent_wrappers as parentwrapper
-from polylogyx.constants import PolyLogyxServerDefaults
 
 
 ns = Namespace('yara', description='yara related operations')
@@ -15,7 +15,7 @@ ns = Namespace('yara', description='yara related operations')
 @ns.route('/', endpoint='list_yara')
 @ns.doc(params={})
 class ListYara(Resource):
-    '''lists yara files'''
+    """lists yara files"""
     def get(self):
         from os import walk
         file_list = []
@@ -24,14 +24,14 @@ class ListYara(Resource):
             break
         if "list.txt" in file_list:
             file_list.remove("list.txt")
-        return marshal(respcls("Successfully fetched the yara files",'success',file_list),parentwrapper.common_response_wrapper)
+        return marshal(prepare_response("Successfully fetched the yara files",'success',file_list),parentwrapper.common_response_wrapper)
 
 
 @require_api_key
 @ns.route('/add', endpoint='add_yara')
 @ns.doc(params={'file': 'yara file to upload'})
 class AddYara(Resource):
-    '''uploads and adds an yara file to the yara folder'''
+    """uploads and adds an yara file to the yara folder"""
     parser = requestparse(['file'], [datastructures.FileStorage], ['Threat file'], [True])
 
     @ns.expect(parser)
@@ -55,4 +55,4 @@ class AddYara(Resource):
                         the_file.write(file_name+'\n')
             message = "Successfully uploaded the file"
             status = "success"
-
+        return marshal(prepare_response(message,status),parentwrapper.common_response_wrapper,skip_none=True)

@@ -7,7 +7,7 @@
   font-weight: 500;
   border-bottom-width: 1px;
   padding-top: 1rem;
-  padding-bottom: 1rem; 
+  padding-bottom: 1rem;
   font-family: "Poppins";
 }
 .back_icon_align {
@@ -189,4 +189,7 @@ transition: color .15s ease-in-out,background-color .15s ease-in-out,border-colo
   right: -5px;
   margin-top: -5px;
   top: 50%;
+}
+.Progress-bg{
+  background-color: #31b2a4 !important;
 }

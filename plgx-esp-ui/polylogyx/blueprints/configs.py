@@ -19,7 +19,7 @@ class ConfigList(Resource):
         data = dao.get_all_configs()
         message = "config is fetched successfully"
         status = "success"
-        return marshal(respcls(message, status, data), parentwrapper.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status, data), parentwrapper.common_response_wrapper, skip_none=True)
 
 
 @ns.route('/<any(windows,linux,darwin):platform>', endpoint='list_config_by_platform')
@@ -36,7 +36,6 @@ class ConfigByPlatform(Resource):
         arch = args['arch']
         if not arch:
            arch = "x86_64"
-
         type = args['type']
         if not type:
             type = "default"
@@ -47,4 +46,4 @@ class ConfigByPlatform(Resource):
         config_dict = dao.edit_config_by_platform(config, args['filters'], args['queries'])
         status = "success"
         message = "Config is updated successfully"
-        return marshal(respcls(message, status, config_dict), parentwrapper.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status, config_dict), parentwrapper.common_response_wrapper, skip_none=True)

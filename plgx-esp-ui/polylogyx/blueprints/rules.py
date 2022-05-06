@@ -24,21 +24,21 @@ def validate_technique_id(technique_id):
 @ns.route('/', endpoint = "list_rules")
 @ns.doc(params = {})
 class RuleList(Resource):
-    '''Lists all Rules'''
+    """Lists all Rules"""
     @ns.marshal_with(wrapper.common_response_wrapper)
     def get(self):
         #data = [rule.as_dict() for rule in dao.getAllRules()]
         data = marshal(dao.get_all_rules(), wrapper.rule_wrapper)
         message = "successfully fetched the rules info"
         if not data: message = "there is no data to be shown"
-        return respcls(message,"success",data)
+        return prepare_response(message,"success",data)
 
 
 @require_api_key
 @ns.route('/<int:rule_id>', endpoint = "list_rule_by_id")
 @ns.doc(params = {'rule_id':"id of the rule"})
 class GetRuleById(Resource):
-    '''Lists the rule by its ID'''
+    """Lists the rule by its ID"""
 
     def get(self, rule_id):
         if rule_id:
@@ -46,19 +46,19 @@ class GetRuleById(Resource):
             if rule:
                 #data = rule.as_dict()
                 data = marshal(rule, wrapper.rule_wrapper)
-                return respcls("successfully fetched the rules info","success",data)
+                return prepare_response("successfully fetched the rules info","success",data)
             else:
                 message="Rule with this id does not exist"
         else:
             message = "Missing rule id"
-        return marshal(respcls(message), parentwrapper.failure_response_parent)
+        return marshal(prepare_response(message), parentwrapper.failure_response_parent)
 
 
 @require_api_key
 @ns.route('/<int:rule_id>', endpoint = "edit_rule_by_id")
 @ns.doc(params = {'rule_id':"id of the rule", 'alerters':"alerters", 'name': "name of the rule", 'description':"description of the rule", 'conditions':"conditions", 'recon_queries':"recon_queries", 'severity':"severity", 'status':"status"})
 class ModifyRuleById(Resource):
-    '''modifies the rule data for the passed rule_id'''
+    """modifies the rule data for the passed rule_id"""
     parser = requestparse(['alerters', 'name', 'description', 'conditions', 'recon_queries', 'severity', 'status', 'type', 'tactics', 'technique_id'],[str, str, str, dict, list, str, str, str, str, str],["alerters", "name of the rule", "description of the rule", "conditions", "recon_queries","severity", 'status', 'type', 'tactics', 'technique_id'], [False, True, True, True, False, False, False, False, False, False])
 
     @ns.expect(parser)
@@ -97,19 +97,19 @@ class ModifyRuleById(Resource):
 
                     rule = dao.edit_rule_by_id(rule_id,name,alerters,description,conditions,rule_status,dt.datetime.utcnow(),json.dumps(recon_queries),severity,type_ip,tactics,technique_id)
 
-                    return respcls("Successfully modified the rules info","success",marshal(rule, wrapper.rule_wrapper))
+                    return prepare_response("Successfully modified the rules info","success",marshal(rule, wrapper.rule_wrapper))
             else:
                 message = "rule with this id does not exist"
         else:
             message="Missing rule id"
-        return marshal(respcls(message), parentwrapper.failure_response_parent)
+        return marshal(prepare_response(message), parentwrapper.failure_response_parent)
 
 
 @require_api_key
 @ns.route('/add', endpoint = "add_rule")
 @ns.doc(params = {'alerters':"alerters", 'name': "name of the rule", 'description':"description of the rule", 'conditions':"conditions", 'recon_queries':"recon_queries", 'severity':"severity", 'status':"status",'type':"type",'tactics':"tactics",'technique_id':"technique_id"})
 class AddRule(Resource):
-    '''adds and returns the API response if there is any existed data for the passed rule_id'''
+    """adds and returns the API response if there is any existed data for the passed rule_id"""
     parser = requestparse(['alerters', 'name', 'description', 'conditions', 'recon_queries', 'severity', 'status', 'type', 'tactics', 'technique_id'],[str, str, str, dict, list, str, str, str, str, str],["alerters", "name of the rule", "description of the rule", "conditions", "recon_queries", "severity", 'status', 'type', 'tactics', 'technique_id'], [False, True, True, True, False, False, False, False, False, False])
 
     @ns.expect(parser)
@@ -141,7 +141,7 @@ class AddRule(Resource):
             try:
                 parse_group(conditions)
             except Exception as e:
-                return marshal(respcls(str(e), "failure"),parentwrapper.failure_response_parent)
+                return marshal(prepare_response(str(e), "failure"),parentwrapper.failure_response_parent)
             if not status:
                 status = "ACTIVE"
             if alerters is None:
@@ -151,5 +151,5 @@ class AddRule(Resource):
             rule = dao.create_rule_object(name,alerters,description,conditions,status,type_ip,tactics,technique_id,dt.datetime.utcnow(),json.dumps(recon_queries),severity)
             rule.save()
             return marshal({'message': "rule is added successfully", 'status':"success",'rule_id': rule.id}, wrapper.response_add_rule)
-        return marshal(respcls(message), parentwrapper.failure_response_parent)
+        return marshal(prepare_response(message), parentwrapper.failure_response_parent)
 

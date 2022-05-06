@@ -1,7 +1,7 @@
 
 @import url("../../../../css/tab.css");
 .active {
-  background-color: #52B2A8;
+  background-color: #30b1a4;
   color: #fff;
   border-radius: .25rem;
   line-height:19.5px;
@@ -47,11 +47,11 @@
     /* width: 200px; */
     float: right;
   }
-  
+
   .badge-queryname {
     font-size: 1rem;
     font-weight: 400;
-  
+
 
   }
   .kt-badge.kt-badge--primary {
@@ -68,7 +68,7 @@
     display: inline-block;
     width: auto;
   }
- 
+
   .datatable__search label {
       float: right;
       margin-top: 0px;
@@ -101,7 +101,7 @@
     .nav-tab_align {
       text-align: right !important;
       word-break: break-all;
-  
+
   }
   .kt-badge.kt-badge--inline {
     height: 0;
@@ -126,4 +126,15 @@ table.dataTable thead th, table.dataTable thead td {
   border-bottom: 1px solid white;
 }
 
+::ng-deep .tab-content .cuppa-dropdown .selected-list .c-btn {
+  width: 236px;
+}
+::ng-deep div.dataTables_wrapper div.dataTables_filter input {
+  width: 180px;
+}
+::ng-deep .tab-content .pull-right .btn{
+  margin-left:5px;
+  padding-bottom:5px;
+  padding-top:5px;
+}
 

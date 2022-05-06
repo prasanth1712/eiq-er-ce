@@ -6,14 +6,17 @@ import swal from 'sweetalert';
 import { Location } from '@angular/common';
 import Swal from 'sweetalert2';
 import { Title } from '@angular/platform-browser';
-
+import { throwError, TimeoutError } from 'rxjs';
+import { msg } from '../../../dashboard/_helpers/common.msg';
+import { ToastrService } from 'ngx-toastr';
+import { AuthorizationService } from '../../../dashboard/_services/Authorization.service';
 @Component({
   selector: 'app-configure-email',
   templateUrl: './configure-email.component.html',
   styleUrls: ['./configure-email.component.css']
 })
 export class ConfigureEmailComponent implements OnInit {
-
+  hasAcess=this.authorizationService.hasAccess()
   ConfigureEmail: FormGroup;
   submitted = false;
   error: any;
@@ -25,31 +28,33 @@ export class ConfigureEmailComponent implements OnInit {
   conf_email_data: any;
   conf_password_data: any;
   conf_server_data: any;
-  conf_port_data: number = 465;
+  conf_port_data: number;
   use_ssl:boolean
   EmailSubmit: any;
   EmailTest: any;
   sslConnection:boolean = false;
   tlsConnection:boolean = false;
   noneConnection:boolean = false;
+  role={'adminAccess':this.authorizationService.adminLevelAccess,'userAccess':this.authorizationService.userLevelAccess}
   constructor(
     private fb: FormBuilder,
     private commonapi: CommonapiService,
     private commonvariable: CommonVariableService,
     private _location: Location,
     private titleService: Title,
-
+    private toastr: ToastrService,
+    private authorizationService: AuthorizationService,
   ) { }
 
   ngOnInit() {
-    this.titleService.setTitle(this.commonvariable.APP_NAME+"-"+"Email Setting" );
-
+    this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Email setting" );
     this.ConfigureEmail = this.fb.group({
       senderEmail: ['', Validators.required],
       senderPassword: ['', Validators.required],
       smtpServer: ['', Validators.required],
       smtpPort: ['', Validators.required],
-      emailRecipients: ['', Validators.required]
+      emailRecipients: ['', Validators.required],
+      ssl:['']
     });
 
     this.commonapi.configuredEmail().subscribe(res => {
@@ -91,7 +96,7 @@ export class ConfigureEmailComponent implements OnInit {
             }
           })
           this.commonapi.UpdateconfigureEmail(this.f.senderEmail.value, this.f.senderPassword.value,
-            this.f.smtpServer.value, this.f.smtpPort.value, this.f.emailRecipients.value, this.sslConnection, this.tlsConnection).subscribe(res => {
+            this.f.smtpServer.value, this.f.smtpPort.value, this.f.emailRecipients.value,this.sslConnection,this.tlsConnection).subscribe(res => {
               this.EmailSubmit = res;
               Swal.close()
               if (this.EmailSubmit.status == 'failure') {
@@ -136,6 +141,7 @@ export class ConfigureEmailComponent implements OnInit {
     }
     return valid;
   }
+  testEmailTimeout :any;
   testEmail(arg) {
     if (arg.value.senderEmail == undefined) {
       Swal.fire({
@@ -195,7 +201,7 @@ export class ConfigureEmailComponent implements OnInit {
           Swal.showLoading()
         }
       })
-      this.commonapi.TestEmail(arg.value.emailRecipients, arg.value.senderEmail, arg.value.smtpServer, arg.value.senderPassword, arg.value.smtpPort, this.sslConnection, this.tlsConnection).subscribe(res => {
+      this.commonapi.TestEmail(arg.value.emailRecipients, arg.value.senderEmail, arg.value.smtpServer, arg.value.senderPassword, arg.value.smtpPort,this.sslConnection,this.tlsConnection).subscribe(res => {
         this.EmailTest = res;
         Swal.close();
         if (this.EmailTest.status == 'failure') {
@@ -208,14 +214,6 @@ export class ConfigureEmailComponent implements OnInit {
 
           })
         } else {
-          // Swal.fire({
-          //   icon: 'success',
-          //   title: this.EmailTest.status,
-          //   text: this.EmailTest.message,
-          //   showConfirmButton: false,
-          //   timer: 2000
-
-          // })
           swal({
             icon: 'success',
             title: this.EmailTest.status,
@@ -225,8 +223,23 @@ export class ConfigureEmailComponent implements OnInit {
 
           })
         }
-      })
+      },error => { // Error...
+        if(error.message == "Timeout has occurred"){
+          Swal.close();
+          this.toastr.error(msg.requestTimeout);
+        }else{this.failureMessgae(msg.failuremsg)}
+       })
+
     }
+  }
+  failureMessgae(msg){
+    Swal.fire({
+      icon: 'warning',
+      title: "failure",
+      text: msg,
+      showConfirmButton: false,
+      timer: 4000
+    })
   }
   numberOnly(event): boolean {
     const charCode = (event.which) ? event.which : event.keyCode;

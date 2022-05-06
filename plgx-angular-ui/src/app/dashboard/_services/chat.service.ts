@@ -28,7 +28,7 @@ export class ChatService {
     if (live_url) {
       socket_url = environment.socket_url;
     } else {
-      socket_url = 'wss://' + socket_ip + '/distributed/result';
+      socket_url = 'wss://' + socket_ip + '/esp-ui/distributed/result';
     }
     console.log(this.messages);
 

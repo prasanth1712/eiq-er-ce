@@ -1,45 +1,35 @@
+/* @import url("../../../js/timeline/timeline.css"); */
+/* @import url("../../../assets/vendors/custom/vendors/flaticon/flaticon.css");
+@import url("../../../assets/vendors/custom/vendors/flaticon2/flaticon.css");
+@import url("../../../assets/vendors/custom/vendors/fontawesome5/css/all.min.css");
+@import url("../../../assets/vendors/general/bootstrap-select/dist/css/bootstrap-select.css"); */
 
-  tbody {
-    vertical-align: top;
-    border-color: inherit;
+p {
+    font-family: Lato;
   }
-  dt {
-    font-weight: 700;
-    font-size: 14px;
+  .graph-container {
+      height: 25em;
+      widows: 100%;
   }
-  td {
-    position: relative;
-    font-size: 11px;
-    margin-top: 15px;
-    margin-bottom: 60px;
-    border-collapse: collapse;
-    padding-left: 13px;
-    word-break: break-all;
-    white-space: normal !important;
-  }
-  table {
-    border-collapse: collapse;
-    border-spacing: 0;
-    width: 100%;
-    word-wrap: break-word;
-    display: table;
-    border-collapse: separate;
-    border-spacing: 2px;
-    border-color: grey;
-  }
-    /* Important part */
-    .modal-dialog {
-      overflow-y: initial !important
+  table.messages tbody.message-group {
+      border-top: 0;
     }
-    .modal-body {
-      height: 100%;
-      overflow-y: auto;
+    tbody {
+      vertical-align: top;
+      border-color: inherit;
     }
-    div.dataTables_scrollBody {
+    dt {
+      font-weight: 700;
+      font-size: 14px;
+    }
+    table.messages {
       position: relative;
-      overflow-x: scroll;
+      font-size: 11px;
+      margin-top: 15px;
+      margin-bottom: 60px;
+      border-collapse: collapse;
+      padding-left: 13px;
       width: 100%;
-      height: 600px;
       word-break: break-all;
     }
     td {
@@ -189,7 +179,25 @@
     div.dataTables_wrapper {
       width: 100%;
       margin: 0 auto
-    } 
+    }
+    table.dataTable tbody td {
+      word-break: break-word;
+      vertical-align: top;
+    }
+    .button {
+      display: block;
+      padding: 10px;
+      text-align: center;
+      border-radius: 5px;
+      color: white;
+      font-weight: bold;
+    }
+    button.active {
+      background: #4CAF50;
+    }
+    a.show {
+      background: #4CAF50 !important;
+    }
     a.toggle-vis:hover {
       text-decoration: underline !important;
       color: #000000 !important;
@@ -198,19 +206,52 @@
       cursor: pointer !important;
       color: #3174c7 !important;
     }
-    .kt-datatable.kt-datatable--default>.kt-datatable__table>.kt-datatable__head .kt-datatable__row>.kt-datatable__cell>span, .kt-datatable.kt-datatable--default>.kt-datatable__table>.kt-datatable__foot .kt-datatable__row>.kt-datatable__cell>span {
-      font-weight: 700;
+    .timeline-controls-alerts {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 50px;
+      overflow: hidden;
+      position: absolute;
+      height:100%;
     }
-    .kt-datatable.kt-datatable--default.kt-datatable--loaded>.kt-datatable__table>.kt-datatable__head{
-      display: unset !important;
+    .timeline-button:hover{
+      background-color: #184ba1;
+      color: #fff;
     }
-
-    td.details-control {
-    background: url('https://datatables.net/examples/resources/details_open.png') no-repeat center center;
-    cursor: pointer;
-  }
-  tr.details td.details-control {
-    background: url('https://datatables.net/examples/resources/details_close.png') no-repeat center center;
+    .kt-datatable.kt-datatable--default>.kt-datatable__table>.kt-datatable__body .kt-datatable__row>.kt-datatable__cell--check {
+      padding-right: 30px;
+    }
+    .datatable__search input {
+        margin-left: .5em;
+        display: inline-block;
+        width: auto;
+    }
+    .datatable__search label {
+        float: right;
+        margin-bottom: -12px;
+    }
+    .txt-clr{
+      color: indianred;
+      text-align: center;
+      /* margin-bottom: 0px; */
+      font-weight: 400;
+    }
+    .kt-portlet .kt-portlet__head .kt-portlet__head-label .kt-portlet__head-title {
+       margin: 0;
+       padding: 0;
+       font-size: 1.2rem;
+       font-weight: 500;
+       color:  #464457;
+    }
+    .dropdown-menu {
+      border: 0 !important;
+      margin: 0;
+      border-radius: 0;
+      width: 12rem;
+      padding: 0;
+      padding: 1rem 0;
+      border-radius: 4px;
+      left: 0;
   }
 
   :host ::ng-deep div.dataTables_wrapper,
@@ -219,75 +260,6 @@
   :host ::ng-deep div.dataTables_length{
     color: #646c9a !important;
   }
-  table.dataTable tbody td {
-    word-break: break-word;
-    vertical-align: top;
-  }
-  .kt-datatable.kt-datatable--default>.kt-datatable__table>.kt-datatable__body .kt-datatable__row>.kt-datatable__cell--check {
-    padding-right: 30px;
-  }
-  .dropdown-toggle::after {
-    margin-left: 0;
-  }
-  .datatable__search input {
-      margin-left: .5em;
-      display: inline-block;
-      width: auto;
-  }
-  .datatable__search label {
-      float: right;
-      margin-bottom: -12px;
-  }
-  .txt-clr{
-    color: indianred;
-    text-align: center;
-    /* margin-bottom: 0px; */
-    font-weight: 400;
-  }
-  .kt-portlet .kt-portlet__head .kt-portlet__head-label .kt-portlet__head-title {
-     margin: 0;
-     padding: 0;
-     font-size: 1.2rem;
-     font-weight: 500;
-     color:  #464457;
-  }
-  .dropdown-menu {
-    border: 0 !important;
-    margin: 0;
-    border-radius: 0;
-    width: 12rem;
-    padding: 0;
-    padding: 1rem 0;
-    border-radius: 4px;
-    left: 0;
-}
-.dropdown-btn-1 {
-  margin-top: -17px;
-  margin-left: 36px;
-  cursor: pointer;
-}
-
-:host ::ng-deep div.dataTables_wrapper,
-:host ::ng-deep div.dataTables_info,
-:host ::ng-deep div.dataTables_filter,
-:host ::ng-deep div.dataTables_length{
-  color: #646c9a !important;
-}
-table.dataTable thead th, table.dataTable thead td {
-  padding: 10px;
-   border-bottom: 1px solid #ebedf2;
-
-}
-::ng-deep table.dataTable.no-footer  {
-  border-bottom: 1px solid white;
-}
-::ng-deep .ngx-datepicker-container .ngx-datepicker-calendar-container {
-  z-index: 999;
-}
-::ng-deep .query_tab .tab-content .nav {
-  width: 50%;
-    margin: 6px auto;
-}
   ::ng-deep div.dataTables_wrapper div.dataTables_filter{
     padding-right: 1%;
   }
@@ -300,4 +272,15 @@ table.dataTable thead th, table.dataTable thead td {
     padding-top:7px;
     padding-left:10px;
     font-size:1.2rem
+  }
+  .show_1{
+    overflow: visible_1;
+    height: auto;
+  }
+  .hideChildren>div{
+    display: none;
+  }
+  ::ng-deep #AggregatedData_table_wrapper .pull-right .dt-buttons .btn{
+    padding-top:6px !important;
+    padding-bottom:5px !important;
   }

@@ -15,6 +15,11 @@ if [ -f $file ] ; then
     rm $file
 fi
 
+logdir="/var/log/er"
+
+if [ ! -d $logdir ] ; then
+    mkdir -p $logdir
+fi
 
 TARGET=/usr/local/lib/python3.7/site-packages/celery/backends
 cd $TARGET
@@ -44,18 +49,15 @@ elif [[ "$OSTYPE" == "freebsd"* ]]; then
 		echo "Os is unknown.."
 fi
 cd /src/plgx-esp
-[ -f resources/certificate.crt ] && echo "PolyLogyx fleet is configured for SSL" || echo "PolyLogyx Fleet is not configured for SSL, please run certificate-generate.sh or use OpenSSL to create key pair. Check deployment guide for more info..."
 
 echo "Creating enroll file..."
 exec `echo "$ENROLL_SECRET">resources/secret.txt`
 
 echo "Creating celery tmux sessions..."
-exec `tmux new-session -d -s plgx_celery`
-exec `tmux new-session -d -s plgx_celery_beat`
 exec `tmux new-session -d -s plgx_gunicorn`
-\exec `tmux new-session -d -s flower`
-
-
+exec `tmux new-session -d -s plgx_celery_beat`
+exec `tmux new-session -d -s flower`
+exec `tmux new-session -d -s plgx_celery`
 
 
 CORES="$(nproc --all)"
@@ -67,47 +69,52 @@ WORKERS_CELERY=$(( 2*CORES  ))
 echo "Creating DB schema..."
 python manage.py db upgrade
 
-echo "Creating default user..."
-exec `tmux send -t plgx_celery 'python manage.py add_user  "$POLYLOGYX_USER" --password  "$POLYLOGYX_PASSWORD"' ENTER`
+echo "Creating all basic roles..."
+python manage.py create_all_roles
 
-echo "Adding default configs..."
-exec `tmux send -t plgx_celery 'python manage.py add_default_config default_config_windows --filepath default_data/default_configs/default_config_windows_shallow.conf --platform windows' ENTER`
-exec `tmux send -t plgx_celery 'python manage.py add_default_config default_config_windows --filepath default_data/default_configs/default_config_windows_deep.conf --platform windows' ENTER`
+echo "Assigning admin role for all the existing users..."
+python manage.py update_role_for_existing_users
 
-exec `tmux send -t plgx_celery 'python manage.py add_default_config default_config_macos --filepath default_data/default_configs/default_config_macos.conf --platform darwin' ENTER`
-exec `tmux send -t plgx_celery 'python manage.py add_default_config default_config_linux --filepath default_data/default_configs/default_config_linux.conf --platform linux' ENTER`
-exec `tmux send -t plgx_celery 'python manage.py add_default_config default_config_freebsd --filepath default_data/default_configs/default_config_freebsd.conf --platform freebsd' ENTER`
-exec `tmux send -t plgx_celery 'python manage.py add_default_options' ENTER`
+echo "Creating default admin user..."
+python manage.py add_admin_user
 
+echo "Creating today's partition from backup"
+python manage.py create_partition_from_old_data
 
+echo "Creating buffer partitions "
+python manage.py add_partition
 exec `tmux send -t plgx_celery 'python manage.py delete_existing_unmapped_queries_filters' ENTER`
 
-
 echo "Adding default filters..."
-exec `tmux send -t plgx_celery 'python manage.py add_default_filters --filepath default_data/default_filters/default_filter_linux.conf --platform linux' ENTER`
-exec `tmux send -t plgx_celery 'python manage.py add_default_filters --filepath default_data/default_filters/default_filter_macos.conf --platform darwin' ENTER`
-exec `tmux send -t plgx_celery 'python manage.py add_default_filters --filepath default_data/default_filters/default_filter_windows_shallow.conf --platform windows --type 1' ENTER`
-exec `tmux send -t plgx_celery 'python manage.py add_default_filters --filepath default_data/default_filters/default_filter_windows_deep.conf --platform windows --type 2' ENTER`
-
-exec `tmux send -t plgx_celery 'python manage.py add_default_filters --filepath default_data/default_filters/default_filter_windows_x86.conf --platform windows --arch x86' ENTER`
+exec `tmux send -t plgx_celery 'python manage.py add_default_filters --filepath default_data/default_filters/default_filter_linux.conf --platform linux --name Default --is_default true' ENTER`
+exec `tmux send -t plgx_celery 'python manage.py add_default_filters --filepath default_data/default_filters/default_filter_macos.conf --platform darwin --name Default --is_default true' ENTER`
+exec `tmux send -t plgx_celery 'python manage.py add_default_filters --filepath default_data/default_filters/default_filter_windows.conf --platform windows --name Default --is_default true' ENTER`
+exec `tmux send -t plgx_celery 'python manage.py add_default_filters --filepath default_data/default_filters/default_filter_windows_deep.conf --platform windows --name Deep' ENTER`
 
 echo "Adding default queries..."
-exec `tmux send -t plgx_celery 'python manage.py add_default_queries --filepath default_data/default_queries/default_queries_linux.conf --platform linux' ENTER`
-exec `tmux send -t plgx_celery 'python manage.py add_default_queries --filepath default_data/default_queries/default_queries_macos.conf --platform darwin' ENTER`
-exec `tmux send -t plgx_celery 'python manage.py add_default_queries --filepath default_data/default_queries/default_queries_windows_shallow.conf --platform windows --type 1' ENTER`
-exec `tmux send -t plgx_celery 'python manage.py add_default_queries --filepath default_data/default_queries/default_queries_windows_deep.conf --platform windows --type 2' ENTER`
-
-exec `tmux send -t plgx_celery 'python manage.py add_default_queries --filepath default_data/default_queries/default_queries_windows_x86.conf --arch x86 --platform windows' ENTER`
+exec `tmux send -t plgx_celery 'python manage.py add_default_queries --filepath default_data/default_queries/default_queries_linux.conf --platform linux --name Default --is_default true' ENTER`
+exec `tmux send -t plgx_celery 'python manage.py add_default_queries --filepath default_data/default_queries/default_queries_macos.conf --platform darwin --name Default --is_default true' ENTER`
+exec `tmux send -t plgx_celery 'python manage.py add_default_queries --filepath default_data/default_queries/default_queries_windows.conf --platform windows --name Default --is_default true' ENTER`
+exec `tmux send -t plgx_celery 'python manage.py add_default_queries --filepath default_data/default_queries/default_queries_windows_deep.conf --platform windows --name Deep' ENTER`
 
 echo "Adding released version's agent information..."
 exec `tmux send -t plgx_celery 'python manage.py add_release_versions --filepath default_data/platform_releases.conf' ENTER`
 
+echo "updating query name from windows_events to windows_real_time_events for all the configs"
+exec `tmux send -t plgx_celery 'python manage.py update_query_name_for_custom_config' ENTER`
 
 echo "Adding default mitre rules..."
 for entry in /src/plgx-esp/default_data/mitre-attack/*
 do
-  packname=$(basename "$entry" .json)
-  echo $packname
+  rulename=$(basename "$entry" .json)
+  echo $rulename
+  exec `tmux send -t plgx_celery 'python manage.py add_rules  --filepath '"$entry" ENTER`
+done
+
+for entry in /src/plgx-esp/default_data/default_rules/*
+do
+  rulename=$(basename "$entry" .json)
+  echo $rulename
   exec `tmux send -t plgx_celery 'python manage.py add_rules  --filepath '"$entry" ENTER`
 done
 
@@ -120,32 +127,33 @@ do
 done
 
 cd /src/plgx-esp
-echo "Starting celery beat..."
-exec `tmux send -t plgx_celery_beat 'celery beat -A polylogyx.worker:celery --schedule=/tmp/celerybeat-schedule --loglevel=INFO --logfile=/var/log/celery-beat.log --pidfile=/tmp/celerybeat.pid' ENTER`
-echo "Starting celery RabbitMQ..."
+echo "Starting EclecticIQ ER..."
+exec `tmux send -t plgx_gunicorn "gunicorn -c gunicorn.py --capture-output manage:app --reload" ENTER`
 
-
-echo "Starting PolyLogyx Vasp osquery fleet manager..."
-exec `tmux send -t plgx_gunicorn "gunicorn -w $WORKERS -k gevent --worker-connections 40 --log-level 'warning' --access-logfile '/var/log/gunicorn-access.log' --error-logfile '/var/log/gunicorn-error.log' --capture-output --timeout 120 --bind 0.0.0.0:6000   manage:app --reload" ENTER`
-
-if [[ -z "$PURGE_DATA_DURATION" ]]
+if [[ -z "$DATA_RETENTION_DAYS" ]]
 then
-  echo "PURGE_DATA_DURATION value is not set, data will not be purged automatically!"
+  echo "DATA_RETENTION_DAYS value is not set, data will not be purged automatically!"
 else
   echo "Creating platform settings..."
-  exec `tmux send -t plgx_celery 'python manage.py update_settings --purge_data_duration '"$PURGE_DATA_DURATION" ENTER`
+  exec `tmux send -t plgx_celery 'python manage.py update_settings --data_retention_days '"$DATA_RETENTION_DAYS" ENTER`
 fi
+
+exec `tmux send -t plgx_celery 'python manage.py set_log_level ' ENTER`
+
 
 exec `tmux send -t plgx_celery 'python manage.py add_default_vt_av_engines --filepath default_data/Virustotal-avengines/default_VT_Av_engines.json' ENTER`
 
 exec `tmux send -t plgx_celery 'python manage.py  update_vt_match_count --vt_min_match_count '"$VT_MIN_MATCH_COUNT" ENTER`
 
+exec `tmux send -t plgx_celery 'python manage.py  update_vt_scan_retention_period --vt_scan_retention_period '"$VT_SCAN_RETENTION_PERIOD" ENTER`
+
 echo "Updating OSQuery Schema from polylogyx/resources/osquery_schema.json ..."
 exec `tmux send -t plgx_celery "python manage.py update_osquery_schema --file_path polylogyx/resources/osquery_schema.json " ENTER`
 
-exec `tmux send -t plgx_celery "celery worker -A polylogyx.worker:celery --concurrency=$WORKERS_CELERY -Q default_queue_tasks --loglevel=INFO --logfile=/var/log/celery.log &" ENTER`
+echo "Starting celery beat..."
+exec `tmux send -t plgx_celery_beat 'celery beat -A polylogyx.celery.worker:celery --schedule=/tmp/celerybeat-schedule --loglevel=INFO --logfile=/var/log/celery-beat.log --pidfile=/tmp/celerybeat.pid' ENTER`
 
 echo "Sever is up and running.."
-exec `tmux send -t flower "flower -A polylogyx.worker:celery --address=0.0.0.0  --broker_api=http://guest:guest@$RABBITMQ_URL:5672/api --basic_auth=$POLYLOGYX_USER:$POLYLOGYX_PASSWORD" ENTER`
+exec `tmux send -t flower "flower -A polylogyx.celery.worker:celery --address=0.0.0.0  --broker_api=http://guest:guest@$RABBITMQ_URL:5672/api --basic_auth=$POLYLOGYX_USER:$POLYLOGYX_PASSWORD" ENTER`
 
 exec `tail -f /dev/null`

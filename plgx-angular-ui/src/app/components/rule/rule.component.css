@@ -16,7 +16,7 @@
   font-weight: 600 !important;
 }
 .portlet-body_align {
-  height: 680px;
+  height: 790px;
   margin-bottom:0px;
   border: 15px solid #ebedf2;
   padding: 10px;
@@ -101,7 +101,7 @@ table {
   border-radius: 50%;
   width: 100%;
   height: 100%;
-  padding: 4%;
+  padding: 3%;
   background: #fff;
   border: 1px solid red;
   color: red;
@@ -111,7 +111,7 @@ table {
   border-radius: 50%;
   width: 100%;
   height: 100%;
-  padding: 4%;
+  padding: 3%;
   background: #fff;
   border: 1px solid green;
   color: green;
@@ -121,9 +121,19 @@ table {
   border-radius: 50%;
   width: 100%;
   height: 100%;
-  padding: 4%;
+  padding: 3%;
   background: #fff;
   border: 1px solid orange;
   color: orange;
   text-align: center;
+}
+::ng-deep .rule_body .dataTables_paginate{
+  width: 100% !important;
+  padding:6px;
+}
+.kt-notification .kt-notification__item{
+  padding: 0.7rem 0.0rem;
+}
+::ng-deep .rule_body .dataTables_wrapper .dataTables_paginate .pagination .page-item > .page-link{
+  min-width:1.8rem !important;
 }

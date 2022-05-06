@@ -16,6 +16,25 @@ services:
       - POLYLOGYX_ENV=prod
     volumes:
          - carves:/src/plgx-esp/carves
+         - container_logs:/var/log
+    restart: always
+    external_links:
+      - rabbit1:rabbit1
+      - postgres:postgres
+  celery:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile_celery
+    depends_on:
+      - rabbit1
+      - postgres
+    env_file:
+      - .env
+    environment:
+      - POLYLOGYX_ENV=prod
+    shm_size: ${SHARED_MEMORY}
+    volumes:
+      - carves:/src/plgx-esp/carves
     restart: always
     external_links:
       - rabbit1:rabbit1
@@ -39,19 +58,24 @@ services:
     volumes:
          - carves:/src/plgx-esp-ui/resources/carves
          - yara:/src/plgx-esp-ui/resources/yara
+         - status_log:/src/plgx-esp-ui/resources/status_log
+         - container_logs:/var/log/
   rabbit1:
-    image: rabbitmq:3.6.5-management
+    image: rabbitmq:3.9.11-management-alpine
     ports:
       - "15672:15672"
       - "5673:5673"
       - "5672:5672"
+    shm_size: ${SHARED_MEMORY}
     volumes:
       #- rabbitmq:/var/lib/rabbitmq:rw
       - ./definitions.json:/opt/definitions.json:ro
       - ./rabbitmq.config:/etc/rabbitmq/rabbitmq.config:ro
     restart: always
   nginx:
-    image: "nginx:1.15.7-alpine"
+    build:
+      context: ./nginx/
+      dockerfile: ./Dockerfile
     env_file:
       - .env
     depends_on:
@@ -64,14 +88,16 @@ services:
          - ./resources:/resources
          - ./dist:/dist
          - yara:/resources/yara
-    command: >
-          sh -c "nginx-debug -g 'daemon off;'"
+         - status_log:/resources/status_log
+         - container_logs:/var/log/
     restart: always
     ports:
+     - "443:443"
      - "9000:9000"
      - "5000:5000"
+     # 5000 and 9000 ports are required for backward support prior to 3.0.1
   postgres:
-    image: "postgres:11.1"
+    image: "postgres:11.14"
     command: postgres -c 'max_connections=1000'
     env_file:
       - .env
@@ -79,6 +105,7 @@ services:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     environment:
       - POSTGRES_DB=${POSTGRES_DB_NAME}
+    shm_size: ${SHARED_MEMORY}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     restart: always
@@ -93,3 +120,5 @@ volumes:
   postgres-data:
   carves:
   yara:
+  status_log:
+  container_logs:

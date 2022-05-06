@@ -1,3 +1,11 @@
+.tagAnalyst{
+    display: block;
+    flex-direction: row;
+    flex-wrap: wrap;
+    position: relative;
+    cursor: text;
+    padding-top: 5px;
+}
 .datatable__search input {
     margin-left: .5em;
     display: inline-block;
@@ -97,8 +105,17 @@ table.dataTable {
     margin-left: 21px;
     cursor: pointer;
   }
-
-
+.hide{
+  display: none;
+ }
+ .clr-red{
+   color: red;
+   padding-left: 2px;
+ }
+ .onlinehost{
+   color: green;
+   margin-left: 15px;
+ }
 table.dataTable thead th, table.dataTable thead td {
 
     border-bottom: 1px solid #ebedf2;}

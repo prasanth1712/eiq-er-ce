@@ -12,8 +12,12 @@ const routes: Routes = [
   {
     path: '',
     children: [{
-      path: ':id/:edit', component: UpdateQueryInPacksComponent,
+      path: 'query/:id/:edit', component: UpdateQueryInPacksComponent,
     }]
+  },
+  {
+    path: ':packname',
+    component: PacksComponent, 
   },
 ];
 

@@ -29,6 +29,7 @@
   margin: 2px;
   border: 1px solid rgb(75, 75, 75);
 }
+
 p {
   font-family: Lato;
 }
@@ -55,22 +56,39 @@ p {
 .ace_editor, .ace_editor div{
     font-family:monospace
 }
-table { 
-  border-collapse: collapse; 
-  width: 100%; 
-} 
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
 
-th, td { 
-  text-align: left; 
-  padding: 7px; 
+th, td {
+  text-align: left;
+  padding: 7px;
 
-} 
+}
 .col_font_size{
   font-size: 11px;
   word-break: break-all;
 }
 
-tr:nth-child(even) { 
-  background-color: #f5f5f5;; 
+tr:nth-child(even) {
+  background-color: #f5f5f5;;
 }
-
+::ng-deep .dataTables_Headerscrollx {
+  Overflow:auto !important;
+  Width:100% !important;
+}
+.Operating_system-class{
+  width: 174px;
+  margin: 2px;
+  border: 1px solid rgb(75, 75, 75);
+}
+.cursor-hov:hover{
+  cursor: pointer;
+}
+:host ::ng-deep .dropdown-list ul li{
+  padding: 5px 2px;
+}
+:host ::ng-deep .dropdown-list ul li:first-child{
+  padding-top: 0px;
+}

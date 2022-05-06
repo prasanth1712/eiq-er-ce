@@ -31,6 +31,9 @@
 :host ::ng-deep json-editor jsoneditor-outer {
   height: 400px
 }
+:host ::ng-deep .jsoneditor .jsoneditor-menu{
+  background-color: #000000bd;
+}
 
 :host ::ng-deep .jsoneditor{
   border: 1px solid hsla(236, 23%, 14%, 0.322) !important;
@@ -40,4 +43,7 @@
   background-color: white;
   border: 1px solid black;
   color: black;
+}
+::ng-deep .jsoneditor-poweredBy{
+  display: none
 }

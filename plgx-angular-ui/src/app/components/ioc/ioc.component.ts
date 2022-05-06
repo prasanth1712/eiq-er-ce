@@ -1,10 +1,11 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonapiService } from '../../dashboard/_services/commonapi.service';
 import { JsonEditorComponent, JsonEditorOptions } from 'ang-jsoneditor';
-import { CommonVariableService } from '../../dashboard/_services/commonvariable.service';
 import { Location } from '@angular/common';
 import swal from 'sweetalert';
+import { CommonVariableService } from '../../dashboard/_services/commonvariable.service';
 import Swal from 'sweetalert2';
+import { AuthorizationService } from '../../dashboard/_services/Authorization.service';
 // import '../../../js/live_query_bundle.js'
 @Component({
   selector: 'app-ioc',
@@ -24,27 +25,37 @@ export class IocComponent implements OnInit {
   public result: any;
   error: any;
   public json_data: any = {};
-  ProjectName=this.commonvariable.APP_NAME
+  project_name=this.commonvariable.APP_NAME
+  ProductNameER=this.commonvariable.ProductNameER
+  role={'adminAccess':this.authorizationService.adminLevelAccess,'userAccess':this.authorizationService.userLevelAccess}
   constructor(
     private commonapi: CommonapiService,
     private _location: Location,
     private commonvariable: CommonVariableService,
+    private authorizationService: AuthorizationService,
+
   ) {
-    this.options.mode = 'code';
-    this.options.modes = ['code', 'text', 'tree', 'view'];
-    this.options.onChange = () => this.json_data['data'] = this.editor.get()
+    // this.options.mode = 'code';
+    // this.options.modes = ['code', 'text', 'tree', 'view'];
+    this.options.onChange = () => this.json_data['data'] = this.editor.getText()
   }
   toggle: boolean = false;
 
   ngOnInit() {
 
+    if(this.authorizationService.hasAccess()){
+      this.options.modes = ['code', 'text', 'tree', 'view'];
+      this.options.mode = 'code';
+    } else{
+       this.options.mode = 'view';
+    }  
     this.toggle = false;
     setTimeout(()=>{
     this.commonapi.ioc_api().subscribe(res => {
       this.ioc_val = res;
       this.editorOptions = new JsonEditorOptions();
-      this.editorOptions.mode = 'code';
-      this.editorOptions.modes = ['code','text', 'tree', 'view'];
+      // this.editorOptions.mode = 'code';
+      // this.editorOptions.modes = ['code','text', 'tree', 'view'];
       this.data = this.ioc_val.data;
       this.json_data['data'] = this.data;
       this.toggle = true;
@@ -58,50 +69,58 @@ export class IocComponent implements OnInit {
   }
 
   onSubmit() {
-    if(Object.entries(this.json_data.data).length==0){
-
-      swal({
+    try {
+      if(typeof this.json_data['data'] === 'string'){
+        this.json_data['data'] = JSON.parse(this.json_data.data);
+       }
+      if(Object.entries(this.json_data.data).length==0){
+        Swal.fire({
+        icon: 'warning',
+        title: 'failure',
+        text: "Please upload valid JSON",
+        })
+        } else{
+      this.commonapi.ioc_update_api(this.json_data).subscribe(res => {
+        this.result = res;
+        if (this.result && this.result.status === 'failure') {
+          swal({
+            icon: 'warning',
+            title: this.result.status,
+            text: this.result.message,
+          })
+        } else {
+          swal({
+            icon: 'success',
+            title: 'Success',
+            text: this.result.message,
+            buttons: [false],
+            timer: 2000,
+          })
+          this.error = null;
+          this.Updated = true;
+  
+        }
+         setTimeout(() => {
+          // location.reload();
+          this.ngOnInit()
+        },2000);
+      },
+        error => {
+          console.log(error);
+        }
+      )
+      }
+   }
+   catch (e) {
+    Swal.fire({
       icon: 'warning',
       title: 'failure',
-      text: "please upload the correct json",
-      buttons: [false],
-      timer: 2000,
+      text:"Please upload valid JSON"
       })
-      return ;
-      } else{
-    this.commonapi.ioc_update_api(this.json_data).subscribe(res => {
-      this.result = res;
-      console.log("ioc_testing", this.result);
-      if (this.result && this.result.status === 'failure') {
-        swal({
-          icon: 'warning',
-          title: this.result.status,
-          text: this.result.message,
-        })
-      } else {
-        swal({
-          icon: 'success',
-          title: 'Success',
-          text: this.result.message,
-          buttons: [false],
-          timer: 2000,
-        })
-        this.error = null;
-        this.Updated = true;
-
-      }
-       setTimeout(() => {
-        // location.reload();
-        this.ngOnInit()
-      },2000);
-    },
-      error => {
-        console.log(error);
-      }
-    )
-    }
-    
+      return 
+   }   
   }
+
   goBack() {
     this._location.back();
   }

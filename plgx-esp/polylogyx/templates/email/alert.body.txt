@@ -1,19 +1,19 @@
-A polylogyx alert was triggered: {{ match.rule.name }}
+An EclecticIQ-ER alert was triggered: {{ match.rule.name }}
 
 Timestamp: {{ timestamp }}
 Action: {{ match.result.action }}
 Content:
 {%- for key, value in match.result.columns | dictsort %}
-           {{ key }}: {{ value }}
+            {{ key }}: {{ value }}
 {%- endfor %}
 
-{%- if match.rule.description %}
-
-{{ match.rule.description }}
+{%- if match.rule.description and match.rule.alert_description %}
+Rule Description: {{ match.rule.description }}
 {%- endif %}
 
-Review most recent activity for {{ node.display_name }} at https://{{server_url}}/manage/node/{{node.id}}/activity.
-This rule's configuration may be reviewed at https://{{server_url}}/manage/rules/{{match.rule.id}}.
-This alert details may be reviewed at https://{{server_url}}/manage/alerts/data/{{match.alert_id}}.
+Review most recent activity for {{ node.display_name }} at https://{{server_url}}/hosts/{{node.id}}/activity.
+This rule's configuration may be reviewed at https://{{server_url}}/rules/{{match.rule.id}}/edit.
+This alert details may be reviewed at https://{{server_url}}/alerts/{{match.alert_id}}/alert-data.
 
----END PolyLogyx notification
+---END EclecticIQ-ER notification
+

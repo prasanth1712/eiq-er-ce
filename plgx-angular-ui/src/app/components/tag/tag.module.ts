@@ -14,7 +14,7 @@ import { RouterModule } from '@angular/router';
 import { TaggedComponent } from './tagged/tagged.component';
 import { HttpClientModule } from '@angular/common/http';
 import {NgxPaginationModule} from 'ngx-pagination';
-
+import { AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
 
 @NgModule({
   declarations: [TagComponent,TaggedComponent],
@@ -31,8 +31,9 @@ import {NgxPaginationModule} from 'ngx-pagination';
     RouterModule,
     // TableModule,
     HttpClientModule,
-    NgxPaginationModule
-    
+    NgxPaginationModule,
+    AngularMultiSelectModule,
+
   ]
 })
 export class TagModule { }
