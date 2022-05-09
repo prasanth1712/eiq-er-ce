@@ -33,7 +33,6 @@ import { Ng2SearchPipeModule } from 'ng2-search-filter';
 import { DateAgoPipe } from './pipes/date-ago.pipe';
 // import { NodeFilterComponent } from './node-filter/node-filter.component';
 import {NgxPaginationModule} from 'ngx-pagination';
-import { AlertDataComponent } from '../components/alerts/alert-data/alert-data.component';
 import { AddRuleComponent } from '../components/rule/add-rule/add-rule.component';
 import { EditRuleComponent } from '../components/rule/edit-rule/edit-rule.component';
 import { UpdateQueryInPacksComponent } from '../components/packs/update-query-in-packs/update-query-in-packs.component';
