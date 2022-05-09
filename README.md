@@ -315,12 +315,15 @@ Osquery is cross platform agent that supports 64 bit variants of Windows (7 and 
 EclecticIQ ER can be programatically interacted with using the extensive  [REST API](https://github.com/EclecticIQ/eiq-er-docs/tree/master/13_Rest_API) interface. This allows for multiple use case like Incident Response, Threat Hunting, Compromise Assessment, Compliance checks etc to be easily served with the platform. This also provides an easy for integration with [SOAR platforms](https://youtu.be/XbpleymXpSg) 
 
 ## Integration with Big Data/Analytic systems
-EclecticIQ ER is packaged with an rSysLog container. This container can be configured to stream the query results and other logs from the endpoint population to the back-end systems like Splunk, ELK, GrayLog etc for cross-product correlation, alert enrichments and other SIEM related use cases.
+The EclecticIQ Endpoint Response server is packaged with an rSysLog container. This container can be configured to stream the query results and other logs from the endpoints to backend systems, such as Splunk, ELK, and GrayLog for cross-product correlation, alert enrichment, and other SIEM-related use cases.
 
-To configure rsyslog forwarding modify the [rsyslogd.conf](rSysLogF/rsyslogd.conf) and specify the destination address of the server accepting logs in syslog format. In the absense of any destination address, the container may not come up. It can be configured at a later point, although the container will have to be manually started.
+To configure rSysLog forwarding, modify the [rsyslogd.conf](rSysLogF/rsyslogd.conf) file to specify the destination address of the server accepting logs in syslog format. In the absence of any destination address, the container may not come up. If needed, the container can be configured at a later point but will need to be manually started.
 
-## EclecticIQ ER - Community Edition License
-Please read the [LICENSE](LICENSE) file for details on the license.
+## EclecticIQ Endpoint Response - Community Edition License
+Review the [LICENSE](LICENSE) file for details on the license for EclecticIQ Endpoint Response Community Edition.
 
-## EclecticIQ ER - Enterprise Edition
+## EclecticIQ Endpoint Response - Enterprise Edition
 EclecticIQ ER comes with an enterprise flavor with advanced set of features and dedicated support. More about the enterprise edition of ER can be learned [here](https://github.com/EclecticIQ/eiq-er-docs)  or send an email to support@eclecticiq.com
+
+## Contact us
+For enquiries and questions, you can contact [support](support@eclecticiq.com).
