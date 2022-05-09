@@ -4,7 +4,6 @@ import { CommonModule } from '@angular/common';
 import { AlertsRoutingModule } from './alerts-routing.module';
 import { AlertsComponent } from './alerts.component';
 import { NgJsonEditorModule } from 'ang-jsoneditor';
-import { AlertDataComponent } from './alert-data/alert-data.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TagInputModule } from 'ngx-chips';
 import { Ng2SearchPipeModule } from 'ng2-search-filter';
@@ -14,7 +13,7 @@ import { GlobalModule } from '../../global/global.module';
 import {NgDatepickerModule} from "ng2-datepicker";
 import {NgbDatepickerModule} from '@ng-bootstrap/ng-bootstrap';
 @NgModule({
-  declarations: [AlertsComponent,AlertDataComponent],
+  declarations: [AlertsComponent],
   imports: [
     CommonModule,
     AlertsRoutingModule,
