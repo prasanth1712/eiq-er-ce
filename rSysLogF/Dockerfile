@@ -1,4 +1,4 @@
-FROM alpine:3.7
+FROM alpine:3.15
 MAINTAINER John Rowley <johnrowleyster@gmail.com>
 
 RUN apk add --no-cache rsyslog bash

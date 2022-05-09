@@ -12,6 +12,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { linkVertical } from 'd3';
+import { AuthorizationService } from '../../dashboard/_services/Authorization.service';
 
 class DataTablesResponse {
   data: any[];
@@ -46,12 +47,13 @@ export class TagComponent implements AfterViewInit, OnInit {
   dtOptions: DataTables.Settings = {};
   searchText:string;
   errorMessage:any;
-
+  role={'adminAccess':this.authorizationService.adminLevelAccess,'userAccess':this.authorizationService.userLevelAccess}
   constructor(
     private commonapi:CommonapiService,
     private fb:FormBuilder,
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private authorizationService: AuthorizationService,
   ) { }
 
   ngOnInit() {
@@ -82,7 +84,7 @@ export class TagComponent implements AfterViewInit, OnInit {
           body['searchterm']="";
         }
 
-        this.http.get<DataTablesResponse>(environment.api_url+"/tags"+"?searchterm="+body['searchterm']+"&start="+body['start']+"&limit="+body['limit'],{ headers: {'x-access-token': localStorage.getItem('JWTkey')}}).subscribe(res =>{
+        this.http.get<DataTablesResponse>(environment.api_url+"/tags"+"?searchterm="+body['searchterm']+"&start="+body['start']+"&limit="+body['limit'],{ headers: {'x-access-token': localStorage.getItem('token')}}).subscribe(res =>{
 
           this.tags_val = res ;
         this.tags_data = this.tags_val.data.results;
@@ -116,7 +118,7 @@ export class TagComponent implements AfterViewInit, OnInit {
         });
       },
       ordering: false,
-      columns: [{ data: 'value' }, { data: 'packs' }, { data: 'queries' }, { data: 'nodes' },{ data: 'Action' }]
+      columns: [{ data: 'value' }, { data: 'packs' }, { data: 'queries' }, { data: 'nodes' }]
     }
 
   }
@@ -127,6 +129,11 @@ export class TagComponent implements AfterViewInit, OnInit {
   clearInput() {
     this.clearValue = null;
   }
+
+  Cancel(){
+    this.clearValue = '';
+  }
+
   onSubmit(){
     this.submitted = true;
     if (this.addTag.invalid) {
@@ -140,9 +147,9 @@ export class TagComponent implements AfterViewInit, OnInit {
 
       })
     }else{
-    let tags_list = tags.split('\n');
+      let tags_list = (tags.split('\n')).filter(x => x !== '');
     for(const i in tags_list){
-    this.commonapi.add_tags_api(tags_list[i]).subscribe(res => {
+    this.commonapi.add_tags_api(tags_list[i].trim()).subscribe(res => {
       this.add_tags_val = res ;
       if(this.add_tags_val && this.add_tags_val.status === 'failure'){
         swal({
@@ -161,19 +168,25 @@ export class TagComponent implements AfterViewInit, OnInit {
           buttons: [false],
           timer: 2000
         })
-
-        setTimeout(() => {
-          this.clearInput()
-          this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
-            // Destroy the table first
-            dtInstance.destroy();
-            // Call the dtTrigger to rerender again
-            this.dtTrigger.next();
-          });
-    },1500);
+    //     setTimeout(() => {
+    //       this.clearInput()
+    //       this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
+    //         // Destroy the table first
+    //         dtInstance.destroy();
+    //         // Call the dtTrigger to rerender again
+    //         this.dtTrigger.next();
+    //       });
+    // },1500);
       }
     });
   }
+  setTimeout(() => {
+    this.clearInput()
+    this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
+      dtInstance.destroy();
+      this.dtTrigger.next();
+    });
+},1500);
 }
 
   }

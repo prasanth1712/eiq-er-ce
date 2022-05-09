@@ -5,23 +5,20 @@ import { Pipe, PipeTransform } from '@angular/core';
 })
 
 export class LiveSearchPipe implements PipeTransform {  
-  transform(records: {}, searchText?: string): any { 
-    let data1= Object.keys(records)
+  transform(records: {}, searchText?: string): any {
     if (!searchText || searchText == "") return records;
-
-     var data =  data1.filter(
-      (val)=> String(val.toLowerCase()).includes(searchText.toLowerCase()))
-      let dict={}
-      for (let [key, value] of Object.entries(records)) {
-        if(data.includes(key)){
-          dict[key]=value
-        }
+    let LiveQueryData={}
+    for(const i in records){
+       var HostName=String(records[i].hostname.toLowerCase()).includes(searchText.toLowerCase())
+       if(HostName){
+        LiveQueryData[i]=records[i]
+       }
     }
-      if(Object.keys(dict).length === 0) {
+      if(Object.keys(LiveQueryData).length === 0) {
         return [-1];
       }
       else{      
-      return dict;
+      return LiveQueryData;
       }
       
   }

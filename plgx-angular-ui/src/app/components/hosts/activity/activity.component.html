@@ -66,15 +66,20 @@
 
    <div class="col-10 col-querytable">
      <div class="tab-content" >
+       <div *ngIf="this.queryname == 'windows_events' || this.queryname == 'windows_real_time_events'" class="pull-right" style="padding-bottom: 5px;">
+      <angular2-multiselect [data]="Events_dropdownList" [(ngModel)]="Events_selectedItems"
+      [settings]="Events_dropdownSettings"
+      (onSelect)="onItemSelect($event)"
+      (onDeSelect)="OnItemDeSelect($event)"
+      (onSelectAll)="onSelectAll($event)"
+      (onDeSelectAll)="onDeSelectAll($event)"></angular2-multiselect>
+    </div>
        <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable">
+         <h4 class="recentActivityLoader" style="margin-left: 3%;margin-top:2%;"> Loading Data...<span class=" spinner-border" role="status" style="color: #3498db;" aria-hidden="true"></span></h4>
          <thead>
-           <tr>
-                <button class="btn btn-outline-success btn-sm buttons-csv buttons-html5"  (click)="get_csv_data(host_identifier,queryname)" tabindex="0" aria-controls="1per_query_perf_table" type="button">
-                  <span>CSV</span>
-                </button>
-           </tr>
-
-           <tr role="row"><th class="sorting_disabled details-control" rowspan="1" colspan="1" style="color: #595d6e;font-weight: 500;">data</th></tr>
+            <tr role="row">
+              <th class="sorting_disabled details-control" rowspan="1" colspan="1" style="color: #595d6e;font-weight: 500;font-size:15px;">{{selectedItem}} data</th>
+            </tr>
          </thead>
          <tbody>
 
@@ -90,7 +95,7 @@
                 <dt *ngFor="let subhostdata of hostdata.columns | keyvalue">
 
                 <!--URL-->
-                <dl  *ngIf="subhostdata.key=='url'" style="word-break: break-word;padding-left: 40px;" >
+                <dl *ngIf="subhostdata.key=='url'" style="word-break: break-word;padding-left: 40px;" >
 
                 {{subhostdata.key}}
                 {{":"}}
@@ -144,11 +149,27 @@
                 </dt>
               </th>
                 </div>
-                </div>
-                <div >
-                  <!-- Modal -->
+
+
 
                 </div>
+
+                <div >
+                </div>
+                <!-- <mat-expansion-panel>
+                <mat-expansion-panel-header>
+                <mat-panel-description>
+                <div class='' ><font color='#16ace3'> {{myjson.stringify(hostdata.columns)}} </font></div>
+                </mat-panel-description>
+                </mat-expansion-panel-header>
+                <dt *ngFor="let subhostdata of hostdata.columns.replace('{', '').replace('}', '').split(',').sort()">
+                <dl>
+
+                {{subhostdata}}
+                </dl>
+
+                </dt>
+                </mat-expansion-panel> -->
                 </td>
             </tr>
          </tbody>
@@ -171,6 +192,7 @@
 
 </div>
 <!-- {% else %} -->
+<!-- <p *ngIf = "activitynode.length == 0">No recent activity for this host.</p> -->
     <!-- {% endif %} -->
 <!--Begin:: Content -->
 <div *ngIf="activitynode?.length == 0">

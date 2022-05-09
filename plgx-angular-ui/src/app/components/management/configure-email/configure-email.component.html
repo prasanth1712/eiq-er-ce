@@ -10,7 +10,7 @@
               <i class="kt-font-brand fab fa-whmcs"></i>
             </span>
             <h3 class="kt-portlet__head-title">
-              Email Settings
+              Configure Email 
             </h3>
           </div>
           <div class="kt-portlet__head-toolbar">
@@ -44,7 +44,7 @@
                       <div class="col-10">
                         <input type="text" id="idEmailAddress" name="nameEmailAddress" [(ngModel)]="conf_email_data"
                           formControlName="senderEmail" class="form-control" value="{{conf_email_data}}"
-                          [ngClass]="{ 'is-invalid': submitted && f.senderEmail.errors }" />
+                          [ngClass]="{ 'is-invalid': submitted && f.senderEmail.errors }" [readonly]="!hasAcess" />
                         <div *ngIf="submitted && f.senderEmail.errors" class="invalid-feedback">
                           <div *ngIf="f.senderEmail.errors.required">Error On Sender's email Field</div>
                         </div>
@@ -59,7 +59,7 @@
                         <input type="password" id="idEmailPassword" name="nameEmailPassword"
                           [(ngModel)]="conf_password_data" formControlName="senderPassword" class="form-control"
                           value="{{conf_password_data}}"
-                          [ngClass]="{ 'is-invalid': submitted && f.senderPassword.errors }" />
+                          [ngClass]="{ 'is-invalid': submitted && f.senderPassword.errors }" [readonly]="!hasAcess"/>
                         <div *ngIf="submitted && f.senderPassword.errors" class="invalid-feedback">
                           <div *ngIf="f.senderPassword.errors.required">Error On Sender's password Field</div>
                         </div>
@@ -73,7 +73,7 @@
                       <div class="col-10">
                         <input type="text" placeholder="Eg: smtp.gmail.com" id="smtpAddress"
                           [(ngModel)]="conf_server_data" formControlName="smtpServer" class="form-control"
-                          value="{{conf_server_data}}" [ngClass]="{ 'is-invalid': submitted && f.smtpServer.errors }" />
+                          value="{{conf_server_data}}" [ngClass]="{ 'is-invalid': submitted && f.smtpServer.errors }"[readonly]="!hasAcess" />
                         <div *ngIf="submitted && f.smtpServer.errors" class="invalid-feedback">
                           <div *ngIf="f.smtpServer.errors.required">Error On SMTP Server Field</div>
                         </div>
@@ -85,9 +85,9 @@
                         SMTP Port
                       </label>
                       <div class="col-10">
-                        <input type="text"  (keypress)="numberOnly($event)" name="smtpPort" value="{{conf_port_data}}" id="smtpPort"
+                        <input type="text" placeholder="Eg:465"  (keypress)="numberOnly($event)" name="smtpPort" value="{{conf_port_data}}" id="smtpPort"
                           [(ngModel)]="conf_port_data" formControlName="smtpPort" class="form-control"
-                          [ngClass]="{ 'is-invalid': submitted && f.smtpPort.errors }" />
+                          [ngClass]="{ 'is-invalid': submitted && f.smtpPort.errors }" [readonly]="!hasAcess"/>
                         <div *ngIf="submitted && f.smtpPort.errors" class="invalid-feedback">
                           <div *ngIf="f.smtpPort.errors.required">Error On SMTP Port Field</div>
                         </div>
@@ -102,19 +102,42 @@
                         <textarea rows="4" formControlName="emailRecipients" [(ngModel)]="conf_recipient_data"
                           value="{{conf_recipient_data}}" class="form-control" required name="emailRecipients"
                           [ngClass]="{ 'is-invalid': submitted && f.emailRecipients.errors }"
-                          id="emailRecipients"></textarea>
+                          id="emailRecipients" [readonly]="!hasAcess"></textarea>
                         <div *ngIf="submitted && f.emailRecipients.errors" class="invalid-feedback">
                           <div *ngIf="f.emailRecipients.errors.required">Error On Email Recipients Field</div>
                         </div>
                       </div>
                     </div>
-
+                    <div class="form-group row required">
+                        <label class="col-sm-2 col-form-label form--label">Connection Security</label>
+                        <div class="col-10">
+                          <div class="kt-radio-inline">
+                            <label class="kt-radio">
+                              <input type="radio" (change)="sslConnection = true;tlsConnection=false"  [checked]="sslConnection"  name="Connectiontype" >
+                              <label for="network_action-1">SSL</label>
+                              <span></span>
+                            </label>
+                            <label class="kt-radio">
+                              <input type="radio" (change)="sslConnection = false;tlsConnection=true"  [checked]="tlsConnection"  name="Connectiontype" >
+                              <label>TLS</label>
+                              <span></span>
+                            </label>
+                            <label class="kt-radio">
+                              <input type="radio"  (change)="sslConnection = false;tlsConnection=false" [checked]="noneConnection" name="Connectiontype" value="none">
+                              <label>None</label>
+                              <span></span>
+                            </label>
+                         </div>
+                            <!-- <input type="checkbox"  name="ssl"  formControlName="ssl" [(ngModel)]="use_ssl"
+                            value="{{use_ssl}}" style="vertical-align: middle;min-height:3em;">&nbsp;<span style="vertical-align: middle;">Use SSL</span> -->
+                        </div>
+                    </div>
                   </div>
                 </div>
 
-                <div class="kt-portlet__foot ">
+                <div *AppHasRole="role.adminAccess" class="kt-portlet__foot ">
                   <div class="kt-form__actions kt-form__actions--center">
-                    <button type="submit" class="btn btn-success" style="margin-left: 5px;">
+                    <button  type="submit" class="btn btn-success" style="margin-left: 5px;">
                       <i class="fa fa-sync-alt"></i>
                       <span>Update</span>
                     </button>

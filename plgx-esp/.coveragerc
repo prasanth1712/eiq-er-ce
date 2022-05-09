@@ -1,0 +1,18 @@
+# .coveragerc to control coverage.py
+[run]
+branch = True
+omit = *tests/* 
+       */__init__.py
+       */settings.py
+
+       */application.py
+       */extensions.py
+       */extra_sql_methods.py
+       */intel/base.py
+       */logs/base.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    def __init__

@@ -10,8 +10,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
     CommonModule,
     RouterModule,
     ReactiveFormsModule,
-    FormsModule,
-
+    FormsModule
   ],
   exports:[
     AdminAsideComponent

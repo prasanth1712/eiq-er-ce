@@ -6,15 +6,15 @@
     <div class="kt-portlet" style="margin-bottom: 0px;">
       <div class="kt-portlet__head kt-portlet__head--lg">
         <div class="kt-portlet__head-label">
-          <h5 class=" text-dark  mt-2 mb-2 mr-5">
-            Endpoint Security Platform Dashboard
+          <h5 class=" text-dark mt-2 mb-2 mr-5">
+            {{ProductNameER}} Dashboard
           </h5>
         </div>
         <div class="kt-portlet__head-toolbar">
           <div class="kt-portlet__head-wrapper">
             <div class="kt-portlet__head-actions">
               <div class="" style="">
-                <button type="button" class="btn btn-outline-secondary btn-icon-sm cust-btn" data-toggle="modal" data-target="#osquery_modal" aria-haspopup="true" aria-expanded="false" data-skin="dark" data-placement="top" title="Download {{ProjectName}} Installer">
+                <button type="button" class="btn btn-outline-secondary btn-icon-sm cust-btn" data-toggle="modal" data-target="#osquery_modal" aria-haspopup="true" aria-expanded="false" data-skin="dark" data-placement="top" title="Download {{project_name}} Installer">
                   <i class="la la-cloud-download"></i>
                   <span>Client Provisioning Tool</span>
                 </button>
@@ -24,7 +24,7 @@
                     <div class="modal-content">
                       <div class="modal-header">
                         <h3 class="kt-portlet__head-title">
-                          Download CPT Installer
+                          Download Client Provisioning Tool (CPT)
                         </h3>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Close"></button>
                       </div>
@@ -63,8 +63,12 @@
                               <h3>Windows Installation:</h3>
                             </div>
                             <pre style="word-wrap: break-word; white-space: pre-wrap; margin-bottom: -1rem;" class=""  data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Open Command Prompt -> write to this command ">
-                               <p style="background-color:#cccccc40;"> c:\user\downloads\&gt; plgx_cpt.exe -p -i &lt; SERVER_IP &gt; -k &lt; Full path to the certificate file &gt;</p>
+                               <p style="background-color:#cccccc40;"> c:\user\downloads\&gt; plgx_cpt.exe -p -i/-h &lt; SERVER_IP/HOST_NAME &gt; -k &lt; Full path to the certificate file &gt;</p>
                              </pre>
+                             <!-- <label style="margin-bottom: 0px;"><span style="color:#cc1313cc">eg:</span> plgx_cpt.exe -p -i 10.10.12.14 -k certificate.crt</label>
+                             <br>
+                             <label style="margin-left: 21px;"><span style="color:#cc1313cc"></span> plgx_cpt.exe -p -h example.com -k certificate.crt</label> -->
+                             <h6>Run "plgx_cpt" to see help</h6>
                             <h6><span style="color:#cc1313cc">Note:</span> Download CPT installer and Certificate both for installation. Use the respective command from terminal for installation with administrative privileges.</h6>
                           </div>
                           <!--end:: Download/Windows  -->
@@ -85,8 +89,12 @@
                               <h3>Linux Based Installation:</h3>
                             </div>
                             <pre style="word-wrap: break-word; white-space: pre-wrap; margin-bottom: -1rem;" class="" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Open terminal -> write to this command">
-                              <p style="background-color:#cccccc40;">sudo chmod +x plgx_cpt <br/>sudo ./plgx_cpt -p -i &lt;SERVER_IP&gt; -k &lt;Full path to the certificate file&gt; </p>
+                              <p style="background-color:#cccccc40;">sudo chmod +x plgx_cpt <br/>sudo ./plgx_cpt -p -i/-h &lt;SERVER_IP/HOST_NAME&gt; -k &lt;Full path to the certificate file&gt; </p>
                             </pre>
+                            <!-- <label style="margin-bottom: 0px;"><span style="color:#cc1313cc">eg:</span> sudo ./plgx_cpt -p -i 10.10.12.14 -k certificate.crt</label>
+                            <br>
+                             <label style="margin-left: 21px;"><span style="color:#cc1313cc"></span> sudo ./plgx_cpt -p -h example.com -k certificate.crt</label> -->
+                            <h6>Run "./plgx_cpt" to see help</h6>
                             <h6><span style="color:#cc1313cc">Note:</span> Download CPT installer for installation. Use the respective command from terminal for installation using sudo.</h6>
 
                           </div>
@@ -100,11 +108,22 @@
                             </div>
                             <div class="kt-separator kt-separator--dashed" style=""></div>
                             <div class="">
+                              <span class="down-font" style="font-size: medium;">Certificate</span>
+                              <button type="button" class="btn btn-clean btn-elevate btn-elevate-air btn-sm focus pull-right fa fa-lg fa-cloud-download-alt" (click)="downloadFile($event,'certificate.crt')" alt="" value="" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title=" Download Certificate"></button>
+                            </div>
+                            <div class="kt-separator kt-separator--dashed" style=""></div>
+
+                            <div class="">
                               <h3>Darwin Based Installation:</h3>
                             </div>
                             <pre style="word-wrap: break-word; white-space: pre-wrap; margin-bottom: -1rem;" class="" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Open terminal -> write to this command">
-                               <p style="background-color:#cccccc40;"> sudo bash plgx_cpt.sh -p -i &lt;SERVER_IP&gt; -port 9000</p>
-                             </pre>
+                               <!-- <p style="background-color:#cccccc40;"> sudo bash plgx_cpt.sh -p -i &lt;SERVER_IP&gt;</p> -->
+                               <p style="background-color:#cccccc40;">sudo bash plgx_cpt.sh -p -i/-h &lt;SERVER_IP/HOST_NAME&gt; -k &lt;Full path to the certificate file&gt;</p>
+                            </pre>
+                            <!-- <label style="margin-bottom: 0px;"><span style="color:#cc1313cc">eg:</span> sudo bash plgx_cpt.sh -p -i 10.10.12.14 -k certificate.crt </label>
+                            <br>
+                             <label style="margin-left: 21px;"><span style="color:#cc1313cc"></span> sudo bash plgx_cpt.sh -p -h example.com -k certificate.crt </label> -->
+                            <h6>"plgx_cpt.sh" to see help options </h6>
                             <h6><span style="color:#cc1313cc">Note:</span> Download CPT installer for installation. Use the respective command from terminal for installation using sudo.</h6>
                           </div>
                           <!--end:: Download/Darwin  -->
@@ -163,7 +182,7 @@
         </div>
       </div>
 
-      <div class="kt-portlet__body kt-portlet__body-div" style="background:#acb2bb2b;">
+      <div class="kt-portlet__body kt-portlet__body-div">
         <!--Begin::Alerts/Section-1-->
         <div class="row">
           <div class="col-sm12 col-md-12 col-lg-12">
@@ -861,7 +880,7 @@
 
         <!--Begin::Pie Charts/Section-2-->
         <div class="row ">
-          <div class="col-xl-6 col-md-6 col-lg-6 col-12 col-sm-12">
+          <div class="col-xl-4 col-md-4 col-lg-4 col-12 col-sm-12">
 
             <!--begin::Portlet-->
             <div class="kt-portlet">
@@ -878,14 +897,14 @@
               <div id="no-data-platform-distribution-chart" class="no-data-platform-distribution" style="float:left;margin-left: 79px;margin-top: 40px;display: none;" ></div>
 
               <!-- <div id="divchart" > -->
-                <canvas id="pie-chart-platform-distribution-chart" style="margin-top: 40px;width: 360px;height: auto;display: block;margin-left: 14%;margin-bottom: 30px;" ></canvas>
+                <canvas id="pie-chart-platform-distribution-chart" style="margin-top: 40px;height: auto;display: block;margin-bottom: 30px;" ></canvas>
 
             </div>
 
             <!--end::Portlet-->
           </div>
 
-          <div class="col-xl-6 col-md-6 col-lg-6 col-12 col-sm-12">
+          <div class="col-xl-4 col-md-4 col-lg-4 col-12 col-sm-12">
 
             <!--begin::Portlet-->
             <div class="kt-portlet">
@@ -900,15 +919,127 @@
                 </div>
               </div>
               <div id="no-data-pie-Host-status-result-chart" class="pie-chart-Host-status" style="float:left;margin-left: 79px;margin-top: 40px;display: none;height: 238px;" ></div>
-                <canvas id="pie-chart-Host-status-pie-chart" class="pie-chart-Host-canvas" style="margin-top: 40px;width: 360px;height: auto;display: block;margin-left: 14%;margin-bottom: 30px;" ></canvas>
+                <canvas id="pie-chart-Host-status-pie-chart" class="pie-chart-Host-canvas" style="margin-top: 40px;height: auto;display: block;margin-bottom: 30px;" ></canvas>
 
 
             <!--end::Portlet-->
           </div>
         </div>
+          <div class="col-xl-4 col-md-4 col-lg-4 col-12 col-sm-12">
+
+            <!--begin::Portlet-->
+            <div class="kt-portlet">
+              <div class="kt-portlet__head">
+                <div class="kt-portlet__head-label">
+                  <span class="kt-portlet__head-icon kt-hidden">
+                    <i class="la la-gear"></i>
+                  </span>
+                  <h3 class="kt-portlet__head-title">
+                    Disk Usage <i _ngcontent-cji-c4="" class="help-badge badge-pill badge-light fa fa-info" title="For a single or monolithic server, this graph depicts disk usage for the server. In a clustered setup, this graph depicts the disk usage for the server running the UI application."></i>
+
+                  </h3>
+                </div>
+              </div>
+              <div id="no-data-pie-Host-status-result-chart" class="pie-chart-Host-status" style="float:left;margin-left: 79px;margin-top: 40px;display: none;height: 238px;" ></div>
+              <canvas id="disk_usage-pie-chart" class="pie-chart-Host-canvas" style="margin-top: 40px;height: auto;display: block;margin-bottom: 30px;" ></canvas>
+
+
+              <!--end::Portlet-->
+            </div>
+          </div>
+
+
         </div>
         <!--End::Pie Charts/Section-2-->
         <!--Begin::Bar Charts/Section-3-->
+        <div class="row">
+          <div class="col-xl-3 col-md-6 col-lg-3 col-12 col-sm-12">
+            <!--begin::Portlet-->
+            <div class="kt-portlet">
+              <div class="kt-portlet__head">
+                <div class="kt-portlet__head-label">
+                  <span class="kt-portlet__head-icon kt-hidden">
+                    <i class="la la-gear"></i>
+                  </span>
+                  <h3 class="kt-portlet__head-title">
+                    Top 5 Hosts by Alerts Generated
+                  </h3>
+                </div>
+              </div>
+              <div id="divchart1" >
+                <canvas id="bar-chart-top_5_alerted_hosts" class="alerted_hosts"></canvas>
+                <div id="no-data-bar-chart-top_5_alerted_hosts" style="margin-left: 50px; margin-top: 40px;"  ></div>
+              </div>
+
+            </div>
+            <!--end::Portlet-->
+          </div>
+          <div class="col-xl-3 col-md-6 col-lg-3 col-12 col-sm-12">
+            <!--begin::Portlet-->
+            <div class="kt-portlet">
+              <div class="kt-portlet__head">
+                <div class="kt-portlet__head-label">
+                  <span class="kt-portlet__head-icon kt-hidden">
+                    <i class="la la-gear"></i>
+                  </span>
+                  <h3 class="kt-portlet__head-title">
+                    Top 5 Queries Generating Alerts
+                  </h3>
+                </div>
+              </div>
+              <div id="divchart1" >
+                <canvas id="bar-chart-top_5_alerted_categries" class="categories_data"  width="50%" ></canvas>
+                <div id="no-data-bar-chart-top_5_alerted_categries" style="margin-left: 50px; margin-top: 40px;"  ></div>
+              </div>
+
+            </div>
+
+            <!--end::Portlet-->
+          </div>
+          <div class="col-xl-3 col-md-6 col-lg-3 col-12 col-sm-12">
+            <!--begin::Portlet-->
+            <div class="kt-portlet">
+              <div class="kt-portlet__head">
+                <div class="kt-portlet__head-label">
+                  <span class="kt-portlet__head-icon kt-hidden">
+                    <i class="la la-gear"></i>
+                  </span>
+                  <h3 class="kt-portlet__head-title">
+                    Top 5 Rules Generating Alerts
+                  </h3>
+                </div>
+              </div>
+              <div id="divchart1" >
+                <canvas id="bar-chart-top_5_alerted_rules" class="top_rules"></canvas>
+                <div id="no-data-bar-chart-top_5_alerted_rules" style="margin-left: 50px; margin-top: 40px;"  ></div>
+              </div>
+
+            </div>
+            <!--end::Portlet-->
+          </div>
+          <div class="col-xl-3 col-md-6 col-lg-3 col-12 col-sm-12">
+            <!--begin::Portlet-->
+            <div class="kt-portlet">
+              <div class="kt-portlet__head">
+                <div class="kt-portlet__head-label">
+                  <span class="kt-portlet__head-icon kt-hidden">
+                    <i class="la la-gear"></i>
+                  </span>
+                  <h3 class="kt-portlet__head-title">
+                    Recent Top 5 Hosts by Events <i _ngcontent-cji-c4="" class="help-badge badge-pill badge-light fa fa-info" title="Lists the five hosts with the most events generated for the day (in UTC)."></i>
+                  </h3>
+                </div>
+              </div>
+              <div id="divchart1" >
+                <canvas id="top5_hosts_data_graph" ></canvas>
+                <div id="no-data-bar-chart-top_5_alerted_rules" style="margin-left: 50px; margin-top: 40px;"  ></div>
+              </div>
+
+            </div>
+            <!--end::Portlet-->
+          </div>
+
+        </div>
         <div class="row">
           <div class="col-xl-4 col-md-4 col-lg-4 col-12 col-sm-12">
             <!--begin::Portlet-->
@@ -919,12 +1050,12 @@
                     <i class="la la-gear"></i>
                   </span>
                   <h3 class="kt-portlet__head-title">
-                    Top 5 Alerted Hosts
+                    Hourly Client Data Volume <i _ngcontent-cji-c4="" class="help-badge badge-pill badge-light fa fa-info" title="Displays the volume of data (in bytes) received from all clients in the last four hours. Each point on the graph depicts data received within the hour."></i>
                   </h3>
                 </div>
               </div>
               <div id="divchart1" >
-                <canvas id="bar-chart-top_5_alerted_hosts" class="alerted_hosts"></canvas>
+                <canvas id="date_rate_graph" ></canvas>
                 <div id="no-data-bar-chart-top_5_alerted_hosts" style="margin-left: 50px; margin-top: 40px;"  ></div>
               </div>
 
@@ -940,12 +1071,12 @@
                     <i class="la la-gear"></i>
                   </span>
                   <h3 class="kt-portlet__head-title">
-                    Top 5 Alerted Categories
+                    Hourly Client HTTP Requests Status <i _ngcontent-cji-c4="" class="help-badge badge-pill badge-light fa fa-info" title="Displays the number of successful and failed requests received from the clients in the last four hours. Each point on the graph depicts requests received within the hour. Success indicates requests that were successfully received while failure represents requests that were not received successfully by the server or contained invalid information."></i>
                   </h3>
                 </div>
               </div>
               <div id="divchart1" >
-                <canvas id="bar-chart-top_5_alerted_categries" class="categories_data"  width="50%" ></canvas>
+                <canvas id="non_success_requests_graph"   width="50%" ></canvas>
                 <div id="no-data-bar-chart-top_5_alerted_categries" style="margin-left: 50px; margin-top: 40px;"  ></div>
               </div>
 
@@ -962,19 +1093,22 @@
                     <i class="la la-gear"></i>
                   </span>
                   <h3 class="kt-portlet__head-title">
-                    Top 5 Alerted Rules
+                    Requests Awaiting Processing <i _ngcontent-cji-c4="" class="help-badge badge-pill badge-light fa fa-info" title="Displays the number of requests that are successfully received from the clients and are awaiting processing at the server."></i>
                   </h3>
                 </div>
               </div>
               <div id="divchart1" >
-                <canvas id="bar-chart-top_5_alerted_rules" class="top_rules"></canvas>
-                <div id="no-data-bar-chart-top_5_alerted_rules" style="margin-left: 50px; margin-top: 40px;"  ></div>
+                <canvas id="pending_rabbitmq_tasks_graph"   width="50%" ></canvas>
+                <div id="no-data-bar-chart-top_5_alerted_categries" style="margin-left: 50px; margin-top: 40px;"  ></div>
               </div>
 
             </div>
+
             <!--end::Portlet-->
           </div>
+
         </div>
+
         <!--End::Bar Charts/Section-3-->
       </div>
     </div>

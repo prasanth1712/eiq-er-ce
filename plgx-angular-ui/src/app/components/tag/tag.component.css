@@ -54,10 +54,16 @@ td.sorting_1 {
   padding-top: 1rem;
   padding-bottom: 1rem;
 }
+p{
+    text-overflow:ellipsis !important;
+    width: 250px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-align: left;
+}
 
 table.dataTable thead th, table.dataTable thead td {
 
   border-bottom: 1px solid #ebedf2;}
   table.dataTable {
     border-bottom: 1px solid #ebedf2;}
-    

@@ -303,13 +303,16 @@ constructor(
   }
 
   ngOnInit() {
-    this.titleService.setTitle(this.commonvariable.APP_NAME+"-"+"Queries");
+    this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Queries");
 
     this.dropdownPacknameList = [];
     this.selectedPacknameItems = [];
 
     this.sub = this._Activatedroute.paramMap.subscribe(params => {
       this.id = params.get('id');
+      if(isNaN(this.id)){
+       this.pagenotfound();
+      }
       let additional_config =this.commonapi.update_queries_api(this.id).subscribe(res =>{
         this.queriesdata=res;
         if(this.queriesdata.status == "failure"){
@@ -320,7 +323,6 @@ constructor(
          this.queriesdata_data=this.queriesdata.data;
          this.queriesdata_name=this.queriesdata.data.name
          this.query_data = this.queriesdata_data.sql;
-         this.editor.mode = 'javascript';
          this.editor.value = this.queriesdata_data.sql;
         }
         // LivequeryFunction();

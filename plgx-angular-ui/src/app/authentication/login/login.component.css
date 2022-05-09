@@ -245,6 +245,7 @@
     #icon {
     width:60%;
     }
+
     .form-password{
       width:90%;
       margin:auto;
@@ -253,7 +254,7 @@
     }
     .kt-login-div{
       height:100vh;
-      background:#f7f7f7 !important;
+      background:#edeff3 !important;
     }
     .kt-login-logo{
       padding-left: 15px;
@@ -270,8 +271,8 @@
       margin-right:0px !important;
     }
     .kt-login-container{
-      border: 1px solid #c1c2c2 !important;
-      background:#fff
+      background:#fff;
+      margin-top: 120px;
     }
     .input-password{
       margin-top:5px;
@@ -288,11 +289,34 @@
       margin-top:15%;
     }
     .kt-submit-div{
-      text-align:right;
+      text-align:left;
       margin-right:30px;
       margin-top:20px;
+      margin-left: 30px;
     }
     .kt-submit-div button{
-      background-color:#3a7b73;
-      border-color:#3a7b73
+      background-color:#20b2aa;
+      border-color:#20b2aa;
+      border-radius: 8px;
+      letter-spacing: 1px;
     }
+   .kt-login-boder{
+     border: 20px solid #FFF;
+   }
+   .kt-login-error{
+    background-color: #edeff3;
+    color: #cd4444;
+    font-size: 14px;
+    font-weight: 400;
+   }
+   .kt-login-sso{
+     width:100%;
+     border: 0px;
+     background-color: Transparent;
+     color: #20b2aa;
+     font-size: 12px;
+     margin-top: 35px;
+     font-family: 'Roboto';
+     font-weight: 500;
+     letter-spacing: 1px;
+   }

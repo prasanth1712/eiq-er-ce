@@ -123,6 +123,9 @@ table.dataTable thead th, table.dataTable thead td {
   overflow: visible_1;
   height: auto;
 }
-::ng-deep .ngx-datepicker-container{
-  z-index: 999;
+.wd{
+  width:15% !important;
+}
+.ft-sz{
+  font-size: 12px !important;
 }

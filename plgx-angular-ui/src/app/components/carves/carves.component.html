@@ -2,10 +2,9 @@
   <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
     <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
       <!-- begin:: Content -->
-      <div class="row">
         <div class="col-lg-12">
         <!--begin::Portlet-->
-        <div class="kt-portlet kt-portlet--last kt-portlet--responsive-mobile" id="kt_page_portlet">
+        <div class="kt-portlet kt-portlet--last kt-portlet--responsive-mobile row" id="kt_page_portlet">
           <div class="kt-portlet__head kt-portlet__head--lg">
             <div class="kt-portlet__head-label">
               <span class="kt-portlet__head-icon">
@@ -47,16 +46,34 @@
             <div class="kt-portlet__body">
             <!-- <div *ngIf="carves_data?.length != 0"> -->
             <div class="col-lg-12 row">
-              <div class="col-lg-6">
+              <div class="col-lg-7">
               </div>
-              <div class="col-lg-6">
-                <label *ngIf="Progress_value > 0 && Progress_value <= 99">File Downloading......</label>
-                <!-- <label *ngIf="Progress_value == 100">File Download Completed</label> -->
-                <div class="progress mb-4" *ngIf="Progress_value > 0 && Progress_value <= 99" style="height:20px">
-                   <div class="progress-bar progress-bar-striped bg-success" role="progressbar" [style.width.%]="Progress_value" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">{{this.Progress_value}}% </div>
-                </div>
+               <div class="col-lg-5">
+                    <div class="dropdown">
+                      <button class="btn Progress-bg dropdown-toggle fnt-white w-100" *ngIf="ProgressDiv" (click)="ToggleProgressMenu()" type="button" id="dropdownMenu"  aria-haspopup="true" aria-expanded="false">
+                        File Downloads ({{InprogessInfo}} / {{ProgressInfos.length}})
+                      </button>
+                      <div class="dropdown-menu px-3 w-100" id="dropdown-div" aria-labelledby="dropdownMenu">
+                        <div *ngFor="let progressInfo of ProgressInfos" class="mb-2">
+                           <span>{{ progressInfo.fileName }}</span>
+                           <div class="progress">
+                             <div
+                               class="progress-bar progress-bar-info progress-bar-striped Progress-bg"
+                               role="progressbar"
+                               attr.aria-valuenow="{{ progressInfo.progress }}"
+                               aria-valuemin="0"
+                               aria-valuemax="100"
+                               [ngStyle]="{ width: progressInfo.progress + '%' }"
+                             >
+                               {{ progressInfo.progress }}%
+                             </div>
+                           </div>
+                      </div>
+                      <span style="color:grey">Note: Please don't refresh the page until download completes</span>
+                      </div>
+                    </div>
                </div>
-            <div class="carves_result">
+            <div class="carves_result w-100">
               <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable" >
                 <thead style="text-align: center;color: #212529">
                   <tr>
@@ -67,7 +84,7 @@
                   <th style="width: 150px;">Blocks Acquired</th>
                   <th>Status</th>
                   <th>Created At</th>
-                  <th></th>
+                  <th *AppHasRole="role.adminAccess"></th>
                 </tr>
                 </thead>
                 <tbody style="text-align: center;">
@@ -75,12 +92,12 @@
                     <td><a [routerLink]="['/hosts/', carve.node_id]">{{ carve.hostname }}</a></td>
                     <td><code>{{ carve.session_id }}</code></td>
                     <td>{{getCarvesize(carve.carve_size)}}
-                    <td><a style="color:#5867dd;" (click)="downloadCarve($event,carve.hostname)" id="{{ carve.session_id }}" >{{ carve.archive }}</a></td>
+                    <td><a style="color:#5867dd;" (click)="downloadCarve($event,carve.hostname,carve.archive)" id="{{ carve.session_id }}" >{{ carve.archive }}</a></td>
                     <td>{{ carve.block_count }}</td>
                     <td>{{ carve.status }}</td>
-                    <td>{{ carve.created_at | date:'long'}}</td>
+                    <td>{{ carve.created_at |  date: 'yyyy-MM-dd hh:mm:ss'}}</td>
 
-                    <td>
+                    <td *AppHasRole="role.adminAccess">
                       <button (click)="deleteCarve($event)" class="btn btn-outline-danger btn-sm" id="{{ carve.session_id }}">
                         Delete
                       </button>
@@ -101,5 +118,4 @@
       </div>
       <!-- end:: Content -->
     </div>
-  </div>
 </div>

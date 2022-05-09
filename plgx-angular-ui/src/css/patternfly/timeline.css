@@ -1,0 +1,212 @@
+.timeline-pf-zoom-area {
+  cursor: pointer;
+  fill: transparent
+}
+
+.timeline-pf-y-tick {
+  fill: none;
+  stroke: #000;
+  stroke-width: 1px
+}
+
+.timeline-pf-axes {
+  fill: #fafafa
+}
+
+.timeline-pf-x-axis {
+  fill: none;
+  position: absolute;
+  shape-rendering: crispEdges;
+  stroke: #d1d1d1;
+  stroke-width: 1px;
+  z-index: 50
+}
+
+.timeline-pf-x-axis text {
+  fill: #000;
+  font-family: Open Sans;
+  font-size: 12px;
+  stroke: none
+}
+
+.timeline-pf-label {
+  font-weight: 400
+}
+
+#blink-alert {
+  animation: blink 2s steps(5, start) infinite;
+  -webkit-animation: blink 1s steps(5, start) infinite;
+  opacity: 1;
+}
+@keyframes blink {
+  to {
+    visibility: hidden;
+  }
+}
+@-webkit-keyframes blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+
+
+@-moz-keyframes blink_2 {0%{opacity:1;} 50%{opacity:0.5;} 100%{opacity:1;}} /* Firefox */
+@-webkit-keyframes blink_2 {0%{opacity:1;} 50%{opacity:0.5;} 100%{opacity:1;}} /* Webkit */
+@-ms-keyframes blink_2 {0%{opacity:1;} 50%{opacity:0.5;} 100%{opacity:1;}} /* IE */
+@keyframes blink_2 {0%{opacity:1;} 50%{opacity:0.5;} 100%{opacity:1;}} /* Opera */
+
+#blink-other-alert {
+    /* background-color: red; */
+    /* color: red; */
+    /* padding: 15px 15px 15px 15px; */
+    /* text-align:center; */
+    /* margin-bottom: 4px; */
+    /* font-size: 24px; */
+    /* border-radius: 5px; */
+    /* border-block-color: red; */
+    border-width: thin;
+    border-style: solid;
+    -moz-transition:all 0.5s ease-in-out;
+    -webkit-transition:all 0.5s ease-in-out;
+    -o-transition:all 0.5s ease-in-out;
+    -ms-transition:all 0.5s ease-in-out;
+    transition:all 0.5s ease-in-out; 
+    -moz-animation:blink_2 normal 1s infinite ease-in-out; /* Firefox */
+    -webkit-animation:blink_2 normal 1s infinite ease-in-out; /* Webkit */
+    -ms-animation:blink_2 normal 1s infinite ease-in-out; /* IE */
+    animation:blink_2 normal 1s infinite ease-in-out; /* Opera */
+}
+
+
+text.timeline-pf-drop {
+  cursor: pointer;
+  font-family: FontAwesome;
+  font-size: 22px;
+  opacity: .7;
+  stroke: none;
+  text-rendering: auto
+}
+
+text.timeline-pf-drop:hover {
+  font-size: 24px;
+  font-weight: 700;
+  paint-order: stroke
+}
+
+text.timeline-pf-drop-14 {
+  cursor: pointer;
+  font-family: FontAwesome;
+  font-size: 22px;
+  /* opacity: .7; */
+  stroke: none;
+  text-rendering: auto
+}
+
+text.timeline-pf-drop-18 {
+  cursor: pointer;
+  font-family: FontAwesome;
+  /* font-size: 22px; */
+  opacity: .7;
+  stroke: none;
+  text-rendering: auto
+}
+
+text.timeline-pf-drop-22 {
+  cursor: pointer;
+  font-family: FontAwesome;
+  font-size: 22px;
+  /* opacity: .7; */
+  stroke: none;
+  text-rendering: auto
+}
+
+text.timeline-pf-drop-26 {
+  cursor: pointer;
+  font-family: FontAwesome;
+  font-size: 22px;
+  opacity: .7;
+  stroke: none;
+  text-rendering: auto
+}
+
+text.timeline-pf-drop-30 {
+  cursor: pointer;
+  font-family: FontAwesome;
+  font-size: 22px;
+  opacity: .7;
+  stroke: none;
+  text-rendering: auto
+}
+text.timeline-pf-drop-34 {
+  cursor: pointer;
+  font-family: FontAwesome;
+  font-size: 22px;
+  opacity: .7;
+  stroke: none;
+  text-rendering: auto
+}
+
+
+text.timeline-pf-event-group {
+  font-size: 18px;
+}
+
+.timeline-pf-grid {
+  cursor: all-scroll;
+  /* shape-rendering: crispEdges; */
+  stroke: #f5f2f2
+}
+
+.timeline-pf-timestamp text {
+  fill: #fff
+}
+
+.timeline-pf-timestamp rect {
+  fill: #000;
+  opacity: .7
+}
+
+.timeline-pf-marker {
+  pointer-events: none
+}
+
+.timeline-pf-brush .extent {
+  fill: #8cc791;
+  fill-opacity: .5;
+  shape-rendering: crispEdges;
+  stroke: none
+}
+
+.timeline-pf-graph-body .timeline-pf-line {
+  height: 20px;
+  padding: 10px
+}
+
+.timeline-pf-zoom {
+  position: absolute
+}
+
+.timeline-pf-context .timeline-pf-bar {
+  fill: #bbb;
+  shape-rendering: crispEdges
+}
+
+.timeline-pf-slider {
+  padding: 0;
+  -webkit-transform: rotate(-90deg);
+  transform: rotate(-90deg)
+}
+
+.timeline-pf-grid-stripes rect {
+  fill: #fafafa;
+  shape-rendering: crispEdges
+}
+
+.timeline-pf-grid-stripes line {
+  shape-rendering: crispEdges;
+  stroke: #d1d1d1;
+  stroke-width: 1px
+}
+
+/*# sourceMappingURL=timeline.css.map*/

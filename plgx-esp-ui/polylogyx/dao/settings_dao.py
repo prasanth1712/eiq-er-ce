@@ -7,3 +7,4 @@ def get_settings_by_name(name):
 
 def create_settings(name, setting):
     Settings.create(name=name, setting=setting)
+

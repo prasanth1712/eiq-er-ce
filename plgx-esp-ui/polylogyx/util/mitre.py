@@ -5,6 +5,7 @@ attack = {}
 # Establish TAXII2 Collection instance for Enterprise ATT&CK
 collection = Collection("https://cti-taxii.mitre.org/stix/collections/95ecc380-afe9-11e4-9b6c-751b66dd541e/")
 
+
 class MitreApi:
     def get_tactics_by_technique_id(self,technique_ids):
 
@@ -32,47 +33,3 @@ class MitreApi:
         response_data['description']=description
         return response_data
 
-
-class TestMail:
-    def test(self ,smtp=None,username=None,password=None,recipients=[]):
-        is_credentials_valid=True
-        import sys
-
-        from smtplib import SMTP_SSL as SMTP  # this invokes the secure SMTP protocol (port 465, uses SSL)
-
-        from email.mime.text import MIMEText
-        SMTPserver = smtp
-        sender = 'username'
-        destination =recipients
-
-        USERNAME =username
-        PASSWORD =password
-
-        # typical values for text_subtype are plain, html, xml
-        text_subtype = 'plain'
-
-        content = """\
-        Test message
-        """
-
-        subject = "Sent from PolyLogyx"
-
-        try:
-            msg = MIMEText(content, text_subtype)
-            msg['Subject'] = subject
-            msg['From'] = sender  # some SMTP servers will do this automatically, not all
-
-            conn = SMTP(SMTPserver)
-            conn.set_debuglevel(False)
-            conn.login(USERNAME, PASSWORD)
-            try:
-                conn.sendmail(sender, destination, msg.as_string())
-            except:
-                is_credentials_valid=False
-            finally:
-                conn.quit()
-
-        except Exception as e:
-            print(e)
-            is_credentials_valid = False
-        return is_credentials_valid

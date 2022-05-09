@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>EclecticIQ ER</title>
+    </head>
+    <script type='text/javascript'>
+        var redirectURL = '{{ url_to_redirect }}';
+        window.localStorage.setItem('first_name', '{{ first_name }}');
+        window.localStorage.setItem('token', '{{ access_token }}');
+        window.localStorage.setItem('roles', '{{ roles }}');
+        window.localStorage.setItem('all_roles', '{{ all_roles }}');
+        window.localStorage.setItem('auth_type', 'sso');
+        window.location = redirectURL;
+    </script>
+    <body>
+    <p style="text-align:center;">Redirecting to Dashboard page in few seconds...</p>
+    </body>
+</html>

@@ -51,7 +51,8 @@ export class AddRuleComponent implements OnInit {
   dropdownTacticsList = [];
   selectedTacticsItems = [];
   dropdownTacticsSettings = {};
-
+  isEmailEnabled = false;
+  isAddDescriptionEmail = false;
   constructor(
     private commonapi: CommonapiService,
     private commonvariable: CommonVariableService,
@@ -71,12 +72,15 @@ export class AddRuleComponent implements OnInit {
     severity:'',
     rule_type:'',
     technique_id:'',
-    tactics:''
+    tactics:'',
+    platform:''
+
   })
 }
 
   ngOnInit() {
-    this.titleService.setTitle(this.commonvariable.APP_NAME+"-"+"Add Rule");
+    this.addRuleObj.platform = 'all';
+    this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Add rule");
 
     init_querybuilder();
     this.dropdownAlertSettings = {
@@ -125,24 +129,23 @@ export class AddRuleComponent implements OnInit {
 
   onSubmit(){
     this.submitted = true;
-
     if (this.addRule.invalid) {
         return;
     }
-
-    this.token_value = localStorage.getItem('JWTkey');
+    this.token_value = localStorage.getItem('token');
     $(document).ready(() => {
       this.query_builder = $('#rules-hidden').val();
       let selected_alerts = this.f.alerters.value;
       let selected_tactics = this.f.tactics.value;
-
       this.addRuleObj={
         "name":this.f.name.value,
         "description":this.f.description.value,
         "status":this.f.status.value,
         "severity":this.f.severity.value,
+        "platform":this.f.platform.value,
         "type":this.f.rule_type.value,
         "technique_id":this.f.technique_id.value,
+        "alert_description":this.isAddDescriptionEmail
       }
       if(this.addRuleObj.status==null){
         this.addRuleObj['status']="ACTIVE"
@@ -167,7 +170,7 @@ export class AddRuleComponent implements OnInit {
       this.addRuleObj["tactics"] = this.getStringConcatinated(tactics_array);
       this.addRuleObj["conditions"]= JSON.parse(this.query_builder);
       console.log("rule obj is",this.addRuleObj);
-      this.http.post<DataTablesResponse>(environment.api_url + "/rules/add", this.addRuleObj, {headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('JWTkey')}}).subscribe(res => {
+      this.http.post<DataTablesResponse>(environment.api_url + "/rules/add", this.addRuleObj, {headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('token')}}).subscribe(res => {
 
         this.result=res;
         if(this.result && this.result.status === 'failure'){
@@ -197,7 +200,7 @@ export class AddRuleComponent implements OnInit {
   onChangeTechniqueID(technique_ids) {
     this.selectedTacticsItems = undefined;
     var tactics_tech_data = [];
-    this.http.post<DataTablesResponse>(environment.api_url + "/rules/tactics", {"technique_ids":technique_ids}, {headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('JWTkey')}}).subscribe(res => {
+    this.http.post<DataTablesResponse>(environment.api_url + "/rules/tactics", {"technique_ids":technique_ids}, {headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('token')}}).subscribe(res => {
         this.result = res;
         for (const i in this.result.data.tactics) {
           for (const tactic_index in this.dropdownTacticsList) {
@@ -230,21 +233,30 @@ export class AddRuleComponent implements OnInit {
     this._location.back();
   }
   onItemSelect(item:any){
-    console.log(item);
-    console.log(this.selectedAlertItems);
+    this.enableAddDescriptionEmail(true);
   }
   OnItemDeSelect(item:any){
-      console.log(item);
-      console.log(this.selectedAlertItems);
+    this.enableAddDescriptionEmail(true);
   }
   onSelectAll(items: any){
-      console.log(items);
+    this.enableAddDescriptionEmail(true);
   }
   onDeSelectAll(items: any){
-      console.log(items);
+    this.enableAddDescriptionEmail(false);
   }
+  clickreset(){
+    this.mitre_show=false
+  }
+  enableAddDescriptionEmail(isEnable){
+    this.isEmailEnabled = false;
+    if(isEnable){
+      for (const i in this.selectedAlertItems) {
+        if( this.selectedAlertItems[i].value == 'email' ){ this.isEmailEnabled = true; }
+      }
+    }
+   }
 
-clickreset(){
-  this.mitre_show=false
-}
+   addDescriptionEmail(e){
+     this.isAddDescriptionEmail = e.target.checked;
+   }
 }

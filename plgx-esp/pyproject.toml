@@ -1,0 +1,10 @@
+[tool.black]
+line-length = 120
+
+
+[tool.isort]
+combine_as_imports = true
+order_by_type = true
+multi_line_output = 3
+use_parentheses = true
+line_length = 120

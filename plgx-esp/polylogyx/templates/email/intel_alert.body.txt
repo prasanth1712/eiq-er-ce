@@ -1,4 +1,4 @@
-A polylogyx alert was triggered: Threat Intel : {{intel_match.intel['source'] }}
+An EclecticIQ-ER alert was triggered: Threat Intel : {{intel_match.intel['source'] }}
 
 Timestamp: {{ timestamp }}
 Content:
@@ -11,7 +11,7 @@ Raw Data:
 {{ intel_match.data }}
 {%- endif %}
 
-Review most recent activity for {{ node.display_name }} at https://{{server_url}}/manage/node/{{node.id}}/activity.
-This alert information may be reviewed at https://{{server_url}}/manage/alerts/data/{{intel_match.alert_id}}.
+Review most recent activity for {{ node.display_name }} at https://{{server_url}}/hosts/{{node.id}}/activity.
+This alert information may be reviewed at https://{{server_url}}/alerts/{{intel_match.alert_id}}/alert-data.
 
----END polylogyx notification
+---END EclecticIQ-ER notification

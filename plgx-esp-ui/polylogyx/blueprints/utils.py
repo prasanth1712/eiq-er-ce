@@ -11,16 +11,18 @@ from polylogyx.models import Node, Settings, db, EmailRecipient, ResultLog
 from polylogyx.dao import nodes_dao as node_dao
 from polylogyx.search_rules import AndCondition, OrCondition, BaseCondition, OPERATOR_MAP
 
-'''Common utils/ all methods used in blueprints folder will be defined here'''
+"""Common utils/ all methods used in blueprints folder will be defined here"""
 
 
 def tag_name_format(Tags):
-    '''used in packs queries nodes'''
+    """used in packs queries nodes"""
     data = [tag.to_dict() for tag in Tags]
     return data
 
+
 def get_body_data(request):
     return json.loads(request.data)
+
 
 def dump_datetime(value):
     """Deserialize datetime object into string form for JSON processing."""
@@ -143,28 +145,6 @@ def validate_json(f):
 
     return decorated_function
 
-def validate_command(request_data):
-    response = {}
-    types = ['file', 'process']
-    status = 'failure'
-    message = 'Invalid Data'
-
-    for type in types:
-        try:
-            if request_data.get('target').get(type):
-
-                node = Node.query.filter(
-                        Node.host_identifier == request_data.get('target').get(type).get(
-                            'device').get(
-                            'hostname')).first()
-                if node: return True,node
-        except:
-            status = 'failure'
-            message = 'Please provide a valid command'
-
-    response['status'] = status
-    response['message'] = message
-    return False,jsonify(response)
 
 def validate_ip(s):
     a = s.split('.')
@@ -240,7 +220,7 @@ def json_serial(obj):
 
 #request parsing function
 def requestparse(args_to_add, type_list, help_list, required = None):
-    '''function which parse the request body data into dictionary'''
+    """function which parse the request body data into dictionary"""
     if not required:required = [True for i in args_to_add]
     parser = reqparse.RequestParser()
     if not 'file' in args_to_add:
@@ -255,8 +235,8 @@ def requestparse(args_to_add, type_list, help_list, required = None):
     return parser
 
 
-def respcls(message, status = None, data = None):
-    '''returns a response dictionary needed to apply to wrappers'''
+def prepare_response(message, status = None, data = None):
+    """returns a response dictionary needed to apply to wrappers"""
     if status and data:
         return {'message':message, 'status':status, 'data':data}
     elif status:
@@ -317,7 +297,6 @@ def add_pack_through_json_data(args):
 
     if 'tags' in args: tags = args['tags'].split(',')
     else: tags=[]
-
     name = args['name']
     queries = args['queries']
     pack = packs_dao.get_pack_by_name(name)
@@ -364,7 +343,7 @@ def get_node_id_by_host_id(host_identifier):
         return node.id
 
 def get_host_id_by_node_id(node_id):
-    node = node_dao.getNodeById(node_id)
+    node = node_dao.get_node_by_id(node_id)
     if node:
         return node.host_identifier
 
@@ -392,19 +371,20 @@ def get_results_by_query(startPage, perPageRecords, node_id, name, args = None):
     count = db.session.query(ResultLog).filter(
         and_(ResultLog.name == name, and_(ResultLog.node_id == node_id, ResultLog.action != 'removed'))).count()
     countFiltered = count
+    
 
     if searchTerm:
         queryCountStr = "select count(distinct id) from result_log join jsonb_each_text(result_log.columns) e on true where  node_id='" + str(
             node_id) + "' and e.value ilike " + "'%" + searchTerm + "%'" + " and name=" + "'" + name + "'" + " and action!='removed'"
 
-        filtered_quer = db.engine.execute(sqlalchemy.text(queryCountStr))
+        filtered_quer = db.session.execute(sqlalchemy.text(queryCountStr))
         for r in filtered_quer:
             countFiltered = r[0]
 
         queryStr = "select distinct id,columns from result_log join jsonb_each_text(result_log.columns) e on true where  node_id='" + str(
             node_id) + "' and e.value ilike " + "'%" + searchTerm + "%'" + " and name=" + "'" + name + "'" + " and action!='removed' order by id desc OFFSET " + str(
             startPage) + "  LIMIT " + str(perPageRecords)
-        record_query = db.engine.execute(sqlalchemy.text(queryStr))
+        record_query = db.session.execute(sqlalchemy.text(queryStr))
         for r in record_query:
             results.append(r[1])
 
@@ -462,11 +442,11 @@ def get_results_by_query(startPage, perPageRecords, node_id, name, args = None):
     aaData_rows = results
 
     # add additional rows here that are not represented in the database
-    # aaData_row.append(('''''' % (str(row[ self.index ]))).replace('\\', ''))
+    # aaData_row.append(("""""" % (str(row[ self.index ]))).replace('\\', ''))
     if not columnsDefined:
         output['columns'] = columns
     output['aaData'] = aaData_rows
-
+    db.session.commit()
     return output
 
 
@@ -554,7 +534,6 @@ def make_condition(klass, *args, **kwargs):
     # Save the condition
     conditions[key] = inst
     return inst
-
 
 def get_tags_list_to_add(tags):
     from polylogyx.models import Tag

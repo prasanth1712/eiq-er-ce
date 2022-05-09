@@ -7,8 +7,12 @@ import { Subject } from 'rxjs';
 import {NgDatepickerModule, DatepickerOptions} from 'ng2-datepicker';
 import {NgModule} from '@angular/core';
 import Swal from 'sweetalert2';
+import {NgbDateStruct,NgbDate, NgbCalendar} from '@ng-bootstrap/ng-bootstrap';
 declare function populateNodeData(any): any;
 declare var $: any;
+var PaginationIndex
+var TempIndex
+var NextDataId
 class DataTablesResponse {
   data: any[];
   draw: number;
@@ -41,10 +45,13 @@ export class SearchComponent implements AfterViewInit,OnInit {
   public search_data:any={};
   search_data_output:any;
   myjson: any = JSON;
-
+  selectedDate = {};
+  maxDate:any;
+  PreviousDataIds={}
   constructor(
-    private http: HttpClient
-    ) { }
+    private http: HttpClient,
+    private calendar: NgbCalendar,
+  ) { var today = new Date(); this.maxDate = { year:today.getFullYear(),month: today.getMonth()+1, day: today.getDate()+1} }
 
   public bootstrapClassNames: QueryBuilderClassNames = {
     arrowIconButton: 'q-arrow-icon-button',
@@ -139,20 +146,16 @@ export class SearchComponent implements AfterViewInit,OnInit {
 
 search(){
   this.loading = true;
-  // console.log(this.query,"this.query")
-  // for(const i in this.query.rules){
-  //   let id=this.query.rules[i].field
-  //   this.query.rules[i]["id"]=id
-  //   this.query.rules[i]["type"]="string"
-  //   this.query.rules[i]["input"]="text"
-  // }
-  if(this.query.rules.length==0){
+  var ruleQueryValue = this.query.rules.find(x=>typeof x.value == 'undefined');
+  if(this.query.rules.length==0 || typeof ruleQueryValue != 'undefined' || this.selectedDate['date'] == null){
     this.loading = false;
     Swal.fire({
       icon: "warning",
       text: "Please provide valid input",
     })
   }else{
+    this.PreviousDataIds={}
+    NextDataId=0
     this.search_data["conditions"]=this.query;
     this.Rerender_datatable()
     $("#table_noresults").hide()
@@ -174,37 +177,54 @@ search(){
 
   get_dtOptions( ){
     this.dtOptions = {
-      pagingType: 'full_numbers',
+      pagingType: 'simple',
       pageLength: 10,
       serverSide: true,
       processing: true,
       searching: false,
       "language": {
-        "search": "Search: "
+        "search": "Search: ",
+        "paginate": {
+          "first":'first',
+          "last":'last',
+          "previous": '<i class="fas fa-angle-double-left"></i> Previous',
+          "next": 'Next <i class="fas fa-angle-double-right"></i>',
+        },
       },
       ajax: (dataTablesParameters: any,callback) => {
-
+        var selectedDate = this.selectedDate['date'];
+        var date = selectedDate.year + '-' + selectedDate.month + '-' + selectedDate.day;
         var body = dataTablesParameters;
         body['limit']=body['length'];
-        console.log( body['limit'])
         if((this.query.rules).length==0){
           return
         }
+        PaginationIndex=body['start']
+        if(PaginationIndex>TempIndex)   //checking next page index
+        {
+          body['start']=NextDataId
+        }
+        else if (PaginationIndex<TempIndex)  //checking Previous page index
+        {
+          body['start']=this.PreviousDataIds[PaginationIndex]
+        }
+        TempIndex=PaginationIndex;
        body["conditions"]=this.search_data['conditions']
-       body["date"]= this.datepicker_date['date']
-       body["duration"]=this.datepicker_date['duration']
+       body["date"]= date;
+       body["duration"]=this.selectedDate['duration'];
         this.http.post<DataTablesResponse>(environment.api_url + "/activity/search", body, {
           headers: {
             'Content-Type': 'application/json',
-            'x-access-token': localStorage.getItem('JWTkey')
+            'x-access-token': localStorage.getItem('token')
           }
         }).subscribe(res => {
           this.loading = false
           if(res['status']=='success'){
             this.search_data_output=res.data['results']
             if(res.data['count'] > 0 && res.data['results'] != undefined)
-
             {
+              this.PreviousDataIds[PaginationIndex]=(this.search_data_output[0].id)+1
+              NextDataId=(this.search_data_output[this.search_data_output.length - 1]).id
               $('.table_data').show();
               $('.dataTables_paginate').show();
               $('.dataTables_info').show();
@@ -229,21 +249,28 @@ search(){
             Swal.fire({
               icon: "warning",
               text: "Please check the missing Condition",
-              //text: res['message'],  
+              //text: res['message'],
             })
           }
         });
       },
       ordering: false,
       columns: [{data: 'hostname'}]
-    }
+    };
+    $(document).on( 'click', '.paginate_button', function (e) {
+      if(!(e.currentTarget.className).includes('disabled')){
+          $('.paginate_button.next').addClass('disabled');
+          $('.paginate_button.previous').addClass('disabled');
+      }})
   }
   getDate() {
     var today = new Date();
     var date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
-    this.datepicker_date['date']=date;
-    this.datepicker_date['duration']=3;
-    this.getconverted_date()
+    // this.datepicker_date['date']=date;
+    // this.datepicker_date['duration']=3;
+    // this.getconverted_date()
+    this.selectedDate['date'] = this.calendar.getToday();
+    this.selectedDate['duration']=3;
     this.get_dtOptions()
 
 }
@@ -255,8 +282,16 @@ getconverted_date() {
     }
   }
   myHandler(){
-    this.getconverted_date()
-    this.Rerender_datatable()
+    // this.getconverted_date()
+    if(this.selectedDate['date'] != null){
+      this.Rerender_datatable()
+    }else{
+      Swal.fire({
+        icon: "warning",
+        text: "Please provide valid input",
+      })
+    }
+
   }
   convertDate(date) {
     var  mnth = ("0" + (date.getMonth() + 1)).slice(-2),
@@ -264,8 +299,9 @@ getconverted_date() {
     return [date.getFullYear(), mnth, day].join("-");
   }
   get_duration(duration_period){
-    this.datepicker_date['duration']=duration_period
-  this.Rerender_datatable()
+    // this.datepicker_date['duration']=duration_period;
+    this.selectedDate['duration']=duration_period;
+    this.Rerender_datatable()
   }
   Rerender_datatable(){
     this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {

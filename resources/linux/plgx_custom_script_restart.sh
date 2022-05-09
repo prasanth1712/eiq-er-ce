@@ -3,7 +3,7 @@
 # Description: This script creates task for service restart after 2 minutes
 # Usage: ./plgx_custom_script_restart.sh -i <IP/FQDN>
 
-_PROJECT="POLYLOGYX"
+_PROJECT="EclecticIQ"
 _LINUX_FLAVOUR=""
 _BASE_URL=""
 port="9000"

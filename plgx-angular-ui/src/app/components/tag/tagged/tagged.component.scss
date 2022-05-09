@@ -104,7 +104,7 @@ table {
   color: #464457;
 }
   @import "~node_modules/ngx-chips/core/styles/core/_core.scss";
-$foundation-primary: #52B2A8;
+$foundation-primary: green;
 $foundation-primary-dark: darken($foundation-primary, 10%);
 $font-family: "Poppins", sans-serif !important;
 
@@ -160,6 +160,7 @@ $foundation-icon-theme: (
 ::ng-deep tag-input .ng2-tag-input.foundation-theme{
   border-bottom: 2px solid  #fff; 
 }
+
 .active {
   background-color: #f7f8fa;
-  } 
+  }

@@ -75,21 +75,35 @@
 .dropdown:hover .dropdown-content {display: block;}
 
 .dropdown:hover .dropbtn {background-color: #3e8e41;}
+
+.card-title{
+  font-size: 1.0rem;
+  font-weight: 500;
+  color: #646c9a
+}
+
+.btn i{
+  padding-right:0rem !important;
+}
+
 </style>
 <div class="kt-grid kt-grid--hor kt-grid--root">
   <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
     <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
+
+      <!-- <div class="kt-content kt-grid__item kt-grid__item--fluid"> -->
       <div class="kt-portlet kt-portlet--mobile kt-portlet--responsive-mobile" style="margin-bottom: 0px;">
         <div class="kt-portlet__head kt-portlet__head--lg">
           <div class="kt-portlet__head-label">
             <span class="kt-portlet__head-icon">
               <i class="kt-font-brand fa fa-th-list "></i>
               <a href="/hosts" class="" data-toggle="kt-tooltip" title="Back to Nodes">
+                <!-- <i class="kt-font-brand fa fa-arrow-circle-left"></i> -->
               </a>
             </span>
             <h1 class="kt-portlet__head-title" style="font-size: 20px;">
               {{node_info?.computer_name}} /
-              <a class="routerLink_Font_colour"[routerLink]="['../',this.id,'activity']" data-skin="dark" data-toggle="kt-tooltip"
+              <a [routerLink]="['../',this.id,'activity']" class="fnt-green" data-skin="dark" data-toggle="kt-tooltip"
                 data-placement="top" title="click -> Activity for recent Node ">recent activity</a>
             </h1>
 
@@ -164,7 +178,7 @@
                           <div class="col-md-2 col-form-label form--p" data-toggle="tooltip" title="Host Name">
                             {{node_info?.computer_name}}
                           </div> -->
-                          <i class="fa fa-user host_name fnt-green" aria-hidden="true"  data-toggle="tooltip" title="Host Name"></i>
+                          <i class="fa fa-user host_name fnt-green"  aria-hidden="true"  data-toggle="tooltip" title="Host Name"></i>
                           <div class="dropdown col-md-2 col-form-label form--p" style="margin-top:-10px">
                            <div class="col-md-12 col-form-label form--p overflow" >
                             <span>{{node_info?.computer_name}}</span>
@@ -180,46 +194,24 @@
                             <span>{{node_info?.hardware_vendor}}<b>-</b>{{node_info?.hardware_model}}</span>
                           </div>
 
-                          <i class="fa fa-microchip cpu_cores fnt-green" aria-hidden="true" data-toggle="tooltip" title="CPU Cores"></i>
+                          <i class="fa fa-microchip cpu_cores fnt-green"  aria-hidden="true" data-toggle="tooltip" title="CPU Cores"></i>
                           <div class="col-md-2 col-form-label form--p" data-toggle="tooltip" title="CPU Cores">
                             Cpu Cores<b>-</b>{{node_info?.cpu_physical_cores}}
                           </div>
 
                          <div class="col-md-4 mt-2">
-                          <span *ngIf="os_platform == 'ubuntu'" class='logo-color menu-icon'
-                            style='font-weight: 400;margin-top:5px' data-toggle="tooltip" title="Operating System">
-                            <img alt='' src='./assets/media/logo/Linux1.svg' height='19px' width='16px'/>
-                            <span>&ensp;{{os_name}}</span>
-                          </span>
                           <span *ngIf="os_platform == 'windows'" class='logo-color menu-icon'
-                            style='font-weight: 400;margin-top:5px' data-toggle="tooltip" title="Operating System">
+                            style='font-weight: 400;float:left;padding-right:14px' data-toggle="tooltip" title="Operating System">
                             <img alt='' src='./assets/media/logo/windows.svg' height='19px' width='16px' />
-                            <span>&ensp;{{os_name}}</span>
                           </span>
                           <span *ngIf="os_platform == 'darwin'" class='logo-color menu-icon'
-                            style='font-weight: 400;margin-top:5px' data-toggle="tooltip" title="Operating System">
-                            <i class='fab fa-apple' style='font-size: 18px; color: #8e8e93;'></i>
-                            <span>&ensp;{{os_name}}</span>
+                            style='font-weight: 400;float:left;padding-right:10px' data-toggle="tooltip" title="Operating System">
+                            <i class='fab fa-apple' style='font-size: 18px; color: #8e8e93;margin-right:8px'></i>
                           </span>
-                          <span *ngIf="os_platform == 'rhel'" class='logo-color menu-icon'
-                            style='font-weight: 400;margin-top:5px' data-toggle="tooltip" title="Operating System">
-                            <img alt='' src='./assets/media/logo/Linux1.svg' height='19px' width='16px'/>
-                            <span>&ensp;{{os_name}}</span>
-                          </span>
-                          <span *ngIf="os_platform == 'debian'" class='logo-color menu-icon' style='font-weight: 400;margin-top:5px' data-toggle="tooltip" title="Operating System">
+                          <span *ngIf="!['windows','darwin'].includes(os_platform)" class='logo-color menu-icon' style='font-weight: 400;margin-top:5px;margin-right:10px' data-toggle="tooltip" title="Operating System">
                             <img alt='' src='./assets/media/logo/Linux1.svg' height='19px' width='16px' />
-                            <span>&ensp;{{os_name}}</span>
                           </span>
-
-                          <span *ngIf="os_platform == 'sles'" class='logo-color menu-icon' style='font-weight: 400;margin-top:5px' data-toggle="tooltip" title="Operating System">
-                            <img alt='' src='./assets/media/logo/Linux1.svg' height='19px' width='16px' />
-                            <span>&ensp;{{os_name}}</span>
-                          </span>
-
-                          <span *ngIf="os_platform == 'amzn'" class='logo-color menu-icon' style='font-weight: 400;margin-top:5px' data-toggle="tooltip" title="Operating System">
-                            <img alt='' src='./assets/media/logo/Linux1.svg' height='19px' width='16px' />
-                            <span>&ensp;{{os_name}}</span>
-                          </span>
+                          <label style='font-weight: 400;margin-top: 2px;'>{{os_name}} - {{osInfo?.version}}</label>
                          </div>
                         </div>
                            <div class="row">
@@ -233,9 +225,21 @@
                                {{this.nodes?.last_ip}}
                           </div>
 
-                          <i class="fa fa-calendar enrolled fnt-green" aria-hidden="true" data-toggle="tooltip" title="Agent Enrolled"></i>
+                          <!-- <i class="fa fa-reply-all rs_action fnt-green" aria-hidden="true"  data-toggle="tooltip" title="Response Action Status"></i>
+                          <div class="col-md-2 col-form-label form--p" data-toggle="tooltip" title="Response Action Status" style="margin-bottom:-12px">
+                            <div *ngIf="responseenabled == undefined" class="spinner-border text-secondary" role="status">
+                                 <span class="sr-only">Loading...</span>
+                            </div>
+                            <p *ngIf="responseenabled == false;" class="" id="response_endpoint_status"><i
+                                class="fa fa-times-circle" style="color:#fd397a"></i></p>
+                            <p *ngIf="responseenabled == true;" class="" id="response_endpoint_status"><i
+                                class="fa fa-check-circle" style="color:#518c24"></i></p>
+                            <p *ngIf="responseenabled == 'Failed'" class="" id="response_endpoint_status" style="color:#FF0000">Failed to get status</p>
+                          </div> -->
+
+                          <i class="fa fa-calendar enrolled fnt-green"  aria-hidden="true" data-toggle="tooltip" title="Agent Enrolled"></i>
                           <div class="col-md-2 col-form-label form--p" data-toggle="tooltip" title="Agent Enrolled">
-                            Enrolled<b>:</b> {{this.enrolled | date}}
+                            Enrolled<b>:</b> {{this.enrolled |  date: 'yyyy-MM-dd'}}
                           </div>
 
                         <i class="fa fa-align-justify serial fnt-green" aria-hidden="true" data-toggle="tooltip" title="Serial No."></i>
@@ -251,22 +255,22 @@
                             {{hostDetails['osquery_version']}}
                           </div>
 
-                          <img src="../assets/media/eiq-img/logo.svg" data-toggle="tooltip" title="{{ProjectName}} Agent Version" class="ex_version">
-                          <div class="col-md-2 col-form-label form--p" data-toggle="tooltip" title="{{ProjectName}} Agent Version">
+                          <img src="../assets/media/eiq-img/EclecticIQ-ER-Logo-Favicon.png" data-toggle="tooltip" title="EclecticIQ Agent Version" class="ex_version">
+                          <div class="col-md-2 col-form-label form--p" data-toggle="tooltip" title="EclecticIQ Agent Version">
                             {{hostDetails['extension_version']}}
                           </div>
 
-                         <i class="fa fa-clock lastseen fnt-green" aria-hidden="true" ></i>
+                         <i class="fa fa-clock lastseen fnt-green"  aria-hidden="true" ></i>
                          <div class="dropdown" style='width: 205px;'>
                           <div class="col-md-12 col-form-label form--p" >
-                          <p>Last Seen<b>:</b> {{this.lastcheckin | dateAgo}}</p>
+                          <p>Last Seen<b>:</b> {{this.lastcheckin}}</p>
                          </div>
                          <div class="dropdown-content lastseen_menu">
-                           <a class="sub_menu_wd">Last Status<b>:</b> {{this.laststatus | dateAgo}}</a>
-                           <a class="sub_menu_wd">Last Query Read<b> :</b> {{this.lastqueryread | dateAgo}}</a>
-                           <a class="sub_menu_wd">Last Query Write<b> :</b> {{this.lastquerywrite | dateAgo }}</a>
-                           <a class="sub_menu_wd">Last Config<b>:</b> {{this.lastconfig | dateAgo }}</a>
-                           <a class="sub_menu_wd">Last Result<b>:</b>  {{this.lastresult | dateAgo }}</a>
+                           <a class="sub_menu_wd help" data-toggle="popover" aria-label="Last status from agent">Last Status<b>:</b> {{this.laststatus}}</a>
+                           <a class="sub_menu_wd help" data-toggle="popover" aria-label="Last livequery sent to agent">Last Query Read<b> :</b> {{this.lastqueryread}}</a>
+                           <a class="sub_menu_wd help" data-toggle="popover" aria-label="Last livequery response received from agent">Last Query Write<b> :</b> {{this.lastquerywrite}}</a>
+                           <a class="sub_menu_wd help" data-toggle="popover" aria-label="Last config refresh happened on agent">Last Config<b>:</b> {{this.lastconfig  }}</a>
+                           <a class="sub_menu_wd help" data-toggle="popover" aria-label="Last result uploaded by agent">Last Result<b>:</b>  {{this.lastresult}}</a>
                          </div>
                        </div>
 
@@ -814,8 +818,19 @@
               <div class="col-xl-12">
                 <div class="kt-section kt-section--first">
                   <div class="kt-section__body">
+                    <div class="row mb-3">
+                      <label class="col-7 col-form-label lbl-wt" >Assigned Config :  {{additional_config_data}}</label>
+                          <div *AppHasRole="role.adminAccess" class="col-3 assignedConfig">
+                          <angular2-multiselect  [data]="config_list_dropdownList"  [(ngModel)]="config_list_selectedItems" [ngModelOptions]="{standalone: true}"
+                          [settings]="config_list_dropdownSettings"
+                          (onSelect)="onItemSelect_config($event)"
+                          (onDeSelect)="OnItemDeSelect_config($event)"
+                          (onDeSelectAll)="onDeSelectAll_config($event)"></angular2-multiselect>
+                          </div>
+                          <button *AppHasRole="role.adminAccess" type="submit" class="btn btn-primary col-2" (click)="Assign_config()" data-dismiss="modal">Assign config</button>
+                     </div>
                     <div class="" *ngIf="toggle">
-                      <json-editor class="col-md-12" style="min-height: 300px;" [options]="editorOptions" [data]="alerted_data_json"></json-editor>
+                      <json-editor   [options]="editorOptions" [data]="alerted_data_json"></json-editor>
                       </div>
                     </div>
 
@@ -874,28 +889,35 @@
                     <input *ngIf="status_log_checkbox == false" class="checkboxClass" (change)="toggleEditable($event)" name="status" type="checkbox" >
                     <input  *ngIf="status_log_checkbox == true" id="status" class="checkboxClass" (change)="toggleEditable($event)" name="status" type="checkbox" checked >&nbsp;<span> Show Status Log</span>
                   </div>
+                  <div class="col-md-6 px-0">
+                    <label *ngIf="ShowProgess == true">File Exporting......</label>
+                    <div class="progress mb-3" *ngIf="ShowProgess == true">
+                         <div class="progress-bar progress-bar-striped bg-success progress-bar-animated" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                  </div>
                   <div  *ngIf="status_log_checkbox == true " id="kt_form" class="kt-form form-horizontal" method="POST">
                     <table datatable [dtOptions]="dtOptions"
                       class="table table-hover table-checkable response_table row-border hover" id="response_table"
                       style="margin-left: 0px; width: 1039px;">
+
                       <thead>
                         <tr>
-                          <th>Line</th>
-                          <th>Message</th>
-                          <th>Severity</th>
-                          <th>File Name</th>
-                          <th>Created At</th>
-                          <th>Version</th>
+                          <th class="pl-2" style="width: 40px;">Line</th>
+                          <th class="pl-2 td-wd">Message</th>
+                          <th class="pl-4" style="width: 50px;">Severity</th>
+                          <th class="pl-2"  style="width: 100px;">File Name</th>
+                          <th class="pl-2" style="width: 120px;">Created At</th>
+                          <th class="pl-2">Version</th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr *ngFor="let statuslog of log_data">
-                          <td> {{statuslog.line}} </td>
-                          <td> {{statuslog.message}} </td>
-                          <td> {{statuslog.severity}} </td>
-                          <td> {{statuslog.filename}} </td>
-                          <td> {{statuslog.created}} </td>
-                          <td> {{statuslog.version}} </td>
+                          <td class="pl-2"> {{statuslog.line}} </td>
+                          <td class="pl-2 td-wd"> {{statuslog.message}} </td>
+                          <td class="pl-4"> {{statuslog.severity}} </td>
+                          <td class="pl-2"> {{statuslog.filename}} </td>
+                          <td class="pl-2"> {{statuslog.created | dateTimeFormatFilter}}</td>
+                          <td class="pl-2"> {{statuslog.version}} </td>
                         </tr>
                       </tbody>
                     </table>
@@ -909,16 +931,21 @@
                   <!--begin:: Additional/packs/query/tags -->
 
                 </div>
+
+
                 <div class="tab-pane" id="additional_packs_query_tags" role="tabpanel">
                     <!--Begin:: Tags -->
                     <div class="kt-portlet">
                       <div class="kt-portlet__body">
 
                         <h2 style="color:#616C9A">Tags</h2>
-                        <div>
+                        <div *AppHasRole="role.adminAccess" >
                           <tag-input [theme]="'foundation-theme'" [placeholder]="'Add tags here...'" [(ngModel)]='tags'
                             (onAdd)="hosts_addTag(tags,id)" (onRemove)="hosts_removeTag($event,id)"
                             [modelAsStrings]="true"></tag-input>
+                        </div>
+                        <div *AppHasRole="role.userAccess">
+                          <input type="text" [placeholder]="'Existings tags...'" value='{{tags}}' readonly>
                         </div>
                       </div>
                     </div>
@@ -937,7 +964,7 @@
                               <div class="">
                                 <div class="kt-input-icon kt-input-icon--left" style="margin-bottom: 10px;">
                                   <input type="text" class="form-control" placeholder="Search Packs here..."
-                                    id="search_pack_query_name" [(ngModel)]="term">
+                                     [(ngModel)]="term">
                                   <span class="kt-input-icon__icon kt-input-icon__icon--left">
                                     <span><i class="la la-search"></i></span>
                                   </span>
@@ -961,7 +988,7 @@
                                       <div class="kt-notification__item-details">
                                         <div class="kt-notification__item-title">
                                           {{ pack.name }}
-                                      </div>
+                                        </div>
                                       </div>
                                     </a>
                                     </div>
@@ -987,10 +1014,13 @@
                                 </h3>
                               </div>
                             </div>
-                            <div class="kt-portlet__body" style="padding:10px;">
+                            <div  *AppHasRole="role.adminAccess"  class="kt-portlet__body" style="padding:10px;">
                               <tag-input [theme]="'foundation-theme'" [placeholder]="'Add tags here...'"
                                 [(ngModel)]='pack_data.tags' (onAdd)="pack_addTag(pack_data.tags,pack_data.id)"
                                 (onRemove)="pack_removeTag($event,pack_data.id)" [modelAsStrings]="true"></tag-input>
+                            </div>
+                            <div  *AppHasRole="role.userAccess"  class="kt-portlet__body" style="padding:10px;">
+                               {{pack_data.tags}}
                             </div>
                             <div class="kt-portlet__body"
                               style="height: 528px; overflow-x:scroll; padding:1.25rem; margin-bottom:20px;">
@@ -1001,11 +1031,11 @@
 
                                   <!--begin::Accordion-->
                                   <div class="card right-conf-card" style="margin-bottom: 0.3rem;">
-                                    <div class="collapsed style-accordion-background" data-toggle="collapse"
+                                    <div class="collapsed bg-clr style-accordion-background" data-toggle="collapse"
                                       data-skin="dark" attr.data-target="#{{pack_data.name}}-query-{{queries.value.id}}"
                                       data-placement="top" title="{{queries.value.name}}">
                                       {{ queries.value.name }}
-                                      <a [routerLink]="['/packs/',queries.value.id,'edit']"
+                                      <a *AppHasRole="role.adminAccess" [routerLink]="['/packs/','query',queries.value.id,'edit']"
                                         class="query_edit" data-skin="dark" data-toggle="kt-tooltip"
                                         data-placement="top" title="Edit Query">
                                         <img class="pull-right" src="./assets/media/icons/edit-document.svg" height="24"
@@ -1029,7 +1059,7 @@
                                               </td>
                                             </tr>
                                             <tr>
-                                              <td class="head-table">Interval</td>
+                                              <td class="head-table" style="width:125px">Interval <span class="intrvl-fnt-md">(in secs)</span></td>
                                               <td class="conf-table-val">
                                                 <div class="desc-background_packs">{{queries.value.interval}}</div>
                                               </td>
@@ -1039,7 +1069,7 @@
                                               <td class="conf-table-val">
                                                 <div class="desc-background_packs">{{queries.value.platform}}
                                                   <span class="col-md-1"></span>
-                                                  <button (click)="runAdHoc(queries.value.id)" class="btn-success"> Run
+                                                  <button  (click)="runAdHoc(queries.value.id)" class="btn-success"> Run
                                                     Live </button>
                                                 </div>
                                               </td>
@@ -1051,22 +1081,30 @@
                                                   {{queries.value.description}}</div>
                                               </td>
                                             </tr>
+                                            <!-- {% if query.version %} -->
                                             <tr>
                                               <td class="head-table">Version</td>
                                               <td>{{queries.value.version}}</td>
                                             </tr>
+                                            <!-- {% endif %}
+      {% if query.value %} -->
                                             <tr>
                                               <td class="head-table">Value</td>
+                                              <td>{{queries.value.value}}</td>
                                             </tr>
+                                            <!-- {% endif %} -->
                                             <tr>
                                               <td class="head-table">Packs</td>
                                               <td>
                                                 {{queries.value.packs}}
                                                 <span class="label">
+                                                  <!-- <a ng-href="['./packs']#{{ pack.name }}">{{ pack.name }}</a> -->
                                                 </span>
+                                                <!-- {% endfor %} -->
                                               </td>
                                             </tr>
-                                            <tr>
+                                            <!-- {% if not hide_query_tags %} -->
+                                            <tr *AppHasRole="role.adminAccess">
                                               <td class="head-table">Tags</td>
                                               <td>
                                                 <tag-input [theme]="'foundation-theme'"
@@ -1074,8 +1112,17 @@
                                                   (onAdd)="queries_addTag(queries.value.tags,queries.value.id)"
                                                   (onRemove)="queries_removeTag($event,queries.value.id)"
                                                   [modelAsStrings]="true"></tag-input>
+
                                               </td>
                                             </tr>
+                                            <tr *AppHasRole="role.userAccess">
+                                              <td class="head-table">Tags</td>
+                                              <td>
+                                                {{queries.value.tags}}
+
+                                              </td>
+                                            </tr>
+                                            <!-- {% endif %} -->
                                           </tbody>
                                         </table>
                                       </div>
@@ -1110,8 +1157,9 @@
                               <!--begin: Search Table -->
                               <div class="">
                                 <div class="kt-input-icon kt-input-icon--left" style="margin-bottom: 10px;">
+                                  <!-- <input class="form-control" type="text" name="search" [(ngModel)]="searchText" autocomplete="off" placeholder="Search Packs here..." id="search_pack_query_name"> -->
                                   <input type="text" class="form-control" placeholder="Search Queries here..."
-                                    id="search_pack_query_name" [(ngModel)]="term">
+                                    id="search_pack_query_name" [(ngModel)]="termQueries">
                                   <span class="kt-input-icon__icon kt-input-icon__icon--left">
                                     <span><i class="la la-search"></i></span>
                                   </span>
@@ -1121,7 +1169,7 @@
                               <div class="" style="height: 528px; overflow-x: scroll;margin-bottom:25px;">
                                 <div class="">
                                   <!--begin::Notifications-->
-                                  <div *ngFor="let query of query_name |filter:term " class="kt-notification conf-div"
+                                  <div *ngFor="let query of query_name |filter:termQueries " class="kt-notification conf-div"
                                     id="search_query-name-list" style="cursor:pointer;" data-skin="dark"
                                     data-toggle="kt-tooltip" data-placement="top" title="{{query.name}}">
                                     <div class="kt-notification__item-title list-group" [ngClass]="{'active_data': queryid == query.id}" (click)='getById(query.id)' >
@@ -1179,7 +1227,7 @@
                                   {{querydata.name}}
                                 </h3>
                               </div>
-                              <div class="kt-portlet__head-actions">
+                              <div  *AppHasRole="role.userAccess" class="kt-portlet__head-actions">
                                 <a [routerLink]="['/queries/',queryid,'edit']"
                                   class="btn btn-clean btn-sm btn-icon btn-icon-md" data-skin="dark"
                                   data-toggle="kt-tooltip" data-placement="top" title="Edit Query">
@@ -1210,7 +1258,7 @@
                                               </td>
                                             </tr>
                                             <tr>
-                                              <td class="head-table">Interval</td>
+                                              <td class="head-table" style="width:125px">Interval <span class="intrvl-fnt-md">(in secs)</span></td>
                                               <td class="conf-table-val">
                                                 <div class="desc-background_packs">{{querydata.interval}}</div>
                                               </td>
@@ -1220,7 +1268,7 @@
                                               <td class="conf-table-val">
                                                 <div class="desc-background_packs">{{querydata.platform}}
                                                   <span class="col-md-1"></span>
-                                                  <button (click)="runAdHoc(querydata.id)" class="btn-success"> Run Live
+                                                  <button  (click)="runAdHoc(querydata.id)" class="btn-success"> Run Live
                                                   </button>
                                                 </div>
                                               </td>
@@ -1245,18 +1293,23 @@
                                               <td>
                                                 {{querydata.packs}}
                                                 <span class="label">
+                                                  <!-- <a ng-href="['./packs']#{{ pack.name }}">{{ pack.name }}</a> -->
                                                 </span>
                                               </td>
                                             </tr>
-                                            <tr>
+                                            <tr >
                                               <td class="head-table">Tags</td>
-                                              <td>
+                                              <td *AppHasRole="role.adminAccess" >
                                                 <tag-input [theme]="'foundation-theme'"  [placeholder]="'Add tags here...'" [(ngModel)]='querydata.tags'
                                                   (onAdd)="queries_addTag(querydata.tags,querydata.id)"
                                                   (onRemove)="queries_removeTag($event,querydata.id)"
                                                   [modelAsStrings]="true"></tag-input>
                                               </td>
+                                              <td *AppHasRole="role.userAccess">
+                                                {{querydata?.tags}}
+                                              </td>
                                             </tr>
+                                            <!-- {% endif %} -->
                                           </tbody>
                                         </table>
                                       </div>
@@ -1278,6 +1331,10 @@
                     </div>
                   </div>
                   <!--End:: Query -->
+
+
+
+
 
                 </div>
                 <!--end:: Additional/packs/query/tags -->

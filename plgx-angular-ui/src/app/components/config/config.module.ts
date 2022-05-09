@@ -6,6 +6,7 @@ import { ConfigComponent } from './config.component';
 import { GlobalModule } from '../../global/global.module';
 import { NgJsonEditorModule } from 'ang-jsoneditor';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
 
 
 @NgModule({
@@ -16,7 +17,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     GlobalModule,
     NgJsonEditorModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    AngularMultiSelectModule
   ]
 })
 export class ConfigModule { }

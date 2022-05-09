@@ -4,7 +4,7 @@ from flask import request
 from flask_restplus import Namespace, Resource, marshal
 
 from .utils import *
-from polylogyx.utils import require_api_key
+from polylogyx.utils import require_api_key, send_test_mail
 from polylogyx.dao import settings_dao as dao
 from polylogyx.wrappers import parent_wrappers as parentwrapper
 from polylogyx.constants import PolyLogyxServerDefaults
@@ -16,7 +16,7 @@ ns = Namespace('email', description='email related operations')
 @ns.route('/configure', endpoint = 'configure_email')
 @ns.doc(params={"email":"from email", "smtpPort":"smtp port", "smtpAddress":"smtp address", "password": "password of the from mail", "emailRecipients":"list of to-email addresses"})
 class ConfigureEmailRecipientAndSender(Resource):
-    '''configures the email recipient and the sender based on the details given'''
+    """configures the email recipient and the sender based on the details given"""
 
     parser = requestparse(["email", "smtpPort", "smtpAddress", "password", "emailRecipients"],[str,str,str,str,list],["from email","smtp port","smtp address", "password of the from mail","list of to-email addresses"],[True,True,True,True,True])
 
@@ -27,7 +27,7 @@ class ConfigureEmailRecipientAndSender(Resource):
         data = result_data['data']
         message = result_data['message']
         status = result_data['status']
-        return marshal(respcls(message,status,data), parentwrapper.common_response_wrapper)
+        return marshal(prepare_response(message,status,data), parentwrapper.common_response_wrapper)
 
 
 def configure_email_recipient_and_sender(request):
@@ -140,7 +140,7 @@ def configure_email_recipient_and_sender(request):
 @ns.route('/test', endpoint='test_send_email')
 @ns.doc(params={"username": "username", "smtp": "smtp", "recipients": "recipients", "password": "password"})
 class TestMailSend(Resource):
-    '''tests email config by sending a test mail'''
+    """tests email config by sending a test mail"""
 
     parser = requestparse(["username", "smtp", "password", "recipients"],
                           [str, str, str, str],
@@ -148,18 +148,16 @@ class TestMailSend(Resource):
 
     @ns.expect(parser)
     def post(self):
-        from polylogyx.util.mitre import TestMail
-        test_mail = TestMail()
         args = self.parser.parse_args()
-        username = args['username']
-        password = args['password']
-        smtp = args['smtp']
-        recipients = args['recipients'].split(",")
-        is_credntials_valid = test_mail.test(username=username, password=password, smtp=smtp, recipients=recipients)
-        if is_credntials_valid:
+        args['email'] = args['username']
+        if args['recipients']:
+            args['recipients'] = args['recipients'].split(',')
+        else:
+            args['recipients'] = []
+        if send_test_mail(args):
             status = 'success'
             message = 'A Test mail is sent to the recipients successfully'
         else:
             status = 'failure'
             message = 'Could not validate credentials. Please enable less secure apps if using gmail and verify security alert prompt on your mail. '
-        return marshal(respcls(message,status), parentwrapper.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message,status), parentwrapper.common_response_wrapper, skip_none=True)

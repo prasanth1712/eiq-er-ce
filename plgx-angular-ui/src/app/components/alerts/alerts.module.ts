@@ -4,17 +4,17 @@ import { CommonModule } from '@angular/common';
 import { AlertsRoutingModule } from './alerts-routing.module';
 import { AlertsComponent } from './alerts.component';
 import { NgJsonEditorModule } from 'ang-jsoneditor';
+import { AlertDataComponent } from './alert-data/alert-data.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TagInputModule } from 'ngx-chips';
 import { Ng2SearchPipeModule } from 'ng2-search-filter';
 import { DataTablesModule } from 'angular-datatables';
 import { RouterModule } from '@angular/router';
 import { GlobalModule } from '../../global/global.module';
-import { NgDatepickerModule } from 'ng2-datepicker';
-
-
+import {NgDatepickerModule} from "ng2-datepicker";
+import {NgbDatepickerModule} from '@ng-bootstrap/ng-bootstrap';
 @NgModule({
-  declarations: [AlertsComponent],
+  declarations: [AlertsComponent,AlertDataComponent],
   imports: [
     CommonModule,
     AlertsRoutingModule,
@@ -26,7 +26,8 @@ import { NgDatepickerModule } from 'ng2-datepicker';
     Ng2SearchPipeModule,
     DataTablesModule,
     RouterModule,
-    NgDatepickerModule
+    NgDatepickerModule,
+    NgbDatepickerModule
     // TableModule,
   ]
 })

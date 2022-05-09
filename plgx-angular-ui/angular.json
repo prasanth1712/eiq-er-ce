@@ -1,8 +1,5 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
-  "cli": {
-    "analytics": "387b0f37-a4cc-4f06-aa46-2731b6ecc8f5"
-  },
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
@@ -50,16 +47,18 @@
 
               "src/libs/bootstrap-tagsinput/dist/bootstrap-tagsinput.css",
               "src/css/cube.css",
+              "src/css/patternfly/c3.min.css",
+              "src/css/patternfly/timeline.css",
               "src/css/query-builder.default.css",
               "src/assets/css/custom/d3-context-menu.css",
 
               "src/assets/demo/default/skins/header/base/light.css",
               "src/assets/demo/default/skins/header/menu/light.css",
+              "src/css/timeline/timeline.css",
               "src/css/datatable.css",
               "src/assets/vendors/custom/datatables/datatables.bundle.css",
               "node_modules/ngx-toastr/toastr.css",
               "src/css/custom.css"
-
             ],
             "scripts": [
               "node_modules/jquery/dist/jquery.min.js",

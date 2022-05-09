@@ -8,7 +8,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DataTablesModule } from 'angular-datatables';
 import { AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
 import { NgDatepickerModule } from 'ng2-datepicker';
-
+import {NgbDatepickerModule} from '@ng-bootstrap/ng-bootstrap';
 @NgModule({
   declarations: [HuntComponent],
   imports: [
@@ -19,7 +19,8 @@ import { NgDatepickerModule } from 'ng2-datepicker';
     ReactiveFormsModule,
     DataTablesModule,
     AngularMultiSelectModule,
-    NgDatepickerModule
+    NgDatepickerModule,
+    NgbDatepickerModule
   ]
 })
 export class HuntModule { }

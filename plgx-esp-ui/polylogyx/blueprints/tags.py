@@ -17,11 +17,11 @@ ns = Namespace('tags', description='tags related operations')
 @ns.route('/', endpoint = "list_tags")
 @ns.doc(params = {})
 class TagsList(Resource):
-    '''List all tags of the Nodes'''
+    """List all tags of the Nodes"""
 
     @ns.marshal_with(wrapper.response_taglist)
     def get(self):
-        '''returns API response of list of tags info'''
+        """returns API response of list of tags info"""
         list_dict_data = [{'value':tag.value,'nodes':[node.host_identifier for node in tag.nodes],'packs':[pack.name for pack in tag.packs],'queries':[query.name for query in tag.queries],'file_paths':tag.file_paths} for tag in dao.get_all_tags()]
 
         data = marshal(list_dict_data,wrapper.tag_wrapper, envelope='data')
@@ -32,7 +32,7 @@ class TagsList(Resource):
 @ns.route('/add', endpoint = "add_tags")
 @ns.doc(params={'tags': "tags to add"})
 class AddTag(Resource):
-    '''adds a new tag to the Tag model'''
+    """adds a new tag to the Tag model"""
 
     parser = requestparse(['tags'], [str], ["list of comma separated tags to add"], [True])
 
@@ -43,4 +43,4 @@ class AddTag(Resource):
         add_tags = create_tags(*add_tags)
         message = "Tags are added successfully"
         status = "success"
-        return marshal(respcls(message,status), parentwrapper.failure_response_parent)
+        return marshal(prepare_response(message,status), parentwrapper.failure_response_parent)

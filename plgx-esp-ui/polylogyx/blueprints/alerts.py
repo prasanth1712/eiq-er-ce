@@ -24,7 +24,7 @@ ns = Namespace('alerts', description='Alerts related operations')
 @ns.route('/', endpoint='alerts_post')
 @ns.doc(params={'host_identifier': 'Host identifier of the Node', 'rule_id':'rule id', 'query_name':'query name'})
 class ViewAlerts(Resource):
-    '''views the alerts'''
+    """views the alerts"""
     parser = requestparse(['host_identifier', 'rule_id', 'query_name'], [str, int, str], ["host identifier of the node", "rule id", "query name"], [False, False, False])
 
     @ns.expect(parser)
@@ -46,7 +46,7 @@ class ViewAlerts(Resource):
         if not data: status="failure";
         else: data = add_rule_name_to_alerts_response(marshal(data, alert_wrapper.alerts_wrapper, skip_none=True)); message = "Successfully received the alerts"; status = "success";
 
-        return marshal(respcls(message,status,data), parentwrapper.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message,status,data), parentwrapper.common_response_wrapper, skip_none=True)
 
 
 
@@ -54,12 +54,12 @@ class ViewAlerts(Resource):
 @ns.route('/data/<int:alert_id>', endpoint = "alerts_data")
 @ns.doc(params = {'alert_id':"id of the alert"})
 class AlertsData(Resource):
-    '''returns alert data'''
+    """returns alert data"""
 
     def get(self,alert_id):
         data = {}
         if not alert_id:
-            return marshal(respcls("Please! Provide the alert id", "failure"), parentwrapper.common_response_wrapper, skip_none=True)
+            return marshal(prepare_response("Please! Provide the alert id", "failure"), parentwrapper.common_response_wrapper, skip_none=True)
 
         alert = dao.get_alert_by_id(alert_id)
 
@@ -79,4 +79,4 @@ class AlertsData(Resource):
             status = "failure"
             data = None
         if not data: message="alerts data doesn't exists for the input given"
-        return marshal(respcls(message,status,data), parentwrapper.common_response_wrapper,skip_none=True)
+        return marshal(prepare_response(message,status,data), parentwrapper.common_response_wrapper,skip_none=True)

@@ -30,7 +30,17 @@
           <!--begin: host/Tagged -->
           <div class="kt-portlet">
             <div class="kt-portlet__body">
-            <h2 >Hosts Tagged <strong>{{ tags_val }}</strong></h2>
+
+            <div class="row mb-3">
+              <div class="col-6">
+                <h4 class="text-truncate" style="max-width: 400px;">Hosts Tagged <strong data-toggle="kt-tooltip" data-placement="top" title="{{ tags_val }}">{{ tags_val }}</strong></h4>
+              </div>
+              <div *AppHasRole="role.adminAccess" class="col-6">
+                <div class="kt-form__actions kt-form__actions--center" style="float:right">
+                  <button type="submit" class="btn btn-success" (click)='OpenAssignModal()'>Assign To Host</button>
+               </div>
+           </div>
+            </div>
             <div *ngIf="host_data_val?.length>0" class="">
               <table style=" font-weight: 500;font-size: 13px;" class="table table-hover table-striped- table-condensed">
                 <thead >
@@ -48,9 +58,10 @@
                     </td>
                     <td>{{host.os_info.name}}</td>
                     <td>{{host.last_ip}}</td>
-                    <td>
+                    <td *AppHasRole="role.adminAccess" >
                       <tag-input [theme]="'foundation-theme'"  [(ngModel)]='host.tags' (onAdd)="hosts_addTag(host.tags,host.id)" (onRemove)="hosts_removeTag($event,host.id)" [modelAsStrings]="true"></tag-input>
                     </td>
+                    <td *AppHasRole="role.userAccess">{{host?.tags}}</td>
                   </tr>
                 </tbody>
               </table>
@@ -60,11 +71,47 @@
             </div>
             </div>
           </div>
+          <div class="modal" id="tagsBulkAssignModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="display: none;z-index: 910; position: fixed; background-color: hsla(0, 0%, 0%, 0.45)">
+            <div class="modal-dialog modal-lg" role="document">
+              <div class="modal-content" style="width:650px;margin:auto" >
+                <div class="modal-header">
+                   <h5 class="title kt-portlet__head-title">Assign To Host</h5>
+                   <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="closeAssignModal()"></button>
+                </div>
+                <div class="modal-body kt-scroll" data-scroll="true" data-height="200" style="overflow:visible" data-scrollbar-shown="true">
+                  <form class="form form-horizontal" [formGroup]="SelectorForm" (ngSubmit)="onSubmit()">
+                    <div class="form-group row required form-group_margin">
+                        <label class="col-md-3 col-form-label">Select Host</label>
+                        <div class="col-7">
+                          <angular2-multiselect [data]="hostDropdownList"  formControlName="hostName"
+                           [settings]="hostDropdownSettings"
+                           (onDeSelectAll)="onDeSelectAllHostName($event)">
+                         </angular2-multiselect>
+                        </div>
+                    </div>
+                    <div class="form-group row required form-group_margin">
+                        <label class="col-md-3 col-form-label">Select OS</label>
+                        <div class="col-7">
+                          <angular2-multiselect [data]="osNameList"
+                                        [settings]="osNameListSettings"
+                                        (onDeSelectAll)="onDeSelectAllOsName($event)" formControlName="osName">
+                          </angular2-multiselect>
+                        </div>
+                    </div>
+                   <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" data-dismiss="modal">Assign</button>
+                    <button type="button" class="btn btn-outline-secondary" (click)="closeAssignModal()" data-dismiss="modal">Close</button>
+                  </div>
+                  </form>
+                </div>
+             </div>
+            </div>
+           </div>
           <!--end: Host/Tagged -->
           <!--begin: Packs/Tagged -->
           <div class="kt-portlet">
             <div class="kt-portlet__body">
-              <h2 >Packs Tagged <strong>{{ tags_val }}</strong></h2>
+              <h4 class="text-truncate" style="max-width: 400px;">Packs Tagged <strong data-toggle="kt-tooltip" data-placement="top" title="{{ tags_val }}">{{ tags_val }}</strong></h4>
              <!--Begin:: Content/Packs -->
              <div *ngIf="pack_data_val?.length>0" class="">
              <div class="row">
@@ -123,7 +170,8 @@
                    </div>
                    <div class="kt-portlet__body" style="padding:10px;">
                      <!-- begin:: Tags -->
-                     <tag-input [theme]="'foundation-theme'" [(ngModel)]='pack_data.tags' (onAdd)="pack_addTag(pack_data.tags,pack_data.id)" (onRemove)="pack_removeTag($event,pack_data.id)" [modelAsStrings]="true"></tag-input>
+                     <span *AppHasRole="role.userAccess">{{pack_data?.tags}}</span>
+                     <tag-input *AppHasRole="role.adminAccess"  [theme]="'foundation-theme'" [(ngModel)]='pack_data.tags' (onAdd)="pack_addTag(pack_data.tags,pack_data.id)" (onRemove)="pack_removeTag($event,pack_data.id)" [modelAsStrings]="true"></tag-input>
                      <!-- end:: Tags -->
                    </div>
                    <div class="kt-portlet__body" style="height: 528px; overflow-x:scroll; padding:1.25rem; margin-bottom:20px;">
@@ -134,7 +182,7 @@
                          <div class="card right-conf-card" style="margin-bottom: 0.3rem;">
                            <div class="collapsed style-accordion-background" data-toggle="collapse" data-skin="dark" attr.data-target="#{{pack_data.name}}-query-{{queries.value.id}}" data-placement="top" title="{{ queries.value.name }}">
                              {{ queries.value.name}}
-                             <a [routerLink]="['/queries/', queries.value.id,'edit']" class="query_edit" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Edit Query">
+                             <a *AppHasRole="role.adminAccess"  [routerLink]="['/packs/','query',queries.value.id,'edit']" class="query_edit" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Edit Query">
                                <img class="pull-right" src="./assets/media/icons/edit-document.svg" height="24" width="24" alt="">
                              </a>
                            </div>
@@ -153,7 +201,7 @@
                                      </td>
                                    </tr>
                                    <tr>
-                                     <td class="head-table">Interval</td>
+                                     <td class="head-table" style="width:145px">Interval <span class="intrvl-fnt-md">(in secs)</span></td>
                                      <td class="conf-table-val">
                                        <div class="desc-background_packs">{{queries.value.interval}}</div>
                                      </td>
@@ -163,7 +211,7 @@
                                      <td class="conf-table-val">
                                        <div class="desc-background_packs">{{queries.value.platform}}
                                          <span class="col-md-1"></span>
-                                         <button (click)="runAdHoc(queries.value.id)" class="btn-success"> Run Live </button>
+                                         <button *AppHasRole="role.adminAccess" (click)="runAdHoc(queries.value.id)" class="btn-success"> Run Live </button>
                                        </div>
                                      </td>
                                    </tr>
@@ -191,9 +239,11 @@
                                    </tr>
                                    <tr>
                                      <td class="head-table">Tags</td>
-                                     <td>
+                                     <td *AppHasRole="role.adminAccess" >
                                        <tag-input [theme]="'foundation-theme'" [(ngModel)]='queries.value.tags' (onAdd)="queries_addTag(queries.value.tags,queries.value.id)" (onRemove)="queries_removeTag($event,queries.value.id)" [modelAsStrings]="true"></tag-input>
                                      </td>
+                                     <td *AppHasRole="role.userAccess">{{queries.value.tags}}
+                                    </td>
                                    </tr>
                                  </tbody>
                                </table>
@@ -220,7 +270,7 @@
           <!--Begin:: Query/Tagged -->
           <div class="kt-portlet">
             <div class="kt-portlet__body">
-            <h2 >Queries Tagged <strong>{{ tags_val }}</strong></h2>
+            <h4 class="text-truncate" style="max-width: 400px;">Queries Tagged <strong data-toggle="kt-tooltip" data-placement="top" title="{{ tags_val }}">{{ tags_val }}</strong></h4>
              <!--Begin:: Content/Queries -->
              <div *ngIf="query_data_val?.length>0" class="">
                <div class="kt-content">
@@ -293,7 +343,7 @@
                          </div>
                          <div class="kt-portlet__head-toolbar">
                            <div class="kt-portlet__head-actions">
-                             <a [routerLink] = "['/queries/',query_data.id,'edit']" class="btn btn-clean btn-sm btn-icon btn-icon-md" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Edit Query">
+                             <a *AppHasRole="role.adminAccess" [routerLink] = "['/queries/',query_data.id,'edit']" class="btn btn-clean btn-sm btn-icon btn-icon-md" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Edit Query">
                                <i class="far fa-edit"></i>
                              </a>
                            </div>
@@ -313,7 +363,7 @@
                                    </td>
                                  </tr>
                                  <tr>
-                                   <td class="head-table-query">Interval</td>
+                                   <td class="head-table-query" style="width:145px">Interval <span class="intrvl-fnt-md">(in secs)</span></td>
                                    <td class="conf-table-val">
                                      <div class="desc-background-query">{{query_data.interval}}</div>
                                    </td>
@@ -323,7 +373,7 @@
                                    <td class="conf-table-val">
                                      <div class="desc-background-query">{{query_data.platform}}
                                        <span class="col-md-1"></span>
-                                       <button (click)="runAdHoc(query_data.id)" class="btn-success"> Run Live </button>
+                                       <button *AppHasRole="role.adminAccess"  (click)="runAdHoc(query_data.id)" class="btn-success"> Run Live </button>
                                      </div>
                                    </td>
                                  </tr>
@@ -349,10 +399,12 @@
                                  </tr>
                                  <tr>
                                    <td class="head-table-query">Tags</td>
-                                   <td>
-                                     <tag-input [theme]="'foundation-theme'" [(ngModel)]='query_data.tags' (onAdd)="queries_addTag(query_data.tags,query_data.id)" (onRemove)="queries_removeTag($event,query_data.id)" [modelAsStrings]="true"></tag-input>
+                                   <td *AppHasRole="role.adminAccess" >
+                                     <tag-input  [theme]="'foundation-theme'" [(ngModel)]='query_data.tags' (onAdd)="queries_addTag(query_data.tags,query_data.id)" (onRemove)="queries_removeTag($event,query_data.id)" [modelAsStrings]="true"></tag-input>
+
                                      <!-- <input multiple class="form-control bootstrap-tagsinput active" data-role="tagsinput" placeholder="Add tags to schedule this query" value="{{ query.tags | map(attribute='value') | sort | join(',') }}" data-uri="{{ url_for('manage.tag_query', query_id=query.id) }}" > -->
                                    </td>
+                                   <td *AppHasRole="role.userAccess">{{query_data?.tags}}</td>
                                  </tr>
                                  <tr>
                                    <td class="head-table-query">Snapshot</td>

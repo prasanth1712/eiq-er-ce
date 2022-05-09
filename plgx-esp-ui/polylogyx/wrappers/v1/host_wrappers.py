@@ -16,6 +16,7 @@ nodewrapper = api.model('nodewrapper', {
     'host_identifier': fields.String(),
     'node_key': fields.String(),
     'last_ip': fields.String(),
+    'platform': fields.String(),
     'os_info': fields.Raw(),
     'node_info': fields.Nested(node_info_wrapper, default=None),
     'network_info': fields.Raw(),

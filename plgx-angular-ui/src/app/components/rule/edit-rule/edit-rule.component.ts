@@ -12,7 +12,7 @@ import { Location } from '@angular/common';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { Title } from '@angular/platform-browser';
-
+import { AuthorizationService } from '../../../dashboard/_services/Authorization.service';
 
 
 declare  function init_querybuilder([]): any;
@@ -74,7 +74,9 @@ tactics_tech_data :any = [];
 
 radioItems: Array<string>;
 model = { rule_type: 'MITRE' };
-
+isEmailEnabled = false;
+isAddDescriptionEmail = false;
+hasAcess=this.authorizationService.hasAccess()
   constructor(
     private _Activatedroute: ActivatedRoute,
     private commonapi: CommonapiService,
@@ -84,6 +86,7 @@ model = { rule_type: 'MITRE' };
     private http: HttpClient,
     private router: Router,
     private titleService: Title,
+    private authorizationService: AuthorizationService,
 
   ) {this.radioItems = ['DEFAULT', 'MITRE'];
   this.updateRule= this.fb.group({
@@ -95,11 +98,12 @@ model = { rule_type: 'MITRE' };
     severity:'',
     rule_type:'',
     technique_id:'',
-    tactics:''
+    tactics:'',
+    platform:''
   }) }
 
   ngOnInit() {
-    this.titleService.setTitle(this.commonvariable.APP_NAME+"-"+"Rule");
+    this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Rule");
 
     this.dropdownAlertSettings = {
       singleSelection: false,
@@ -146,6 +150,9 @@ model = { rule_type: 'MITRE' };
 
     this.sub = this._Activatedroute.paramMap.subscribe(params => {
       this.id = params.get('id');
+       if(isNaN(this.id)){
+	      this.pagenotfound();
+       }
       let additional_config =this.commonapi.update_rule_api(this.id).subscribe(res =>{
         this.ruledata=res;
         if(this.ruledata.status == "failure"){
@@ -168,9 +175,10 @@ model = { rule_type: 'MITRE' };
           this.mitre_show = false;
         }
         /* Mitre and default radio button edit End*/
-
+        // if(this.ruledata_data.alert_description == true){ this.isEmailEnabled  = true}
         this.selectedAlertItems = this.getAlertersDict(this.ruledata_data.alerters);
         this.selectedTacticsItems = this.getTacticsDict(this.ruledata_data.tactics);
+        this.enableAddDescriptionEmail(true);
       }
       })
     });
@@ -185,7 +193,10 @@ model = { rule_type: 'MITRE' };
 
     $(document).ready(() => {
       this.query_builder = $('#rules-hidden').val();
-      let selected_alerts = this.f.alerters.value;
+      if(this.query_builder == '')
+        return;
+      else{
+        let selected_alerts = this.f.alerters.value;
       let selected_tactics = this.f.tactics.value;
       this.updateRuleObj={
         "name":this.f.name.value,
@@ -193,6 +204,8 @@ model = { rule_type: 'MITRE' };
         "alerters":this.f.alerters.value,
         "status":this.f.status.value,
         "severity":this.f.severity.value,
+        "platform":this.f.platform.value,
+        "alert_description":this.isAddDescriptionEmail,
         "type":this.f.rule_type.value,
       }
       var alerters_array = [];
@@ -217,7 +230,7 @@ model = { rule_type: 'MITRE' };
       this.updateRuleObj["alerters"] = this.getStringConcatinated(alerters_array);
 
       this.updateRuleObj["conditions"]= JSON.parse(this.query_builder);
-      this.http.post<DataTablesResponse>(environment.api_url+"/rules/"+this.id, this.updateRuleObj,{ headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('JWTkey')}}).subscribe(res =>{
+      this.http.post<DataTablesResponse>(environment.api_url+"/rules/"+this.id, this.updateRuleObj,{ headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('token')}}).subscribe(res =>{
 
         this.result=res;
         if(this.result && this.result.status === 'failure'){
@@ -243,6 +256,7 @@ model = { rule_type: 'MITRE' };
             },2000);
         }
    });
+      }
     })
 
   }
@@ -250,7 +264,7 @@ model = { rule_type: 'MITRE' };
   onSelect(technique_ids) {
     this.selectedTacticsItems = undefined;
     var tactics_tech_data = [];
-    this.http.post<DataTablesResponse>(environment.api_url + "/rules/tactics", {"technique_ids":technique_ids}, {headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('JWTkey')}}).subscribe(res => {
+    this.http.post<DataTablesResponse>(environment.api_url + "/rules/tactics", {"technique_ids":technique_ids}, {headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('token')}}).subscribe(res => {
         this.result = res;
         for (const i in this.result.data.tactics) {
           for (const tactic_index in this.dropdownTacticsList) {
@@ -325,19 +339,33 @@ model = { rule_type: 'MITRE' };
 
    }
    onItemSelect(item:any){
-    console.log(item);
-}
-OnItemDeSelect(item:any){
-    console.log(item);
-}
-onSelectAll(items: any){
-    console.log(items);
-}
-onDeSelectAll(items: any){
-    console.log(items);
-}
-pagenotfound() {
-    this.router.navigate(['/pagenotfound']);
-}
+     this.enableAddDescriptionEmail(true);
+   }
+   OnItemDeSelect(item:any){
+     this.enableAddDescriptionEmail(true);
+   }
+   onSelectAll(items: any){
+     this.enableAddDescriptionEmail(true);
+   }
+   onDeSelectAll(items: any){
+     this.enableAddDescriptionEmail(false);
+   }
+   clickreset(){
+     this.mitre_show=false
+   }
+   enableAddDescriptionEmail(isEnable){
+     this.isEmailEnabled = false;
+     if(isEnable){
+       for (const i in this.selectedAlertItems) {
+         if( this.selectedAlertItems[i].value == 'email' ){ this.isEmailEnabled = true; }
+       }
+     }
+    }
 
+   addDescriptionEmail(e){
+      this.isAddDescriptionEmail = e.target.checked;
+   }
+   pagenotfound() {
+     this.router.navigate(['/pagenotfound']);
+   }
 }

@@ -1,0 +1,93 @@
+#!/bin/sh
+#
+#       Example of init script for UNIX plgx_agent
+#
+# description: Example of UNIX plgx_agent
+
+### BEGIN INIT INFO
+# Provides:       plgx_agent
+# Required-Start: $rsyslog
+# Required-Stop:
+# Should-Start:
+# Should-Stop:
+# Default-Start: 2 3 4 5
+# Default-Stop:  0 1 6
+# Short-Description: start and stop example of plgx_agent
+# Description: Example of UNIX plgx_agent
+### END INIT INFO
+
+# Source function library.
+if [ -e /etc/init.d/functions ]; then
+  . /etc/init.d/functions
+fi
+
+PROG="plgx_agent"
+APP="/usr/bin/$PROG"
+PIDFILE="/var/run/plgx_agent.pid"
+
+start() {
+	[ -x $exec ] || exit 5
+
+	if [ -f $PIDFILE ]; then
+		PID=$(cat $PIDFILE)
+		PROCNAME=$(ps -p $PID -o comm\=)
+		if [ "$PROCNAME" = "$PROG" ]; then
+			printf "\n$PROG already running with pid $PID.\n"
+			return 0
+		else
+			rm -f $PIDFILE
+		fi
+	fi
+
+	printf "\nStarting $PROG"
+	$APP -r
+	RETVAL=$?
+
+	return $RETVAL
+}
+
+stop() {
+	if [ ! -f $PIDFILE ] ; then
+		printf "\nPid file for $PROG not found.\n"
+		RETVAL=0
+	else
+		PID=$(cat $PIDFILE)
+		printf "\nStopping $PROG with pid $PID\n"
+		pkill -g $PID
+		rm -f $PIDFILE
+		RETVAL=$?
+	fi
+
+	return $RETVAL
+}
+
+restart() {
+    stop
+    start
+}
+
+status() {
+  if [ -f $PIDFILE ]; then
+    PID=$(cat $PIDFILE)
+    PROCNAME=$(ps -p $PID -o comm\=)
+    if [ "$PROCNAME" = "$PROG" ]; then
+      echo "$PROG is already running: $PID"
+      RETVAL=0
+    else
+      echo "$PROG is not running but a stale pidfile was found."
+      RETVAL=7
+    fi
+  else
+    echo "$PROG is not running. no pidfile found."
+    RETVAL=7
+  fi
+}
+
+case "$1" in
+    start) start ;;
+    stop) stop ;;
+    restart) restart ;;
+    status) status ;;
+esac
+
+exit ${RETVAL}

@@ -17,7 +17,7 @@ ns = Namespace('iocs', description='iocs related operations')
 @ns.route('/', endpoint='get_ioc_data')
 @ns.doc(params={})
 class ListIocs(Resource):
-    '''lists ioc json data'''
+    """lists ioc json data"""
     def get(self):
         data = marshal(dao.get_intel_data('self'), ioc_wrappers.ioc_wrapper, skip_none=True)
         if data:
@@ -26,14 +26,14 @@ class ListIocs(Resource):
         else:
             status = "failure"
             message = "There is no intel data to display.."
-        return marshal(respcls(message,status,data),parentwrapper.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message,status,data),parentwrapper.common_response_wrapper, skip_none=True)
 
 
 @require_api_key
 @ns.route('/add', endpoint='add_ioc')
 @ns.doc(params={'file': 'ioc json file to upload'})
 class AddIocs(Resource):
-    '''uploads and adds an ioc file to the iocs folder'''
+    """uploads and adds an ioc file to the iocs folder"""
     parser = requestparse(['file'], [datastructures.FileStorage], ['Threat file'], [True])
 
     @ns.expect(parser)
@@ -55,4 +55,4 @@ class AddIocs(Resource):
             message = str(e)
             #message='Invalid JSON format...! Please upload JSON file only'
             status='failure'
-        return marshal(respcls(message,status),parentwrapper.common_response_wrapper,skip_none=True)
+        return marshal(prepare_response(message,status),parentwrapper.common_response_wrapper,skip_none=True)

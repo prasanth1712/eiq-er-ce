@@ -7,3 +7,5 @@ echo $ENROLL_SECRET>resources/secret.txt
 echo $ENROLL_SECRET>resources/windows/x64/secret.txt
 echo $ENROLL_SECRET>resources/windows/x86/secret.txt
 echo $ENROLL_SECRET>resources/linux/x64/secret.txt
+echo $ENROLL_SECRET>resources/darwin/secret.txt
+

@@ -58,7 +58,7 @@
     color: #fff;
   }
   .jsoneditor-menu{
-    border-bottom:1px solid #31b2a4 
+    border-bottom:1px solid #31b2a4
   }
   .jsoneditor{
     border: thin solid #31b2a4;
@@ -126,23 +126,27 @@
   .alerts_datatable .alerts_resolve_btn_width{
     width:80px
   }
-.routerLink_Font_colour{
-  color: #31b2a4 !important;
-}
-.tabs-line-success.nav.nav-tabs .nav-link:hover, .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link.active,.nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link:hover, .nav-tabs.nav-tabs-line.nav-tabs-line-success a.nav-link.active {
-  color: #30B0A4 !important;
-  border-bottom: 1px solid #30B0A4 !important;
-  font-weight: 500;
+  .page-item .page-link:hover{
+      cursor: pointer;
   }
-  .btn .btn-success .active{
-    color: #F7F7F7 !important;
-    border-color: #52B2A8 !important;
-    background-color:#52B2A8 !important;
+  .page-item.active .page-link{
+      color: #fff !important;
+      background-color: #52B2A8 !important;
+      border-color: #52B2A8 !important;
   }
-.query_tab .tab-content .nav-pills .nav-item .nav-link.active{
-  background-color: #30B0A4 !important;
-  color: #ffffff !important;
-}
-.fnt-green{
-  color: #30B0A4 !important;
-}
+  .calender-img{
+    padding-left: 10px;
+    padding-right: 3px;
+    padding-top: 4px;
+    background-color: #eef1ff;
+    border-color: #eff2ff;
+  }
+  .calender-img{
+    color: #184ba1;
+  }
+  .intrvl-fnt-md{
+    font-weight:500;font-size:12px
+  }
+  .intrvl-fnt-sm{
+    font-weight:500;font-size:10px
+  }

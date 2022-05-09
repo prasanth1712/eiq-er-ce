@@ -795,16 +795,45 @@ export default function create_timeline(jsonFilteredArray, arg,alasql_) {
 
   var start = new Date((alerted_event.time - 30) * 1000),
     today = new Date((alerted_event.time * 1000 + 30000));
+  var PageNumber = 1;
   var timeline_event_table = $('#pf-timeline-data').DataTable({
-    "pagingType": "full_numbers"
+    "pagingType": "full_numbers",
+    drawCallback: function () {
+      $('.paginate_button').on('click', (e) =>  {
+          var info = timeline_event_table.page.info();
+          if(e.currentTarget.className == 'paginate_button page-item ' || e.currentTarget.className == 'paginate_button page-item active'){
+            PageNumber = e.currentTarget.innerText;
+            redraw_event_timeline_table(timeline_event_table, eventsdata,PageNumber);
+          }
+          else if(e.currentTarget.className == 'paginate_button page-item next'){
+            PageNumber ++ ;
+            redraw_event_timeline_table(timeline_event_table, eventsdata,PageNumber);
+          }
+          else if(e.currentTarget.className == 'paginate_button page-item previous'){
+            PageNumber -- ;
+            redraw_event_timeline_table(timeline_event_table, eventsdata,PageNumber);
+          }
+          else if(e.currentTarget.className == 'paginate_button page-item first'){
+            PageNumber =  1//First record
+            redraw_event_timeline_table(timeline_event_table, eventsdata,PageNumber);
+          }
+          else if(e.currentTarget.className == 'paginate_button page-item last'){
+            PageNumber =  info.pages;//last record
+            redraw_event_timeline_table(timeline_event_table, eventsdata,PageNumber);
+          }
+        });
+      }
+
   });
+
   timeline = d3.chart.timeline()
     .end(today)
     .start(start)
     .minScale(1)
-    .maxScale(60).eventGrouping(1000).labelWidth(60)
+    .maxScale(60).eventGrouping(1000).labelWidth(80)
     .eventClick(function (el) {
-      redraw_event_timeline_table(timeline_event_table, el);
+      Initialize_Event_Pagination(timeline_event_table, el);
+      redraw_event_timeline_table(timeline_event_table, el,1);
     });
 
   element = d3.select('#pf-timeline').append('div');
@@ -961,18 +990,12 @@ setInterval(() => {
   }
 }, 0);
 
-
-
-
-
-function redraw_event_timeline_table(timeline_event_table, el) {
-  var eventsData = document.getElementById('eventsData');
-
-  var length = 1;
+function Initialize_Event_Pagination(timeline_event_table, el) {
+  var length = 10;
   timeline_event_table.clear();
 
   if (el.hasOwnProperty("events")) {
-    length = el.events.length;
+    // length = el.events.length;
     for (let index = 0; index < el.events.length; index++) {
       timeline_event_table.row.add(el.events);
     }
@@ -983,19 +1006,36 @@ function redraw_event_timeline_table(timeline_event_table, el) {
   timeline_event_table.page.len(length);
 
   timeline_event_table.draw();
+}
+
+
+var eventsdata = '';
+function redraw_event_timeline_table(timeline_event_table, el,pagenumber) {
+  var eventsData = document.getElementById('eventsData');
+  eventsdata = el;
+  var page_number = pagenumber;
+  var page_size = 10;
   while (eventsData.firstChild) eventsData.removeChild(eventsData.firstChild);
-
   if (el.hasOwnProperty('events')) {
+  var EventList = el.events.slice((page_number - 1) * page_size,page_number * page_size);
+    for (let i = 0; i < EventList.length; i++) {
 
-
-    for (let i = 0; i < el.events.length; i++) {
-
-      var eid=el.events[i].eid;
+      var eid=EventList[i].eid;
       if(eid==undefined){
         eid='View';
       }
       var TableRow = '';
-
+      var eid = '';
+      if(!EventList[i].eid){
+        if(EventList[i].eventid){
+          eid = EventList[i].eventid;
+        }
+        else{
+          eid=i+1
+        }
+      }else{
+        eid = EventList[i].eid;
+      }
       TableRow += '<tr><td>' +
         '<div class="card" style="margin-bottom: 0.2rem;">' + '<div class="card-header" id="label' + eid + '">' +
         '<h5 class="mb-0" style="">' + '<button class="btn dropdown-toggle" data-toggle="collapse" data-target="#' + eid + '" aria-expanded="true" aria-controls="' + eid + '">'
@@ -1017,11 +1057,11 @@ function redraw_event_timeline_table(timeline_event_table, el) {
       var tbl = document.createElement("table");
       tbl.setAttribute("class", "table table-striped- table-bordered table-hover table-checkable");
       tbl.setAttribute("style", "margin-bottom: 0rem;");
-      for (let child in el.events[i]) {
+      for (let child in EventList[i]) {
         if (child === 'date') {
 
         } else if (child === 'domain_name' || child === 'md5') {
-          var data = el.events[i][child];
+          var data = EventList[i][child];
           var domain_md5_link
           if (child === 'domain_name') {
             domain_md5_link = "https://www.virustotal.com/#/domain/" + data.substring(1, data.length);
@@ -1033,7 +1073,7 @@ function redraw_event_timeline_table(timeline_event_table, el) {
           var cell1 = document.createElement("td");
           var cell2 = document.createElement("td");
           var firstCellText = document.createTextNode(child);
-          var secondCellText = document.createTextNode(el.events[i][child]);
+          var secondCellText = document.createTextNode(EventList[i][child]);
           var atag = document.createElement("a");
           atag.target = "_blank";
           atag.style.color = "blue";
@@ -1056,7 +1096,7 @@ function redraw_event_timeline_table(timeline_event_table, el) {
           var cell1 = document.createElement("td");
           var cell2 = document.createElement("td");
           var firstCellText = document.createTextNode(child);
-          var secondCellText = document.createTextNode(el.events[i][child]);
+          var secondCellText = document.createTextNode(EventList[i][child]);
           cell1.appendChild(firstCellText);
           cell1.style.fontSize = "11px";
           cell1.style.fontWeight = 600;

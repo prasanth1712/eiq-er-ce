@@ -52,9 +52,20 @@
                         </div>
                         <div class="col-4" >
                           <div class="row">
-                            <span style="margin-top:auto;margin-bottom: auto;margin-right:10px;" >ending(UTC)</span>
+                            <span style="margin-top:10px;margin-bottom: auto;margin-right:10px;" data-toggle="tooltip" data-placement="top" title="UTC Time Zone">Ending Date</span>
 
-                            <ng-datepicker [(ngModel)]="datepicker_date['date']" [ngModelOptions]="{standalone: true}" (ngModelChange)="myHandler()" ></ng-datepicker>
+                            <!-- <ng-datepicker [(ngModel)]="datepicker_date['date']" [ngModelOptions]="{standalone: true}" (ngModelChange)="myHandler()" ></ng-datepicker> -->
+                            <form class="form-inline">
+                              <div class="form-group">
+                                <div class="input-group">
+                                  <input class="form-control" placeholder="yyyy-mm-dd"
+                                         name="dp" [(ngModel)]="selectedDate['date']" [maxDate]="maxDate"  (click)="d.toggle()" (ngModelChange)="myHandler()"  ngbDatepicker #d="ngbDatepicker">
+                                  <div class="input-group-append">
+                                    <button class="btn calendar calender-img" (click)="d.toggle()" type="button"><i class="far fa-calendar-alt fa-2x" aria-hidden="true"></i></button>
+                                  </div>
+                                </div>
+                              </div>
+                            </form>
                           </div>
                         </div>
                       </div>
@@ -81,17 +92,17 @@
               <table  datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable" style="text-align: left;" >
                 <thead>
                   <tr>
-                    <th style="width:15%">Host Name</th>
-                    <th style="width:15%">Query Name</th>
+                    <th class="wd">Host Name</th>
+                    <th class="wd">Query Name</th>
                     <th>Columns</th>
                   </tr>
                 </thead>
                 <tbody >
                     <tr *ngFor="let alrowdata of search_data_output; let i = index ">
                         <td style="vertical-align:left;">
-                          <a [routerLink]="['/hosts/', alrowdata.node_id]" class="active" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="click -> Host Details" style="color:#5867dd;font-weight: 600;">{{alrowdata.hostname}}</a>
+                          <a [routerLink]="['/hosts/', alrowdata.node_id]" class="active ft-sz" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="click -> Host Details" style="color:#5867dd;font-weight: 600;">{{alrowdata.hostname}}</a>
                         </td>
-                        <td style="vertical-align:left;">
+                        <td class="ft-sz" style="vertical-align:left;">
 
                         {{alrowdata.name}}
                         </td>
@@ -100,10 +111,10 @@
                           <div (click)="ele.class = ele.class == 'showChildren' ? '' : 'showChildren'" [ngClass]="{ hideChildren : ele.class !== 'showChildren' }" #ele>
                             <font color='#16ace3'>
                                 <div >
-                                  <div class="sql hljs desc-background_rules container" [class.show_1]="alrowdata.visible_1" style="cursor: pointer;">
+                                  <div class="sql hljs desc-background_rules container ft-sz" [class.show_1]="alrowdata.visible_1" style="cursor: pointer;">
                                     {{myjson.stringify(alrowdata.columns)}}
                                   </div>
-                                  <span *ngIf="myjson.stringify(alrowdata.columns).length > 300" style="cursor: pointer;" class="kt-link" (click)="alrowdata.visible_1 = !alrowdata.visible_1">{{ alrowdata.visible_1 ? 'Read less': 'Read More' }}</span>
+                                  <span *ngIf="myjson.stringify(alrowdata.columns).length > 200" style="cursor: pointer;padding-left:10px" class="kt-link" (click)="alrowdata.visible_1 = !alrowdata.visible_1; $event.stopPropagation()">{{ alrowdata.visible_1 ? 'Read less': 'Read More' }}</span>
                                 </div>
                         </font>
                           <div (click)="action($event);false" >

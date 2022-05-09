@@ -1,19 +1,24 @@
 import {AfterViewInit, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
+import {DataTablesModule} from 'angular-datatables';
 import {DataTableDirective} from 'angular-datatables';
 import {Subject} from 'rxjs';
 import {HttpClient, HttpResponse} from '@angular/common/http';
 import {CommonapiService} from '../../dashboard/_services/commonapi.service';
 import {JsonEditorComponent, JsonEditorOptions} from 'ang-jsoneditor';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+
 import {environment} from '../../../environments/environment';
 import {Router, ActivatedRoute} from '@angular/router';
+import '../../../assets/vendors/timeline/lib/timeline.js';
+import '../../../assets/vendors/timeline/lib/timeline-locales.js';
 import {NgDatepickerModule, DatepickerOptions} from 'ng2-datepicker';
 import {NgModule} from '@angular/core';
-import {Datatablecolumndefs} from '../../dashboard/_helpers/datatable-columndefs';
+import { Location, DatePipe } from '@angular/common';
+import {NgbDateStruct,NgbDate, NgbCalendar,NgbInputDatepickerConfig} from '@ng-bootstrap/ng-bootstrap';
+declare var links: any;
 import swal from 'sweetalert';
-declare var $: any;
-import 'datatables.net';
-
-
+import {moment} from "vis-timeline";
+import {saveAs} from 'file-saver';
 class DataTablesResponse {
   data: any[];
   draw: number;
@@ -25,19 +30,23 @@ class DataTablesResponse {
 @Component({
   selector: 'app-alerts',
   templateUrl: './alerts.component.html',
-  styleUrls: ['./alerts.component.css', './alerts.component.scss']
+  styleUrls: ['./alerts.component.css', './alerts.component.scss'],
+  providers: [DatePipe]
 })
 @NgModule({
   imports: [
-    NgDatepickerModule
+    NgDatepickerModule, DatePipe
   ],
 
 })
 
 export class AlertsComponent implements AfterViewInit, OnDestroy, OnInit {
   @ViewChild(JsonEditorComponent, {static: true}) editor: JsonEditorComponent;
+  selectedDate = {};
   public editorOptions: JsonEditorOptions;
   alertSource: any;
+  options = {};
+  datepicker_date = {};
   virusTotalCount: number;
   alert_data:any;
   IBMForceTotalCount: number;
@@ -53,36 +62,60 @@ export class AlertsComponent implements AfterViewInit, OnDestroy, OnInit {
   masterSelected = {};
   checklist = {};
   checkedList = {};
+  fetched = {};
   dtTrigger: Subject<any>[] = [];
+  events_ids = [];
   @ViewChildren(DataTableDirective)
   dtElements: QueryList<DataTableDirective>;
   activeAlerts: any;
-
-  fetched = {};
-  aggregated_data:any={};
-  alert_selectedItem:any;
-  datepicker_date = {};
-  aggregate_tab=[];
   purge_data_duration:any;
+  submitted = false;
+  verdict: any;
+  AlertId: any;
+  source: any;
+  multipleSelect:boolean=false;
+  resolveAlertForm:FormGroup;
+  alert_selectedItem:any;
+  aggregated_data:any={};
+  aggregate_tab=[];
+  aggregatedOptions: any = {};
+  id: any;
+  aggregateoutput:any;
+  aggregatelist:any;
+  dtTriggerAggregatedAlerts: Subject<any> = new Subject();
+  myjson: any = JSON;
+  aggregateTabLength:any;
+  isAlertSelected:boolean = false;
   constructor(
     private commonapi: CommonapiService,
     private http: HttpClient,
     private _Activatedroute: ActivatedRoute,
-    private columndefs: Datatablecolumndefs,
+    private _location: Location,
+    private calendar: NgbCalendar,
+    private config: NgbInputDatepickerConfig,
+    private formBuilder: FormBuilder,
+    private datePipe: DatePipe,
   ) {
-
   }
 
   toggle: boolean = false;
 
   ngOnInit() {
+
     $.fn.dataTable.ext.errMode = 'none';
     this._Activatedroute.params.subscribe(params => {
+
       this.activeAlerts = this._Activatedroute.snapshot.queryParams["id"];
-      window.history.pushState("object or string", "Title", "/"+window.location.href.substring(window.location.href.lastIndexOf('/') + 1).split("?")[0]);
+      if(this.activeAlerts!=undefined){
+      window.history.replaceState("object or string", "Title", "/"+window.location.href.substring(window.location.href.lastIndexOf('/') + 1).split("?")[0]);
+      }
     });
-    $('#hidden_button').bind('click', (event, source) => {
-      this.toggleDisplay(source);
+    this.resolveAlertForm = this.formBuilder.group({
+      comment: '',
+      resolveAlert: ['', Validators.required],
+    })
+    $('#hidden_button').bind('click', (event, source, event_ids) => {
+      this.toggleDisplay(source, event_ids);
     });
     this.get_Platform_settings();
     this.commonapi.alerts_source_count_api().subscribe((res: any) => {
@@ -102,6 +135,8 @@ export class AlertsComponent implements AfterViewInit, OnDestroy, OnInit {
         active_souce = this.alertSource.find(x => x.name == this.activeAlerts).name;
       }
       if (this.alertSource.length > 0) {
+
+
         for (let i = 0; i < this.alertSource.length; i++) {
 
           if (this.alertSource[i].name == "virustotal") {
@@ -121,15 +156,36 @@ export class AlertsComponent implements AfterViewInit, OnDestroy, OnInit {
           }
         }
       }
+
+
       for (let i = 0; i < this.alertSource.length; i++) {
+
           this.getAlertData(this.alertSource[i].name);
+
+
       }
       setTimeout(() => {
 
         this.show_hide_div(active_souce);
-
       }, 300);
+
+
     })
+    this.GetAggregatedDataFilterWithQueryName(null);
+  }
+  validDateFormat(value) {
+    if(value) {
+      let date = value.substring(0, 10);
+      let time = value.substring(11, 19);
+      let millisecond = value.substring(20)
+      let date1 = date.split('-')[0];
+      let date2 = date.split('-')[1];
+      let date3 = date.split('-')[2];
+      let validDate = date3+'-'+date2+'-'+date1 + ' ' + time;
+      return validDate
+    }
+
+    return null;
 
   }
 
@@ -142,7 +198,6 @@ export class AlertsComponent implements AfterViewInit, OnDestroy, OnInit {
       serverSide: true,
       processing: true,
       searching: true,
-      destroy: true,
       InfoPostFix:false,
       InfoFiltered:false,
       dom: '<"pull-right"B><"pull-right"f><"pull-left"l>tip',
@@ -154,6 +209,7 @@ export class AlertsComponent implements AfterViewInit, OnDestroy, OnInit {
           }
         }
       ],
+
       "language": {
         "search": "Search: ",
         "sInfoFiltered": "",
@@ -170,26 +226,38 @@ export class AlertsComponent implements AfterViewInit, OnDestroy, OnInit {
           body['searchterm'] = body.search.value;
           searching=true;
         }
+
+        if (this.events_ids.length > 0) {
+          body['event_ids'] = this.events_ids;
+
+        }
+
         var duration = $('#duration_' + source).val();
 
         var type = $('#type_' + source).val();
 
 
-        var date = this.datepicker_date[source];
-        if(date instanceof Date){
-          date=this.convertDate(date);
-        }
+        // var date = this.datepicker_date[source];
+        var selectedDate = this.selectedDate[source];
+        var date = selectedDate.year + '-' + selectedDate.month + '-' + selectedDate.day;
+        // if(date instanceof Date){
+        //   date=this.convertDate(date);
+        // }
         body['type']=type;
         body['duration']=duration;
+
 
         if (body['searchterm'] == undefined) {
             body['searchterm'] = "";
         }
+
         body['date']=date;
+
+
         this.http.post<DataTablesResponse>(environment.api_url + "/alerts", body, {
           headers: {
             'Content-Type': 'application/json',
-            'x-access-token': localStorage.getItem('JWTkey')
+            'x-access-token': localStorage.getItem('token')
           }
         }).subscribe(res => {
           this.checklist[source] = [];
@@ -263,33 +331,18 @@ export class AlertsComponent implements AfterViewInit, OnDestroy, OnInit {
     }
   }
 
-  // getAlertData(source) {
-  //   var today = new Date();
-  //   if(this.dtTrigger[source] == undefined) {
-  //     this.dtTrigger[source] = new Subject<any>();
-  //     this.datepicker_date[source]=today;
-  //     this.options[source] = {
-  //       minYear: 1970,
-  //       maxYear: 2030,
-  //       displayFormat: 'MMM D[,] YYYY',
-  //       barTitleFormat: 'MMMM YYYY',
-  //       dayNamesFormat: 'dd',
-  //       firstCalendarDay: 0, // 0 - Sunday, 1 - Monday
-  //       maxDate: today,  // Maximal selectable date
-  //       barTitleIfEmpty: 'Click to select a date',
-  //       placeholder: 'Click to select a date', // HTML input placeholder attribute (default: '')
-  //       addClass: 'form-control', // Optional, value to pass on to [ngClass] on the input field
-  //       addStyle: {}, // Optional, value to pass to [ngStyle] on the input field
-  //       fieldId: 'datepicker_' + source, // ID to assign to the input field. Defaults to datepicker-<counter>
-  //       useEmptyBarTitle: false, // Defaults to true. If set to false then barTitleIfEmpty will be disregarded and a date will always be shown
-  //     };
+  getAlertData(source) {
+    var today = new Date();
+    if(this.dtTrigger[source] == undefined) {
+      this.dtTrigger[source] = new Subject<any>();
+      this.selectedDate[source] = this.calendar.getToday();
+      // this.datepicker_date[source]=today;
+    }
 
-  //   }
-
-  //   this.all_options[source] = this.get_options(source);
+    this.all_options[source] = this.get_options(source);
 
 
-  // }
+  }
 
   ngAfterViewInit(): void {
   }
@@ -333,45 +386,85 @@ export class AlertsComponent implements AfterViewInit, OnDestroy, OnInit {
     }
   }
 
-  resolveAlert(AlertId, source) {
-    let resolve_alerts_data={}
-    resolve_alerts_data["resolve"]=true
-    resolve_alerts_data['alert_ids']=AlertId
-    swal({
-      title: 'Are you sure?',
-      text: "Want to resolve the alert!",
-      icon: 'warning',
-      buttons: ["Cancel", "Yes,Resolve"],
-      dangerMode: true,
-      closeOnClickOutside: false,
-    }).then((willDelete) => {
-      if (willDelete) {
-        this.commonapi.AlertsResolve(resolve_alerts_data).subscribe(res => {
-          if (res['status'] == "success") {
-            swal({
-              icon: 'success',
-              title: 'Resolved',
-              text: 'Alert has been successfully resolved',
-              buttons: [false],
-              timer: 3000
-            })
-          } else {
-            swal({
-              icon: "warning",
-              text: res['message'],
-            })
-          }
-          setTimeout(() => {
-            this.dtTrigger[source].next();
-          }, 2000);
-        })
+  resolveAlert(alertId, source) {
+    this.AlertId = alertId;
+    this.source = source;
+    this.openResolveAlert();
+  }
+  multiResolveAlert(source,selectOption) {
+    this.isAlertSelected = false;
+    this.checklist[source].forEach((value) => {
+      if(value.isSelected == true){this.isAlertSelected = true}
+    });
+    this.source = source;
+    this.multipleSelect = selectOption;
+    if(this.isAlertSelected){
+      this.openResolveAlert();
+    }
+    else{
+      swal({
+        icon: "warning",
+        text: "Please Select Alert",
+      })
+    }
 
+  }
+  openResolveAlert(){
+    let modal = document.getElementById("resolveAlertModal");
+    modal.style.display = "block";
+  }
+  onItemChange(value){
+    console.log(value);
+    this.verdict = value;
+  }
+  resolveAlertSubmitForm(){
+    this.submitted = true;
+    let resolveAlertsData={}
+    resolveAlertsData["resolve"]=true
+
+    if(this.multipleSelect == false){   resolveAlertsData['alert_ids']=this.AlertId;     }
+    else{ resolveAlertsData['alert_ids']= this.checkedList[this.source]; }
+
+    if(this.verdict == 'True Positive'){
+      resolveAlertsData['verdict'] = true;
+    }
+    else if(this.verdict == 'False Positive'){
+      resolveAlertsData['verdict'] = false;
+    }
+    resolveAlertsData['comment'] = this.f.comment.value;
+    // stop here if form is invalid
+    if (this.resolveAlertForm.invalid) {
+        return;
+    }
+    this.commonapi.AlertsResolve(resolveAlertsData).subscribe(res => {
+      if (res['status'] == "success") {
+        let modal = document.getElementById("resolveAlertModal");
+        modal.style.display = "none";
+        swal({
+          icon: 'success',
+          title: 'Resolved',
+          text: 'Alert has been successfully resolved',
+          buttons: [false],
+          timer: 3000
+        })
+      } else {
+        swal({
+          icon: "warning",
+          text: res['message'],
+        })
       }
+      setTimeout(() => {
+        this.dtTrigger[this.source].next();
+      }, 2000);
     })
   }
-
-
-
+  closeResolveAlert(){
+    this.submitted = false;
+    this.resolveAlertForm.reset()
+    let modal = document.getElementById("resolveAlertModal");
+    modal.style.display = "none";
+  }
+  get f() { return this.resolveAlertForm.controls; }
   resolvedAllSelected(source) {
     let resolve_alerts_data={}
     resolve_alerts_data["resolve"]=true
@@ -413,40 +506,57 @@ export class AlertsComponent implements AfterViewInit, OnDestroy, OnInit {
     }
     }
 
-  toggleDisplay(source) {
-    this.fetched[source] = true;
+  toggleDisplay(source, events) {
+    this.events_ids = events;
     this.dtTrigger[source].next();
   }
-    show_hide_div(name: any) {
-      $('.nav-link-active').removeClass("active");
-      $('#' + name).addClass("active");
-      $('.alert_source_div').hide();
-      $('#div_' + name).show();
-      $('.no_data').hide();
-      if (this.fetched[name] != true) {
-        this.toggleDisplay(name);
-      }
-      if(name == 'ioc'){
-      this.alert_data ={"source":name}
-      }
-      if(name == 'rule'){
-      this.alert_data ={"source":name}
 
-      }
-      if(name == 'virustotal'){
-      this.alert_data ={"source":name}
-      }
-       if(name == 'alienvault'){
-      this.alert_data ={"source":name}
-      }
-       if(name == 'ibmxforce'){
-      this.alert_data ={"source":name}
-      }
+  show_hide_div(name: any) {
+    // this.dtTrigger[name].next();
+    this.events_ids=[];
+    $('.nav-link-active').removeClass("active");
+    $('#' + name).addClass("active");
+    $('.alert_source_div').hide();
+    $('#div_' + name).show();
+    $('.no_data').hide();
+
+    if (this.fetched[name] != true) {
+      this.toggleDisplay(name, []);
     }
- /* called common alert type  function*/
-    exportAlert(data) {
-    this.exportAlerts(data);
-    }
+    this.alert_data ={"source":name};
+  }
+
+
+
+  myHandler( source: any) {
+    this.events_ids=[];
+    setTimeout(() => {
+
+    var duration = $('#duration_' + source).val();
+
+    var type = $('#type_' + source).val();
+
+  this.grabNewDataBasedOnDate(source, duration, type);
+    this.dtTrigger[source].next();
+  },400);
+  }
+
+  grabNewDataBasedOnDate(source, duration, type) {
+    this.getAlertData(source);
+  }
+
+  convert(str) {
+    var date = new Date(str),
+      mnth = ("0" + (date.getMonth() + 1)).slice(-2),
+      day = ("0" + date.getDate()).slice(-2);
+    return [date.getFullYear(), mnth, day].join("-");
+  }
+
+  convertDate(date) {
+    var  mnth = ("0" + (date.getMonth() + 1)).slice(-2),
+      day = ("0" + date.getDate()).slice(-2);
+    return [date.getFullYear(), mnth, day].join("-");
+  }
 
   update_graph(source: any) {
     this.myHandler( source);
@@ -454,10 +564,16 @@ export class AlertsComponent implements AfterViewInit, OnDestroy, OnInit {
 
     /*  Export csv file for all the alert type*/
   exportAlerts(source){
-    var payloadDict = {"source": source, "duration": $('#duration_' + source).val(), "type": $('#type_' + source).val(), "date":this.convertDate(this.datepicker_date[source])}
-
+    var selectedDate = this.selectedDate[source];
+    var date = selectedDate.year + '-' + selectedDate.month + '-' + selectedDate.day;
+    // var payloadDict = {"source": source, "duration": $('#duration_' + source).val(), "type": $('#type_' + source).val(), "date":this.convertDate(this.datepicker_date[source])}
+    var payloadDict = {"source": source, "duration": $('#duration_' + source).val(), "type": $('#type_' + source).val(), "date":date}
+    console.log(payloadDict);
+    if (this.events_ids.length > 0) {
+      payloadDict['event_ids'] =this.events_ids;
+    }
     var alert_name = JSON.stringify(payloadDict);
-    var token_val = localStorage.getItem('JWTkey');
+    var token_val = localStorage.getItem('token');
     var today = new Date();
     var currentDate = today.getDate()+"-"+(today.getMonth()+1)+"-"+today.getFullYear();
     $.ajax({
@@ -495,125 +611,116 @@ export class AlertsComponent implements AfterViewInit, OnDestroy, OnInit {
     return false;
 }
 // Start Aggregated alerts
-get_alerts_aggregated_data(id){
-  this.aggregated_data={}
-  this.aggregate_tab = [];
+getAlertsAggregatedData(id){
+  this.id = id;
+  this.aggregated_data = [];
+  $('.aggregated_table_data').hide();
   this.commonapi.get_alerts_aggregated_data(id).subscribe((res: any) => {
+    $('.aggregation_loader').hide();
+    this.aggregateTabLength=res.data.length
    for(const i in res.data){
-     if (!this.aggregated_data.hasOwnProperty(res.data[i].name)){
-      this.aggregated_data[res.data[i].name]=[]
-      this.aggregate_tab.push(res.data[i].name)
-       }
-       this.aggregated_data[res.data[i].name].push(res.data[i].columns)
-
+     this.aggregated_data.push(res.data[i].query_name)
     }
-    if(res.data.length!=0){
-      this.alerts_aggregated_data(res.data[0].name)
+    if(this.aggregated_data!=0){
+      this.GetAggregatedDataFilterWithQueryName(this.aggregated_data[0]);
     }else{
-      $("#alerts_aggretated_table").html('No results found');
+
     }
   })
 }
-alerts_aggregated_data(key){
-  this.alert_selectedItem =key
-  // $('#alerts_aggretated_table').empty();
-  document.getElementById("alerts_aggretated_table").innerHTML = '';
-  var id="alerts_aggretated_table";
-  var div_table = $("<table></table>")
-      .attr("id", key + "_table")
-      .attr("style", "margin-left:auto;width:100%;overflow-x: scroll")
-      .attr("width", "100%;")
-      .addClass("table table-striped- table-bordered  table-checkable");
-        $("#"+id).append(div_table);
-      let values=this.aggregated_data[key]
-      var columns = [];
-            var keys =  Object.keys(values[0]);
-            // var counter = 0;
-            // keys.forEach(function (key) {
-            //   counter++;
-            //   columns.push({
-            //     data: key,
-            //     title: key
-            //   });
-            // });
 
-            var _result = this.columndefs.columnDefs(keys);
-            var column_defs = _result.column_defs;
-            columns = _result.column;
+GetAggregatedDataFilterWithQueryName(name){
+  this.dtTriggerAggregatedAlerts.next();
+  $('.aggregated_table_data').show();
+  var that=this;
+  this.alert_selectedItem = name;
+  this.aggregatedOptions = {
+    pagingType: 'full_numbers',
+    pageLength: 10,
+    serverSide: true,
+    processing: true,
+    searching: true,
+    dom: '<"pull-right"B><"pull-right"f><"pull-left"l>tip',
+    buttons: [
+      {
+        text: 'Export',
+        attr:  {id: 'IdExport'},
+        action: function ( e, dt, node, config ) {
+          that.exportAggregatedData();
+        },
+      },
+    ],
+    "language": {
+      "search": "Search: "
+    },
+    ajax: (dataTablesParameters: any, callback) => {
+      var body = dataTablesParameters;
+      var searchitem = '';
+      if(body.search.value!= ""  &&  body.search.value.length>=3){
+        searchitem=body.search.value;
+      }
+      if(body.search.value!="" && body.search.value.length<3){
+       return;
+      }
+      var payload = {
+	          "query_name":this.alert_selectedItem,
+	          "start":body['start'],
+            "limit":body['length'],
+            "searchterm":searchitem,
+      }
+      this.http.post<DataTablesResponse>(environment.api_url+"/alerts/"+this.id+"/alerted_events", payload, { headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('token')}}).subscribe(res =>{
+        this.aggregateoutput = res;
+        this.aggregatelist = this.aggregateoutput.data.results;
+        if(this.aggregatelist.length >0 &&  this.aggregatelist!=undefined)
+        {
+          $('.dataTables_paginate').show();
+          $('.dataTables_info').show();
+        }
+        else{
+          if(body.search.value=="" || body.search.value == undefined){
+            this.errorMessage="No Data Found";
+          }
+          else{
+            this.errorMessage="No Matching Record Found";
+          }
+          $('.dataTables_paginate').hide();
+          $('.dataTables_info').hide();
+        }
+        callback({
+          recordsTotal: this.aggregateoutput.data.count,
+          recordsFiltered: this.aggregateoutput.data.count,
+          data: []
+        });
+      });
+    },
 
-            $(document).ready(function() {
-              div_table.DataTable({
-              dom: "Bfrtip",
-              bLengthChange:true,
-              data: values,
-              sPaginationType:"full_numbers",
-              "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
-              columns: columns,
-              paging:true,
-              buttons: [ {extend: 'csv',filename: function () { return key;}}],
-            "columnDefs":column_defs,
-            "language": {
-              "search": "Search: "
-            },
-            "initComplete": function (settings, json) {
-              div_table.wrap("<div style='overflow:auto; width:100%;position:relative;'></div>");
-            },
-            rowCallback: function(row, data, index){
-              $('td', row).css('background-color', 'white');
-            }
-            });
-          })
-
+    ordering: false,
+    columns: [{ data: 'line' }, { data: 'message' }, { data: 'severity' }, { data: 'filename' },{ data: 'created' },{ data: 'version' }]
+  }
+}
+exportAggregatedData(){
+  var queryName = this.alert_selectedItem;
+  var alertId = this.id;
+  var today = new Date();
+  var currentDate = today.getDate()+"-"+(today.getMonth()+1)+"-"+today.getFullYear();
+  this.commonapi.alertedEventsExport(alertId,queryName).subscribe((res: any) => {
+    saveAs(res,  'alert'+'_'+this.alert_selectedItem+ '_' + currentDate + '.csv');
+  })
 }
 
 
-  // End Aggregated alerts
-  close_data(){
-    document.getElementById("alerts_aggretated_table").innerHTML = '';
-      }
+get_Platform_settings(){
+  this.commonapi.getConfigurationSettings().subscribe(res => {
+    this.purge_data_duration=res.data.purge_data_duration;
+  });
+}
+Get_total_alerts_based_on_alert_type(name){
+  $(".timeline-event-dot").removeClass("selected")
+  this.events_ids=[];
+  this.dtTrigger[name].next();
+}
 
-      // Start datepicker
-   update_duration(source: any) {
-      this.myHandler( source);
-   }
-   myHandler( source: any) {
-     setTimeout(() => {
-        var duration = $('#duration_' + source).val();
-        var type = $('#type_' + source).val();
-       this.grabNewDataBasedOnDate(source, duration, type);
-        this.dtTrigger[source].next();
-      },400);
-  }
-      grabNewDataBasedOnDate(source, duration, type) {
-      this.getAlertData(source);
-    }
-    convert(str) {
-      var date = new Date(str),
-        mnth = ("0" + (date.getMonth() + 1)).slice(-2),
-        day = ("0" + date.getDate()).slice(-2);
-      return [date.getFullYear(), mnth, day].join("-");
-    }
-
-    convertDate(date) {
-      var  mnth = ("0" + (date.getMonth() + 1)).slice(-2),
-        day = ("0" + date.getDate()).slice(-2);
-      return [date.getFullYear(), mnth, day].join("-");
-    }
-    getAlertData(source) {
-      var today = new Date();
-
-      var date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
-      if(this.dtTrigger[source] == undefined) {
-        this.dtTrigger[source] = new Subject<any>();
-        this.datepicker_date[source]=today;
-      }
-      this.all_options[source] = this.get_options(source);
-    }
-    // End datepicker
-
-    get_Platform_settings(){
-      this.commonapi.getConfigurationSettings().subscribe(res => {
-        this.purge_data_duration=res.data.purge_data_duration;
-      });
-    }
+goBack(){
+  this._location.back();
+}
 }

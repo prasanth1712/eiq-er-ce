@@ -30,16 +30,7 @@ def get_all_queries(searchterm=''):
         .options(
         db.joinedload(Query.tags),
         db.joinedload(Query.packs),
-        db.joinedload(Query.packs, Pack.queries, innerjoin=True)).filter(
-        or_(
-            Query.name.ilike('%' + searchterm + '%'),
-            Query.sql.ilike('%' + searchterm + '%'),
-            Query.platform.ilike('%' + searchterm + '%'),
-            Query.description.ilike('%' + searchterm + '%'),
-            Query.version.ilike('%' + searchterm + '%'),
-            cast(Query.interval, sqlalchemy.String).ilike('%' + searchterm + '%'),
-        )
-        ).order_by(asc(Query.name))
+        db.joinedload(Query.packs, Pack.queries, innerjoin=True)).filter(Query.name.ilike('%' + searchterm + '%')).order_by(asc(Query.name))
     return queries
 
 
@@ -50,15 +41,7 @@ def get_all_packed_queries(searchterm=''):
         db.joinedload(Query.packs),
         db.joinedload(Query.packs, Pack.queries, innerjoin=True)
     ).filter(Query.packs.any()).filter(
-        or_(
-            Query.name.ilike('%' + searchterm + '%'),
-            Query.sql.ilike('%' + searchterm + '%'),
-            Query.platform.ilike('%' + searchterm + '%'),
-            Query.description.ilike('%' + searchterm + '%'),
-            Query.version.ilike('%' + searchterm + '%'),
-            cast(Query.interval, sqlalchemy.String).ilike('%' + searchterm + '%'),
-        )
-        ).order_by(asc(Query.name))
+            Query.name.ilike('%' + searchterm + '%')).order_by(asc(Query.name))
     return queries
 
 
@@ -95,3 +78,7 @@ def is_tag_of_query(query, tag):
         return True
     else:
         return False
+
+
+def get_all_queries_by_names(queries):
+    return db.session.query(Query).filter(Query.name.in_(queries)).all()

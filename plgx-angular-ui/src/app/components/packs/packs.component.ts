@@ -3,7 +3,18 @@ import { CommonapiService } from '../../dashboard/_services/commonapi.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormControl, FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 import swal from 'sweetalert';
-
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
+import { Subject, Subscription } from 'rxjs';
+import { Location } from '@angular/common';
+import { DataTableDirective } from 'angular-datatables';
+import { AuthorizationService } from '../../dashboard/_services/Authorization.service';
+class DataTablesResponse {
+  data: any[];
+  draw: number;
+  recordsFiltered: number;
+  recordsTotal: number;
+}
 
 @Component({
 selector: 'app-packs',
@@ -14,32 +25,35 @@ export class PacksComponent implements OnInit {
     packsfile: FormGroup;
     public pack: any;
     first_pack : any = [];
-    pack_data: any = [];
+    packData: any = [];
     dataval:any;
-    pack_query_name:any;
     searchText:any;
     term:any;
     packs:File;
     submitted:any;
-    pack_upload:any;
     category:any;
     selectedItem:any;
     result:any;
     error:any;
     Updated = false;
-    pack_addtags_val:any;
-    pack_removetags_val:any;
-    queries_addtags_val:any;
-    queries_removetags_val:any;
+    packAddtagsVal:any;
+    packRemovetagsVal:any;
+    queriesAddtagVal:any;
+    queriesRemovetagsVal:any;
     updatepackObj= {};
-    packs_category_dictionary = [];
-    sorted_pack_data_name=[];
-
-
+    packsCategoryDictionary = [];
+    sortedPackDataName=[];
+    PackName:string;
+    dtElement: DataTableDirective;
+    role={'adminAccess':this.authorizationService.adminLevelAccess,'userAccess':this.authorizationService.userLevelAccess}
 constructor(
 private commonapi: CommonapiService,
 private fb: FormBuilder,
-private router: Router
+private router: Router,
+private http: HttpClient,
+private _Activatedroute:ActivatedRoute,
+private _location: Location,
+private authorizationService: AuthorizationService,
 ) { }
 
 clearValue:string = '';
@@ -51,14 +65,14 @@ getById(event, newValue,any){
     this.selectedItem = newValue;
     for(const i in this.pack.data.results){
         if (this.pack.data.results[i].name == any) {
-            this.pack_data =this.pack.data.results[i]
+            this.packData =this.pack.data.results[i]
         }
     }
 }
 
-getfirst_data(first_pack){
-    this.pack_data = first_pack
-    this.selectedItem = this.pack_data.name;
+getfirstData(first_pack){
+    this.packData = first_pack
+    this.selectedItem = this.packData.name;
 }
 
 uploadFile(event){
@@ -87,14 +101,7 @@ deletePacks(pack_id, pack_name){
       timer: 2000
       })
       setTimeout(() => {
-        this.packs_category_dictionary = [];
-        this.ngOnInit();
-        // this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
-        //   // Destroy the table first
-        //   dtInstance.destroy();
-        //   // Call the dtTrigger to rerender again
-        //   this.dtTrigger.next();
-        // });
+        this.rerender();
       },300);
     })
   }
@@ -102,26 +109,26 @@ deletePacks(pack_id, pack_name){
 }
 
 
-    pack_addTag(test,id){
+    packAddTag(test,id){
       this.commonapi.packs_addtag_api(id,test.toString()).subscribe(res => {
-        this.pack_addtags_val = res ;
+        this.packAddtagsVal = res ;
       });
     }
-    pack_removeTag(event,pack_id) {
+    packRemoveTag(event,pack_id) {
       this.commonapi.packs_removetags_api(pack_id,event).subscribe(res => {
-        this.pack_removetags_val = res ;
+        this.packRemovetagsVal = res ;
       });
 
     }
-    queries_addTag(tags,query_id){
+    queriesAddTag(tags,query_id){
       this.commonapi.queries_addtag_api(query_id,tags.toString()).subscribe(res => {
-        this.queries_addtags_val = res ;
+        this.queriesAddtagVal = res ;
 
       });
     }
-    queries_removeTag(event,query_id) {
+    queriesRemoveTag(event,query_id) {
       this.commonapi.queries_removetags_api(query_id,event).subscribe(res => {
-        this.queries_removetags_val = res ;
+        this.queriesRemovetagsVal = res ;
 
       });
 
@@ -132,59 +139,115 @@ runAdHoc(queryId){
 }
 
 ngOnInit() {
-
+  this._Activatedroute.paramMap.subscribe(params => {  
+    this.PackName=params.get('packname')
+    console.log(this.PackName," this.PackName")
+  })
     this.packsfile = this.fb.group({
         pack: '',
         category:'General'
       });
-    this.pack=this.packsfile.value.pack
-    this.commonapi.packs_api().subscribe((res: any) => {
-      
-    this.pack = res;
-
-    let dataval_sort=[];
-    this.sorted_pack_data_name=[];
-    $('.placeholder_event').hide();
-    if( this.pack.data.count ==0){
-      $('.no_data').append('No Packs Present')
+    this.pack=this.packsfile.value.pack;
+    if(this.PackName){
+      this.getPack({searching:false,paging:false});
     }else{
-      
-      $('.show_packs_data').show(); 
+      this.getPack({searching:true,paging:true});
+    }
+}
 
-      for(const i in this.pack.data.results){
-        let is_present = false;
-        for(const j in this.packs_category_dictionary){
-          if(this.pack.data.results[i].category == this.packs_category_dictionary[j]['category']){
-            is_present = true;
-            if(this.pack.data.results[i].name in this.packs_category_dictionary[j]['packs']){
-              break;
-            }else{
-              this.packs_category_dictionary[j]['packs'].push(this.pack.data.results[i].name);
+packList:any;
+dtOptions: DataTables.Settings = {};
+errorMessage:any;
+dtTrigger: Subject<any> = new Subject();
+getPack({searching,paging}){
+  this.dtOptions = {
+    pagingType: 'full_numbers',
+    pageLength: 10,
+    serverSide: true,
+    processing: true,
+    searching: searching,
+    lengthChange: false,
+    paging:paging,
+    info:false,
+    scrollCollapse: true,
+    "language": {
+      "search": "Search: "
+    },
+    ajax: (dataTablesParameters: any,callback) => {
+      var body = dataTablesParameters;
+      if(body.search.value!= ""  &&  body.search.value.length>=1){
+         body['searchterm']=body.search.value;
+         body['limit']=body['length'];
+      }
+      if(this.PackName){
+        body['searchterm']=this.PackName
+      }
+      else if(body['searchterm']==undefined){
+          body['searchterm']="";
+          body['limit']=body['length'];
+      }
+      this.sortedPackDataName=[];
+      $('.placeholder_event').hide();
+      $('.show_packs_data').show();
+      this.http.post<DataTablesResponse>(environment.api_url+"/packs", body,{ headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('token')}}).subscribe(res =>{
+        this.packList = res.data['results'];
+        this.packsCategoryDictionary = [];
+      if(this.packList.length >0 &&  this.packList!=undefined){
+        this.packList = res.data['results'];
+        this.packList.sort((x,y) => y.name - x.name)
+        $('.dataTables_paginate').show();
+        this.pack = res;
+        for(const i in this.pack.data.results){
+          let is_present = false;
+          for(const j in this.packsCategoryDictionary){
+            if(this.pack.data.results[i].category == this.packsCategoryDictionary[j]['category']){
+              is_present = true;
+              if(this.pack.data.results[i].name in this.packsCategoryDictionary[j]['packs']){
+                break;
+              }else{
+                this.packsCategoryDictionary[j]['packs'].push(this.pack.data.results[i].name);
+              }
             }
           }
-        }
-        if(is_present == false){
-          this.packs_category_dictionary.push({'category':this.pack.data.results[i].category, 'packs': [this.pack.data.results[i].name]});
-        }
-      }
-  
-      for(const item_index in this.packs_category_dictionary){
-        this.packs_category_dictionary[item_index]['packs'] = this.getSortedPackArray(this.packs_category_dictionary[item_index]['packs']);
-      }
-  
-      this.sorted_pack_data_name = this.packs_category_dictionary[0]['packs'];
-  
-      for(const i in this.pack.data.results){
-          if (this.pack.data.results[i].name == this.packs_category_dictionary[0]['packs'][0]){
-              this.getfirst_data(this.pack.data.results[i]);
+          if(is_present == false){
+            this.packsCategoryDictionary.push({'category':this.pack.data.results[i].category, 'packs': [this.pack.data.results[i].name]});
           }
+        }
+        for(const item_index in this.packsCategoryDictionary){
+          this.packsCategoryDictionary[item_index]['packs'] = this.getSortedPackArray(this.packsCategoryDictionary[item_index]['packs']);
+        }
+        this.sortedPackDataName = this.packsCategoryDictionary[0]['packs'];
+        for(const i in this.pack.data.results){
+            if (this.pack.data.results[i].name == this.packsCategoryDictionary[0]['packs'][0]){
+                this.getfirstData(this.pack.data.results[i]);
+            }
+        }
+      }else{
+        if(body.search.value=="" || body.search.value == undefined){
+          this.errorMessage = "No results found";
+          $('.dataTables_paginate').hide();
+        }
+        else{
+          this.errorMessage = "No search results found";
+          $('.dataTables_paginate').hide();
+        }
       }
-    }
-   
+        callback({
+          recordsTotal: res.data['total_count'],
+          recordsFiltered: res.data['count'],
+          data: []
+        });
+      });
+    },
+    ordering: false,
+    columns: [{data: 'Packs' }]
   }
-);
-
 }
+
+ngAfterViewInit(): void {
+  this.dtTrigger.next();
+}
+
 get f() { return this.packsfile.controls; }
 
 
@@ -195,7 +258,6 @@ onSubmit() {
       "Please select a file for upload"
     )
   }
-
     this.category = this.packsfile.value.category;
     this.submitted = true;
     if (this.packsfile.invalid) {
@@ -223,7 +285,7 @@ onSubmit() {
         })
     this.error = null;
     this.Updated = true;
-
+    this.rerender();
     }
     setTimeout(() => {
       this.ngOnInit()
@@ -262,5 +324,13 @@ getSortedPackArray(list){
   return list_to_return
 }
 
+goBack(){
+  this._location.back();
+}
+rerender(): void {
+  var table = $("#packstable").DataTable();
+  table.destroy();
+  this.dtTrigger.next();
+ }
 
 }

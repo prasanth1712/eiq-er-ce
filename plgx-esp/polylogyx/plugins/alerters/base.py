@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from abc import ABCMeta, abstractmethod
 
-from polylogyx.compat import with_metaclass
+from polylogyx.utils.compat import with_metaclass
 
 
 class AbstractAlerterPlugin(with_metaclass(ABCMeta)):
@@ -10,6 +10,7 @@ class AbstractAlerterPlugin(with_metaclass(ABCMeta)):
     defines the interface that an alerter should implement in order to support
     sending an alert.
     """
+
     @abstractmethod
-    def handle_alert(self, node, match,intel_match):
-        raise NotImplementedError()
+    def handle_alert(self, node, match, intel_match):
+        raise NotImplementedError()  # pragma: no cover

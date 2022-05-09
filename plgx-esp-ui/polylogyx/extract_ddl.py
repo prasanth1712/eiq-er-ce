@@ -81,8 +81,10 @@ def extended_schema(macro, schema):
 def get_supported_platforms(filename):
     platforms = []
     path_list = filename.split(os.sep)
-    ignore_folders = ["freebsd", "posix"]
-    dir_platform_like_dict = {"windows": ["windows", "linwin", "macwin", "polylogyx"], "linux": ["linux", "linwin", "lldpd", "sleuthkit", "smart", "yara"], "darwin": ["darwin", "macwin", "sleuthkit", "smart", "yara"]}
+    ignore_folders = ["freebsd"]
+    dir_platform_like_dict = {"windows": ["windows", "linwin", "macwin", "polylogyx"],
+                              "linux": ["linux", "linwin", "lldpd", "sleuthkit", "smart", "yara", "posix"],
+                              "darwin": ["darwin", "macwin", "sleuthkit", "smart", "yara", "posix"]}
     if path_list[-2] and path_list[-2] not in ignore_folders:
         for platform, like_dirs in dir_platform_like_dict.items():
             if path_list[-2] and path_list[-2] in like_dirs:
@@ -147,7 +149,7 @@ def extract_schema_json(filename):
     current_spec['schema'] = merge_schema(current_spec['schema'])
 
     table = copy.deepcopy(current_spec)
-    if table['extended_schema']:
+    if 'extended_schema' in table and table['extended_schema']:
         del table['extended_schema']
     return table
 

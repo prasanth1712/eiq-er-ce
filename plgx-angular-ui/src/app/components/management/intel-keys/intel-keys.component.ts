@@ -8,7 +8,7 @@ import swal from 'sweetalert';
 import { Location } from '@angular/common';
 import Swal from 'sweetalert2'
 import { Title } from '@angular/platform-browser';
-
+import { AuthorizationService } from '../../../dashboard/_services/Authorization.service';
 @Component({
   selector: 'app-intel-keys',
   templateUrl: './intel-keys.component.html',
@@ -16,6 +16,7 @@ import { Title } from '@angular/platform-browser';
 })
 
 export class IntelKeysComponent implements OnInit {
+  hasAcess=this.authorizationService.hasAccess()
   intelKeys: FormGroup;
   submitted = false;
   error: any;
@@ -30,18 +31,20 @@ export class IntelKeysComponent implements OnInit {
   virustotalError: any;
   alienvaultkeyError: any;
   ibmxforcepassError: any;
-  ProjectName=this.commonvariable.APP_NAME
+  project_name=this.commonvariable.APP_NAME
+  ProductName=this.commonvariable.ProductName
+  role={'adminAccess':this.authorizationService.adminLevelAccess,'userAccess':this.authorizationService.userLevelAccess}
   constructor(
     private fb: FormBuilder,
     private commonapi: CommonapiService,
     private commonvariable: CommonVariableService,
     private _location: Location,
     private titleService: Title,
-
+    private authorizationService: AuthorizationService,
   ) { }
 
   ngOnInit() {
-    this.titleService.setTitle(this.commonvariable.APP_NAME+"-"+"Threat Intel Keys" );
+    this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Threat intel keys" );
     this.intelKeys = this.fb.group({
       ibmkey: '',
       ibmpass: '',

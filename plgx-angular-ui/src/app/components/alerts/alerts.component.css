@@ -1,4 +1,19 @@
+/* @import url("../../../js/timeline/timeline.css"); */
+/* @import url("../../../assets/vendors/custom/vendors/flaticon/flaticon.css");
+@import url("../../../assets/vendors/custom/vendors/flaticon2/flaticon.css");
+@import url("../../../assets/vendors/custom/vendors/fontawesome5/css/all.min.css");
+@import url("../../../assets/vendors/general/bootstrap-select/dist/css/bootstrap-select.css"); */
 
+p {
+  font-family: Lato;
+}
+.graph-container {
+    height: 25em;
+    widows: 100%;
+}
+table.messages tbody.message-group {
+    border-top: 0;
+  }
   tbody {
     vertical-align: top;
     border-color: inherit;
@@ -6,6 +21,16 @@
   dt {
     font-weight: 700;
     font-size: 14px;
+  }
+  table.messages {
+    position: relative;
+    font-size: 11px;
+    margin-top: 15px;
+    margin-bottom: 60px;
+    border-collapse: collapse;
+    padding-left: 13px;
+    width: 100%;
+    word-break: break-all;
   }
   td {
     position: relative;
@@ -27,6 +52,66 @@
     border-spacing: 2px;
     border-color: grey;
   }
+
+
+  .resolved_alert_type_active {
+    background-color: #eef1ff;
+    padding: .55rem 1.25rem;
+    transition: all .3s;
+    font-size: 1rem;
+    border-radius: .25rem;
+    font-weight: 400;
+  }
+  .blink-severity--critical {
+    animation: blink .5s infinite;
+  }
+  @keyframes blink {
+    0% {
+      opacity: 1.0;
+    }
+    50% {
+      opacity: 0.0;
+    }
+    100% {
+      opacity: 1.0;
+    }
+  }
+  .blink-severity--warning {
+    animation: blink 1s infinite;
+  }
+  @keyframes blink {
+    0% {
+      opacity: 1.0;
+    }
+    50% {
+      opacity: 0.3;
+    }
+    100% {
+      opacity: 1.0;
+    }
+  }
+  .blink-severity--low {
+    animation: blink 2s infinite;
+  }
+  @keyframes blink {
+    0% {
+      opacity: 1.0;
+    }
+    50% {
+      opacity: 0.5;
+    }
+    100% {
+      opacity: 1.0;
+    }
+  }
+
+
+  .modal-backdrop {
+      background-color: #f3f3f3;
+    }
+    .blue {
+      color: #468cd2
+    }
     /* Important part */
     .modal-dialog {
       overflow-y: initial !important
@@ -34,6 +119,14 @@
     .modal-body {
       height: 100%;
       overflow-y: auto;
+    }
+    .modal-ku {
+      width: 500px;
+      margin: auto;
+    }
+    div.dataTables_scrollHeadInner {
+      /* width: 100%; */
+      /* background-color: #b2bdd21c; */
     }
     div.dataTables_scrollBody {
       position: relative;
@@ -44,6 +137,20 @@
     div.dataTables_wrapper {
       width: 100%;
       margin: 0 auto
+    }
+    .button {
+      display: block;
+      padding: 10px;
+      text-align: center;
+      border-radius: 5px;
+      color: white;
+      font-weight: bold;
+    }
+    button.active {
+      background: #4CAF50;
+    }
+    a.show {
+      background: #4CAF50 !important;
     }
     a.toggle-vis:hover {
       text-decoration: underline !important;
@@ -60,6 +167,8 @@
       display: unset !important;
     }
 
+
+
     td.details-control {
     background: url('https://datatables.net/examples/resources/details_open.png') no-repeat center center;
     cursor: pointer;
@@ -67,15 +176,50 @@
   tr.details td.details-control {
     background: url('https://datatables.net/examples/resources/details_close.png') no-repeat center center;
   }
+  div.dataTables_wrapper {
+    width: 100%;
+    margin: 0 auto
+  }
   table.dataTable tbody td {
     word-break: break-word;
-    vertical-align: top;
+    vertical-align: middle;
+  }
+  .button {
+    display: block;
+    padding: 10px;
+    text-align: center;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+  }
+  button.active {
+    background: #4CAF50;
+  }
+  a.show {
+    background: #4CAF50 !important;
+  }
+  a.toggle-vis:hover {
+    text-decoration: underline !important;
+    color: #000000 !important;
+  }
+  a.toggle-vis {
+    cursor: pointer !important;
+    color: #3174c7 !important;
+  }
+  .timeline-controls-alerts {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 50px;
+    overflow: hidden;
+    position: absolute;
+    height:100%;
+  }
+  .timeline-button:hover{
+    background-color: #184ba1;
+    color: #fff;
   }
   .kt-datatable.kt-datatable--default>.kt-datatable__table>.kt-datatable__body .kt-datatable__row>.kt-datatable__cell--check {
     padding-right: 30px;
-  }
-  .dropdown-toggle::after {
-    margin-left: 0;
   }
   .datatable__search input {
       margin-left: .5em;
@@ -109,11 +253,6 @@
     border-radius: 4px;
     left: 0;
 }
-.dropdown-btn-1 {
-  margin-top: -17px;
-  margin-left: 36px;
-  cursor: pointer;
-}
 
 :host ::ng-deep div.dataTables_wrapper,
 :host ::ng-deep div.dataTables_info,
@@ -121,24 +260,10 @@
 :host ::ng-deep div.dataTables_length{
   color: #646c9a !important;
 }
-table.dataTable thead th, table.dataTable thead td {
-  padding: 10px;
-   border-bottom: 1px solid #ebedf2;
-
-}
-::ng-deep table.dataTable.no-footer  {
-  border-bottom: 1px solid white;
-}
-::ng-deep .ngx-datepicker-container .ngx-datepicker-calendar-container {
-  z-index: 999;
-}
-::ng-deep .query_tab .tab-content .nav-wd {
-  width: 50%;
-    margin: 6px auto;
-}
 ::ng-deep div.dataTables_wrapper div.dataTables_filter{
   padding-right: 1%;
 }
+
 ::ng-deep #rule_table_wrapper .pull-right .dt-buttons .btn{
   padding:6px !important
 }
@@ -148,4 +273,15 @@ table.dataTable thead th, table.dataTable thead td {
   padding-top:7px;
   padding-left:10px;
   font-size:1.2rem
+}
+.show_1{
+  overflow: visible_1;
+  height: auto;
+}
+.hideChildren>div{
+  display: none;
+}
+::ng-deep #AggregatedData_table_wrapper .pull-right .dt-buttons .btn{
+  padding-top:6px !important;
+  padding-bottom:5px !important;
 }

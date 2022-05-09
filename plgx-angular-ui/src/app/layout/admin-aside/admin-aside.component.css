@@ -38,6 +38,7 @@
     margin-left: 37px;
     margin-top: -15px;
     font-family: system-ui;
+    height: 20px;
   }
   /* .kt-aside__brand .kt-aside__brand-tools .kt-aside__brand-aside-toggler svg g [fill] {
     fill: #ffffffab !important;
@@ -119,7 +120,7 @@
     font-size: large;
     margin-right: 10px;
     padding: 5px;
-    color: #52B2A8;
+    color: #30B0A4;
     background-color: #f4f4f8;
     border-color: transparent;
   }
@@ -136,11 +137,11 @@
     font-weight: 500;
   }
   .live-qry ul li:hover a {
-    color: #52B2A8;
+    color: #30B0A4;
   }
   .live-qry ul li:hover i {
     color: #fff;
-    background-color: #52B2A8;
+    background-color: #30B0A4;
     -webkit-border-radius: 50%;
     -moz-border-radius: 50%;
     border-radius: 50%;
@@ -250,19 +251,20 @@
 .kt-aside-submenu{
   color:#FFF !important;
   padding-left: 18px !important;
-  font-size: 1rem !important;
 }
 .bg-white{
   background-color: #fff;
 }
 .kt-logo-div{
   background-color: #152944;
-  margin-bottom:5px;
+  margin-bottom:-5px;
   height:58px;
   border-bottom:1px solid #415469;
 }
 .kt-aside__brand-logo img{
   padding-right:10px;
+  /* float:left;
+  padding-top:3px; */
 }
 .kt-aside__brand-logo label{
   padding-top:2px;

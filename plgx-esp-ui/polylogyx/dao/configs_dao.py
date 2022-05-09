@@ -17,7 +17,7 @@ def get_all_configs():
             query_status=False
         else:
             type = query.config.type
-            query_status = query.config.is_active
+            query_status = query.config.is_default
         if not query.platform in config_data:
             config_data[query.platform] = {}
         if not query.arch in config_data[query.platform]:
@@ -39,7 +39,7 @@ def get_all_configs():
             filter_status=False
         else:
             type = filter.config.type
-            filter_status = filter.config.is_active
+            filter_status = filter.config.is_default
 
         if not filter.platform in config_data:
             config_data[filter.platform] = {}
@@ -61,13 +61,6 @@ def edit_config_by_platform(config, filters, queries):
     arch = config.arch
     platform = config.platform
     type = config.type
-    db.session.query(Config).filter(Config.arch == arch).filter(Config.platform == platform).update(
-        {Config.is_active: False})
-    db.session.query(Config).filter(Config.arch == arch).filter(Config.platform == platform).filter(
-        Config.type == type).update({Config.is_active: True})
-
-    db.session.commit()
-
     # fetching the filters data to insert to the config dict
     if arch and arch == DefaultFilters.ARCH_x86:
         default_filters_obj = DefaultFilters.query.filter(DefaultFilters.platform == platform.lower()).filter(
