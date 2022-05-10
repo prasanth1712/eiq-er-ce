@@ -25,10 +25,14 @@
   </div>
 </div>
 </div>
-
+<div  *ngIf="ruleList?.length === 0" class="mt-5 text-center">
+  <span class="kt-nodata-msg">
+   No rules configured
+  </span>
+  </div>
 <div class="no_data" style="text-align: center;margin-top: 10px;"></div>
-<div class="kt-portlet__body rule_body" >
-<div class="">
+<div class="kt-portlet__body rule_body">
+<div class="" *ngIf="ruleList?.length != 0">
   <div class="row">
     <div class="col-md-4">
       <!--begin::Portlet-->
