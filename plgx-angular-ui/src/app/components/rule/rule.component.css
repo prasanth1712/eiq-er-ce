@@ -137,3 +137,8 @@ table {
 ::ng-deep .rule_body .dataTables_wrapper .dataTables_paginate .pagination .page-item > .page-link{
   min-width:1.8rem !important;
 }
+.kt-nodata-msg{
+   text-align: center;
+   font-size: larger;
+   font-weight: 600;
+}
