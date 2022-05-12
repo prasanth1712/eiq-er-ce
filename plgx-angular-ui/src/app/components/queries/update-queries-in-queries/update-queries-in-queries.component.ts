@@ -7,6 +7,7 @@ import { first } from 'rxjs/operators';
 import swal from 'sweetalert';
 import { Location } from '@angular/common';
 import Swal from 'sweetalert2';
+import "ace-builds/webpack-resolver";
 
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
@@ -305,12 +306,14 @@ private titleService: Title,
   }
 
 ngOnInit() {
-  this.titleService.setTitle(this.commonvariable.APP_NAME+"-"+"Update-Queries");
+  this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Update queries");
 
   // LivequeryFunction();
 this.sub = this._Activatedroute.paramMap.subscribe(params => {
 this.id = params.get('id');
-
+if(isNaN(this.id)){
+ this.pagenotfound();
+}
 let additional_config =this.commonapi.update_queries_api(this.id).subscribe(res =>{
 this.queriesdata=res;
 if(this.queriesdata.status == "failure"){
@@ -324,7 +327,6 @@ if(this.queriesdata.data.platform==null){
 this.queriesdata_data=this.queriesdata.data;
 this.queriesdata_name=this.queriesdata.data.name
 this.query_data = this.queriesdata_data.sql;
-this.editor.mode = 'javascript';
   this.editor.value = this.queriesdata_data.sql;
 this.ExistingQueryObj.packs=this.queriesdata.data.packs;
 // this.query_data = this.query_response_data.data.sql;
@@ -377,6 +379,12 @@ if (this.updateQuery.invalid) {
 return;
 }
 var sql= this.editor._text;
+if(sql==""){
+  swal({
+    icon: 'warning',
+    text:"Query field is required",
+  })
+}else{
 this.updateQueryObj= {
 "name":this.f.name.value,
 "query":sql,
@@ -390,10 +398,7 @@ this.updateQueryObj= {
 "description":this.f.description.value,
 "tags":this.f.tags.value,
 "snapshot":String(this.f.snapshot.value)
-
-
 }
-
 Swal.fire({
   title: 'Are you sure want to update?',
   icon: 'warning',
@@ -433,7 +438,7 @@ console.log(error);
 )
 }
 })
-
+}
 }
 
 getStringConcatinated(array_object){

@@ -43,5 +43,5 @@ def get_carves_by_session_id(session_id):
     return CarveSession.query.filter(CarveSession.session_id == session_id).first()
 
 
-def delete_carve_by_session_id(session_id):
-    return CarveSession.query.filter_by(session_id=session_id).delete()
+def delete_carve(carve_session):
+    return carve_session.delete()

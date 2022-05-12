@@ -61,9 +61,8 @@
                             <div class="query-editor">
                               <section class="query-editor__wrapper">
                                 <div id="js-query-editor" class="query-editor__flex-editor" style="flex-basis: calc((25vh));">
-                                  <!-- <div class="query-editor__editor ace_editor ace_focus" id="live-query-editor"></div> -->
                                   <ace-editor
-                                    #editor style="height:70px;">
+                                    #editor [(text)]="queryText" style="height:70px;">
                                   </ace-editor>
                                 </div>
                               </section>
@@ -71,39 +70,22 @@
                             <div *ngIf="submitted && f.sql.errors" class="invalid-feedback">
                               <div *ngIf="f.sql.errors.required">Query is required</div>
                               </div>
-                            <!-- <div class="query-editor form-control query-editor__wrapper">
-                              <div id="js-query-editor" class="query-editor__flex-editor">
-                                <div class="query-editor__editor ace_editor ace_focus" id="live-query-editor"></div>
-                              </div>
-                            </div> -->
-                            <!-- <input type= "text" class="form-control" name="query" id="sql" [(ngModel)]="addQueryObj.query" formControlName="query" [ngClass]="{ 'is-invalid': submitted && f.query.errors }"/>
-                            <div *ngIf="submitted && f.query.errors" class="invalid-feedback">
-                            <div *ngIf="f.query.errors.required">query is required</div>
-                            </div> -->
-                            <!-- <ace-editor [(text)]="text" #editor [mode]="'sql'" formControlName="query"  [theme]="'eclipse'" [autoUpdateContent]="true" [readOnly]="false" id ="live-query-editor" style="height:100px;" [ngClass]="{ 'is-invalid': submitted && f.query.errors }"></ace-editor>
-                            <div *ngIf="submitted && f.query.errors" class="invalid-feedback">
-                             <div *ngIf="f.query.errors.required">Query is required</div>
-                           </div> -->
                             <span class="description_ex">Example: select * from processes;</span>
-
-
                           </div>
                       </div>
                       <div class="form-group row required">
                           <div class="col-2 col-form-label">
-                            <label class="required">Interval:</label>
+                            <label class="required">Interval <span class="intrvl-fnt-sm">(in secs)</span>:</label>
                             </div>
-
-                                 <!-- {{ form.interval.label(class_="col-2 col-form-label") }} -->
                           <div class="col-10">
                            <input type= "number"   class="form-control" min="1" name="interval" id="interval" [(ngModel)]="addQueryObj.interval" formControlName="interval" [ngClass]="{ 'is-invalid': submitted && f.interval.errors }"  />
-                         
+
                             <div *ngIf="submitted && f.interval.errors" class="invalid-feedback">
                             <div *ngIf="f.interval.errors.required">interval field is required</div>
-
+                            <div *ngIf="f.interval.errors.min">Please select a positive value </div>
                             </div>
 
-                           
+
                           </div>
                       </div>
 
@@ -119,9 +101,6 @@
                           <option value="posix">POSIX Compatible</option>
                           <option value="windows">Windows</option>
                           </select>
-                          <!-- <div *ngIf="submitted && f.platform.errors" class="invalid-feedback">
-                            <div *ngIf="f.platform.errors.required">platform field is required</div>
-                          </div> -->
                          </div>
                        </div>
                       <div class="form-group row">
@@ -152,52 +131,20 @@
                               <textarea class="form-control" rows="3" name="value" [(ngModel)]="addQueryObj.value" formControlName="value"></textarea>
                           </div>
                       </div>
-                    
+
 
                       <div class="form-group row">
                         <label class="col-2 col-form-label">packs</label>
                         <div class="col-10">
                           <angular2-multiselect [data]="dropdownPacknameList" [(ngModel)]="selectedPacknameItems" formControlName="packs"
-                              [settings]="dropdownPacknameSettings" 
-                              (onSelect)="onItemSelect($event)" 
+                              [settings]="dropdownPacknameSettings"
+                              (onSelect)="onItemSelect($event)"
                               (onDeSelect)="OnItemDeSelect($event)"
                               (onSelectAll)="onSelectAll($event)"
                               (onDeSelectAll)="onDeSelectAll($event)">
                           </angular2-multiselect>
-                          <!-- <select  class="browser-default custom-select" id="alerters"  name="alerters" [(ngModel)]="addRuleObj.alerters" formControlName="alerters">
-                            <option value="" selected="">Nothing Selected</option>
-                            <option value="Rsyslog">Rsyslog</option>
-                            <option value="Email">Email</option>  
-                         </select> -->
                         </div>
                       </div>
-
-
-               
-                      
-
-                      <!-- <div class="form-group row">
-                        <label class="col-2 col-form-label" for="packs">Packs</label>
-                        <div class="col-10">
-                          <label for="exampleFormControlSelect1"></label>
-
-                         <select  class="form-control r-selectpicker" id="packs" name=packs formControlName="packs" class="form-control" [(ngModel)]="addQueryObj.packs" [ngClass]="{ 'is-invalid': submitted && f.packs.errors }" multiple>
-                          <option value="all-events-pack">all-events-pack</option>
-                          <option value="binary-monitoring-pack">binary-monitoring-pack</option>
-                          <option value="forensic-pack">forensic-pack</option>
-                          <option value="hardware-monitoring">hardware-monitoring</option>
-                          <option value="incident-response">incident-response</option>
-                          <option value="it-compliance">it-compliance</option>
-                          <option value="user-creation-updation-pack">user-creation-updation-pack</option>
-                          <option value="unwanted-chrome-extensions">unwanted-chrome-extensions</option>
-                          <option value="osquery-monitoring">osquery-monitoring</option>
-                          <option value="vuln-management">vuln-management</option>
-                          <option value="windows-attacks">windows-attacks</option>
-                          <option value="windows-hardening">windows-hardening</option>
-                          </select>
-
-                           </div>
-                         </div> -->
                       <div class="form-group row">
                         <div class="col-2 col-form-label">
                           Tags
@@ -216,18 +163,26 @@
                               <div class="kt-checkbox-inline">
 
 
-                                  <div class="checkbox col-sm-5">
-                                      <label>
+                                  <div class="checkbox col-sm-5 row">
+                                      <label class="mr-2">
 
                                         <input formControlName="snapshot" type="checkbox" [(ngModel)]="snapshot" >
 
                                         Snapshot
 
                                      </label>
+                                     <div class="info-icon">
+
+                                       <a href="javascript:void(0);" tabindex="0" class="help"  role="button" data-toggle="popover"
+                                       aria-label="Snapshot queries, those with snapshot: true will not store differentials and will not emulate an event stream.Snapshots always return the entire results from the query on the given interval.">
+                                         <span class="badge badge-pill badge-light fa fa-info" data-placement="top" title="info"> </span>
+                                       </a>
+                                     </div>
                                   </div>
                               </div>
                           </div>
                       </div>
+
                   </div>
               </div>
 
@@ -241,7 +196,7 @@
                   <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i>Add</button>
 
 
-                  <button type="reset" style="margin-left:5px;" style="margin-left:5px;" class="btn btn-secondary">Clear</button>
+                  <button type="reset"(click)="clearQuery()" style="margin-left:5px;" style="margin-left:5px;" class="btn btn-secondary">Clear</button>
                 </div>
 
               </div>

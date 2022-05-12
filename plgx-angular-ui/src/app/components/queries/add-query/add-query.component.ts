@@ -139,6 +139,7 @@ export class AddQueryComponent implements OnInit {
   error:any;
   Updated:any;
   text: string = "";
+  queryText:string = "";
   pack_details:any;
   dropdownPacknameList = [];
   selectedPacknameItems = [];
@@ -209,7 +210,7 @@ private fb:FormBuilder) {
   this.addQuery= this.fb.group({
     name:['', Validators.required],
     query:'',
-    interval:['', Validators.required],
+    interval:['', [Validators.required, Validators.min(Number.MIN_VALUE)]],
     platform:'all',
     description:'',
     version:'',
@@ -296,7 +297,7 @@ private fb:FormBuilder) {
 
 ngOnInit() {
   // LivequeryFunction();
-  this.titleService.setTitle(this.commonvariable.APP_NAME+"-"+"Add Query");
+  this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Add query");
 
 
   // this.editor.value ='';
@@ -355,7 +356,7 @@ this.commonapi.packs_api().subscribe((res: any) => {
     if(sql==""){
       swal({
         icon: 'warning',
-        title:"Error in Query field-This field is required",
+        text:"Query field is required",
       })
     }
     else{
@@ -429,6 +430,9 @@ this.commonapi.packs_api().subscribe((res: any) => {
   goBack(){
     this._location.back();
   }
+  clearQuery(){
+    this.queryText = "";
+  }
   onItemSelect(item:any){
     console.log(item);
     console.log(this.selectedPacknameItems);
@@ -444,4 +448,3 @@ onDeSelectAll(items: any){
     console.log(items);
 }
 }
-

@@ -89,6 +89,12 @@
 
                               </div>
                           </div>
+                          <div *ngIf="isEmailEnabled == true" class="form-group row">
+                            <label class="col-2 col-form-label lbl-clr">Add description in email</label>
+                            <div class="col-10">
+                                 <input  id="status" class="checkboxClass mt-3" [checked]="ruledata_data.alert_description" (change)="addDescriptionEmail($event)" name="status" type="checkbox" >
+                            </div>
+                          </div>
                           <div class="form-group row required">
                               <label class="col-2 col-form-label lbl-clr">Conditions</label>
                               <div class="col-10">
@@ -128,6 +134,23 @@
 
                               </div>
                           </div>
+                        <div class="form-group row required">
+                          <label class="col-2 col-form-label" for="platform">Platform</label>
+                          <div class="col-10">
+
+                            <select  class="form-control r-selectpicker" id="platform" name="platform" placeholder="select platform" formControlName="platform" class="form-control" [(ngModel)]="ruledata_data.platform" >
+                              <option value="all">All</option>
+                              <option value="darwin">Darwin</option>
+                              <option value="linux">Linux</option>
+                              <option value="freebsd">FreeBSD</option>
+                              <option value="posix">POSIX Compatible</option>
+                              <option value="windows">Windows</option>
+                            </select>
+                            <!-- <div *ngIf="submitted && f.platform.errors" class="invalid-feedback">
+                              <div *ngIf="f.platform.errors.required">platform field is required</div>
+                            </div> -->
+                          </div>
+                        </div>
 
                           <!-- <div class="form-group row">
                             <label class="col-2 col-form-label">Type</label>
@@ -168,27 +191,16 @@
                           <!--begin:: Rule/type-->
                           <div class="form-group row">
                             <label class="col-2 col-form-label" for="rule_type">Type</label>
-                            <div class="col-md-10">
-                              <label *ngFor="let radiobutton of radioItems" class="form-check-inline">
-                              <input type="radio" name="rule_type" formControlName="rule_type" (click)="OnRadioBtnChnge(radiobutton)" class="form-check-input"
-                              [value]="radiobutton" [checked]="radiobutton === model.rule_type" [(ngModel)]="ruledata_data.type">
-                              <label for="rule_type-1">{{radiobutton}}</label>
-                              </label>
+                              <div class="col-10">
+                                <div class="kt-radio-inline">
+                                  <label *ngFor="let radiobutton of radioItems" class="kt-radio">
+                                    <input type="radio" name="rule_type" formControlName="rule_type" (click)="OnRadioBtnChnge(radiobutton)" class="form-check-input"
+                                    [value]="radiobutton" [checked]="radiobutton === model.rule_type" [(ngModel)]="ruledata_data.type">
+                                    <label for="rule_type-1">{{radiobutton}}</label>
+                                    <span></span>
+                                  </label>
+                                </div>
                               </div>
-                            <!-- <div class="col-10">
-                              <div class="kt-radio-inline">
-                                <label class="kt-radio">
-                                  <input [checked]="ruledata_data.type =='DEFAULT'" [(ngModel)]="type_selected" id="rule_type-1" type="radio" (change)="mitre_show = false" value="DEFAULT" name="rule_type" formControlName="rule_type">
-                                  <label for="rule_type-1">DEFAULT</label>
-                                  <span></span>
-                                </label>
-                                <label class="kt-radio">
-                                  <input [checked] = "ruledata_data.type =='MITRE'" [(ngModel)]="type_selected" id="rule_type-0" type="radio" (change)="mitre_show = true" value="MITRE" name="rule_type" formControlName="rule_type">
-                                  <label for="rule_type-0">MITRE</label>
-                                  <span></span>
-                                </label>
-                              </div>
-                            </div> -->
                           </div>
                           <!-- <pre>{{ruledata_data.technique_id}}</pre> -->
                           <div class="" *ngIf=" mitre_show">
@@ -252,12 +264,12 @@
                           <!-- <input class="btn btn-success" id="submit-button" type="submit" value="{% if rule is defined %}Update{% else %}Add{% endif %}"> -->
                           <!-- <button type="reset" class="btn btn-success" style="margin-left: 1em;" value="{% if query is defined %}update{% else %}add{% endif %} query"></button> -->
                           <!-- {% if rule is defined %} -->
-                          <button type="submit" (click)="onSubmit()" id="submit-button"  class="btn btn-success"><i class="fa fa-sync-alt"></i>Update</button>
+                          <button type="submit" (click)="onSubmit()" id="submit-button"  class="btn btn-success" [disabled]="!hasAcess"><i class="fa fa-sync-alt"></i>Update</button>
                           <!-- {% else %} -->
                           <!-- <button type="submit" id="submit-button" class="btn btn-success"><i -->
                                   <!-- class="fa fa-plus"></i>Add</button> -->
                           <!-- {% endif %} -->
-                          <button type="reset" (click)="resetForm()" style="margin-left:5px;" class="btn btn-secondary">Clear</button>
+                          <button type="reset" (click)="resetForm()" style="margin-left:5px;" class="btn btn-secondary" [disabled]="!hasAcess">Clear</button>
                       </div>
                       <!-- <pre>{{updateRuleObj | json}}</pre> -->
                   </div>

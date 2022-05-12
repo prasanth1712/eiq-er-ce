@@ -1,40 +1,66 @@
 <div class="kt-grid kt-grid--ver kt-grid--root">
   <div class="kt-grid kt-grid--hor kt-grid--root kt-login kt-login--v3 kt-login--signin" id="kt_login">
-    <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor"
-      style="height:100vh; background-image: url(../assets/media/bg/bg-3.jpg);">
-      <div class="kt-grid__item kt-grid__item--fluid kt-login__wrapper">
+    <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-login-div kt-login-boder">
+      <div class="mb-3 text-left" >
+        <a href="#">
+          <!-- <img src="../assets/media/poly-img/poly-6.png" width="250px"> -->
+            <img alt="Logo" src="/assets/media/eiq-img/logo_EIQ_payoff_RGB.svg" style="height: 30px;" /><label class="kt-login-logo"> </label>
+        </a>
+      </div>
+      <div class="kt-grid__item kt-grid__item--fluid kt-login__wrapper" style="padding-top: 0px;">
         <!--Begin::content-->
-        <div class="kt-portlet__body">
+        <div class="kt-portlet__body pt-5 pb-4 kt-login-container">
           <div class="">
             <div class="kt-login__container" >
-              <div class="kt-login__logo">
+              <div class="kt-login__logo mb-2 mt-4">
                 <a href="#">
-                  <img src="../assets/media/poly-img/poly-6.png" width="250px">
+                  <!-- <img src="../assets/media/poly-img/poly-6.png" width="250px"> -->
+                    <img alt="Logo" src="/assets/media/eiq-img/EclecticIQ-ER-Logo.svg" width="170px" style="padding-bottom:5px;" /><label class="kt-login-logo"> </label>
                 </a>
               </div>
               <!--Begin::Login-->
               <div class="kt-login__signin">
                 <div class="kt-login__head">
-                  <h3 class="kt-login__title">Sign In To Admin</h3>
+                  <!-- <h3 class="kt-login__title">Sign In To Admin</h3> -->
                 </div>
                 <!-- <div *ngIf="message" [ngClass]="message.cssClass">{{message.text}}</div> -->
                 <form #loginForm="ngForm" (ngSubmit)="onSubmit(loginForm)" >
                   <div class="loginform-row">
                     <div class="form-group">
-                      <input type="text" placeholder="Username" name="username" [(ngModel)]="credentials.username" class="form-control">
+                      <input type="text" placeholder="Enter Username" name="username" [(ngModel)]="credentials.username" class="form-control text-left kt-login-txt">
                     </div>
                   </div>
                   <div class="loginform-row">
-                    <div class="form-group">
-                      <input type="password" placeholder="Password" name="password" [(ngModel)]="credentials.password" class="form-control">
+                    <div class="input-group form-password" >
+                       <input [type]="fieldTextType ? 'text' : 'password'" placeholder="Enter Password" name="password" [(ngModel)]="credentials.password" class="form-control text-left kt-login-txt kt-pw-border">
+                       <div class="input-group-append input-password kt-login-txt">
+                         <span class="input-group-text bg-white">
+                           <i
+                             class="fa"
+                             [ngClass]="{
+                             'fa-eye-slash': !fieldTextType,
+                             'fa-eye': fieldTextType
+                             }"
+                             (click)="toggleFieldTextType()"
+                           ></i>
+                         </span>
+                       </div>
                     </div>
                   </div>
+
+                  <div *ngIf="error" class="loginform-row">
+                    <div class="form-group" style="padding: 0px 30px;">
+                      <span class="form-control kt-login-error" >{{error}}</span>
+                    </div>
+                  </div>
+
                   <div class="loginform-row">
-                   <button [disabled]="loading" class="btn btn-brand btn-elevate btn-success">
-                      <span *ngIf="loading"  class="spinner-border spinner-border-sm mr-1"></span>
-                      Sign In
-                    </button>
-                    <div *ngIf="error" class="alert alert-danger mt-3 mb-0">{{error}}</div>
+                    <div class="form-group kt-submit-div" style="margin-top: 30px;">
+                      <button [disabled]="loading"  class="btn btn-brand btn-elevate shadow form-control">
+                         <span *ngIf="loading"  class="spinner-border spinner-border-sm mr-1"></span>
+                         SIGN IN
+                       </button>
+                    </div>
                   </div>
                 </form>
               </div>
@@ -42,6 +68,12 @@
           </div>
           <!-- end:: content -->
         </div>
+        <!-- <div class="text-center" [class.disabled]="!ssoStatus" style="width:100%;margin-top: 20px;">
+        <a (click)="makeSSOAuth()" ><span style="color: #20b2aa; font-size: 11px;"> Sign in with Single Sign On (SSO)</span></a>
+        </div> -->
+        <button class="kt-login-sso" (click)="makeSSOAuth()" [disabled]="!ssoStatus" >
+          Sign in with Single Sign On (SSO)
+        </button>
       </div>
     </div>
   </div>

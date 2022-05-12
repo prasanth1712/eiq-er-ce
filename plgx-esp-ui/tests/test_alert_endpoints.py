@@ -1,9 +1,3 @@
-"""
-All Test-Case required client, url_prefix and token,
-and these all we need to just pass as parameters in the function.
-"""
-
-
 from polylogyx.dao.v1 import alerts_dao as dao
 from polylogyx.wrappers.v1 import alert_wrappers as alert_wrapper
 from polylogyx.blueprints.v1.utils import *
@@ -42,440 +36,168 @@ ALERT_RECON_QUERIES_JSON = {
 }
 
 
-class TestAlertSourceCount:
+class TestPostViewAlerts:
 
-    def test_alert_source_count_without_alerts_data(self,client, url_prefix, token):
-        """
-        test-case without existing alerts data,
-        expected output:- status is success, and
-        resultant data of alert_source with source_name and count
-        """
-        resp = client.get(url_prefix + '/alerts/count_by_source', headers={'x-access-token': token})
+    payload = {'host_identifier': '', 'rule_id': None, 'query_name': ''}
+
+    def test_valid_post_alerts_empty_data(self, client, url_prefix, token):
+        """ Test-Case with no payload """
+        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, data=self.payload)
+        assert resp.status_code == 200
+        response_dict = json.loads(resp.data)
+        assert response_dict['status'] == 'failure'
+        assert response_dict['message'] == 'no data is given to view alerts'
+        assert response_dict['data'] == []
+
+        """ Test-Case with only rule_id """
+        self.payload['rule_id'] = 1
+        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, data=self.payload)
+        assert resp.status_code == 200
+        response_dict = json.loads(resp.data)
+        assert response_dict['status'] == 'failure'
+        assert response_dict['message'] == 'rule_id is invalid or might be there is no matching data'
+        assert response_dict['data'] == []
+
+        """ Test-Case only with Host-Identifier """
+        self.payload['rule_id'] = None
+        self.payload['host_identifier'] = 'foobar'
+        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, data=self.payload)
+        assert resp.status_code == 200
+        response_dict = json.loads(resp.data)
+        assert response_dict['message'] == "Host_identifier given is not valid!"
+        assert response_dict['data'] == []
+
+        """ Test-Case only with Query-Name """
+        self.payload['query_name'] = 'win_file_events'
+        self.payload['host_identifier'] = ''
+        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, data=self.payload)
+        assert resp.status_code == 200
+        response_dict = json.loads(resp.data)
+        assert response_dict['message'] == 'query_name is invalid or might be there is no matching data'
+        assert response_dict['data'] == []
+
+    def test_post_view_alerts_invalid_url(self, client, url_prefix, token):
+        resp = client.post(url_prefix + '/alert', headers={'x-access-token': token}, data=self.payload)
+        assert resp.status_code == 404
+
+    def test_valid_post_alerts_with_data(self, client, url_prefix, token, alerts):
+        self.payload['host_identifier'] = 'foobar'
+        self.payload['rule_id'] = 1
+        self.payload['query_name'] = 'win_file_events'
+        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, data=self.payload)
         assert resp.status_code == 200
         response_dict = json.loads(resp.data)
         assert response_dict['status'] == 'success'
-        assert response_dict['data']['alert_source'][0] == {'name': 'virustotal', 'count': 0}
-        assert response_dict['data']['alert_source'][1] == {'name': 'rule', 'count': 0}
-        assert response_dict['data']['alert_source'][2] == {'name': 'ibmxforce', 'count': 0}
-        assert response_dict['data']['alert_source'][3] == {'name': 'alienvault', 'count': 0}
-        assert response_dict['data']['alert_source'][4] == {'name': 'ioc', 'count': 0}
+        assert response_dict['message'] == 'Successfully received the alerts'
+        node = node_dao.get_node_by_host_identifier(self.payload['host_identifier'])
+        assert response_dict['data'] == add_rule_name_to_alerts_response(marshal(dao.get_alerts_for_input(node, self.payload['rule_id'], self.payload['query_name'])[0], alert_wrapper.alerts_wrapper, skip_none=True))
 
-    def test_post_view_alerts_invalid_method(self, client, url_prefix, token):
-        """
-        Test-case with invalid request method,
-        expected output:- status code is 405
-        """
-        resp = client.get(url_prefix + '/alerts', headers={'x-access-token': token})
-        assert resp.status_code == 405
-
-    def test_alert_source_count_with_alerts_data(self,client, url_prefix, token, alerts):
-        """
-        test-case with existing alerts data,
-        expected output:- status is success, and
-        resultant data of alert_source with source_name and count
-        """
-        resp = client.get(url_prefix + '/alerts/count_by_source', headers={'x-access-token': token})
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'success'
-        assert response_dict['data']['alert_source'][0] == {'name': 'virustotal', 'count': 1}
-        assert response_dict['data']['alert_source'][1] == {'name': 'rule', 'count': 1}
-        assert response_dict['data']['alert_source'][2] == {'name': 'ibmxforce', 'count': 0}
-        assert response_dict['data']['alert_source'][3] == {'name': 'alienvault', 'count': 0}
-        assert response_dict['data']['alert_source'][4] == {'name': 'ioc', 'count': 0}
-
-
-class TestAlertsData:
-    """
-    Test-case inside this block where these payloads values are used
-    these values are optional values and source and searchterm are of str type,
-    start and limits are integer type, resolved value is
-    of boolean type, and event_ids is of list type, start is 0,
-    limit is 10 and searchterm is empty str, so if value type is
-    not same as specified type then it will return 400 i.e., bad request
-    """
-    payload = {
-        "start": None, "limit": None, "source": None,
-        'resolved': None, 'event_ids': None, 'searchterm': ''
-    }
-
-    def test_alerts_data_without_payload(self, client, url_prefix, token):
-        """
-        Test-case without payload value and without existing alerts data,
-        expected output:- status is failure, and resultant alert data is empty list in this case
-        """
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token})
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-        assert response_dict['data'] == []
-
-    def test_alerts_data_with_payload_value_empty_dict(self, client, url_prefix, token):
-        """
-        Test-case with payload value is empty dictionary,
-        and without existing alerts data,
-        expected output:- status is failure, and
-        resultant alert data is empty list in this case
-        """
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json={})
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-        assert response_dict['data'] == []
-
-    def test_alerts_data_with_payload_value_None(self, client, url_prefix, token):
-        """
-        Test-case with payload value None,
-        and without existing alerts data,
-        expected output:- status is failure, and
-        resultant alert data is empty list in this case
-        """
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=self.payload)
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-        assert response_dict['data'] == []
-
-    def test_alerts_data_with_only_source(self, client, url_prefix, token):
-        """
-        Test-case with only payload value of source,
-        and without existing alerts data,
-        expected output:- status is failure, and
-        resultant alert data is empty list in this case
-        """
-        payload = {'source': 'rule'}
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-        assert response_dict['data'] == []
-
-    def test_alerts_data_with_only_resolved(self, client, url_prefix, token):
-        """
-        Test-case with only payload value of resolved,
-        and without existing alerts data,
-        expected output:- status is failure, and
-        resultant alert data is empty list in this case
-        """
-        payload = {'resolved': True}
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-        assert response_dict['data'] == []
-
-    def test_alerts_data_with_only_event_ids(self, client, url_prefix, token):
-        """
-        Test-case with only payload value of event_ids,
-        and without existing alerts data,
-        expected output:- status is failure, and
-        resultant alert data is empty list in this case
-        """
-        payload = {'event_ids': [1]}
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-        assert response_dict['data'] == []
-
-    def test_alerts_data_with_only_searchterm(self, client, url_prefix, token):
-        """
-        Test-case with only payload value of searchterm,
-        and without existing alerts data,
-        expected output:- status is failure, and
-        resultant alert data is empty list in this case
-        """
-        payload = {'searchterm': 'testrule'}
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-        assert response_dict['data'] == []
-
-    def test_alerts_data_with_all_payload_value(self, client, url_prefix, token):
-        """
-        Test-case with all payload value,
-        and without existing alerts data,
-        expected output:- status is failure, and
-        resultant alert data is empty list in this case
-        Note:- results may vary based on date value
-        """
-        payload = {
-            'start':0, 'limit': 3, 'source': 'rule', 'resolved': False,
-            'event_ids': [1], 'searchterm': 'testrule'
-        }
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-        assert response_dict['data'] == []
-
-    def test_alerts_data_with_all_payload_value_with_invalid_pagination(self, client, url_prefix, token):
-        """
-        Test-case with all payload value with invalid pagination,
-        and without existing alerts data,
-        expected output:- status_code is 400
-        """
-        payload = {
-            'start':'str', 'limit': 'foo', 'source': 'rule', 'resolved': False,
-            'event_ids': [1], 'searchterm': 'testrule'
-        }
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
-        assert resp.status_code == 400
-
-    def test_alerts_data_with_all_payload_value_with_start_value_none(self, client, url_prefix, token):
-        """
-        Test-case with all payload value with start value none,
-        and without existing alerts data,
-        expected output:- status_code is 400
-        """
-        payload = {
-            'start':None, 'limit': 'foo', 'source': 'rule', 'resolved': False,
-            'event_ids': [1], 'searchterm': 'testrule'
-        }
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
-        assert resp.status_code == 400
-
-    def test_alerts_data_with_all_payload_value_with_limit_value_none(self, client, url_prefix, token):
-        """
-        Test-case with all payload value with limit value none,
-        and without existing alerts data,
-        expected output:- status is failure, and response_data should be empty list
-        """
-        payload = {
-            'start':1, 'limit': None, 'source': 'rule', 'resolved': False,
-            'event_ids': [1], 'searchterm': 'testrule'
-        }
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-        assert response_dict['data'] == []
-
-    def test_alerts_data_invalid_method(self, client, url_prefix, token, alerts):
-        """
-         Test-case with invalid request method,
-         expected output:- status code is 405
-        """
+    def test_invalid_method_for_view_alerts(self, client, url_prefix, token):
         resp = client.get(url_prefix + '/alerts', headers={'x-access-token': token}, data=self.payload)
         assert resp.status_code == 405
 
-    def test_alert_data_without_payload(self, client, url_prefix, token, alerts):
-        """
-        Test-case without payload value and with existing alerts data,
-        expected output:- status is failure, and resultant alert data is empty list in this case
-        """
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token})
+
+class TestGetAlertsGraphData:
+
+    def test_valid_alerts_with_empty_data(self, client, url_prefix, token):
+        resp = client.get(url_prefix + '/alerts/graph', headers={'x-access-token': token})
         assert resp.status_code == 200
         response_dict = json.loads(resp.data)
         assert response_dict['status'] == 'failure'
-        assert response_dict['data'] == []
+        assert response_dict['data'] is None
 
-    def test_alert_data_with_payload_value_empty_dict(self, client, url_prefix, token, alerts):
-        """
-        Test-case with payload value is empty dictionary,
-        and with existing alerts data,
-        expected output:- status is failure, and
-        resultant alert data is empty list in this case
-        """
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json={})
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-        assert response_dict['data'] == []
-
-    def test_alert_data_with_payload_value_None(self, client, url_prefix, token, alerts):
-        """
-        Test-case with payload value None,
-        and with existing alerts data,
-        expected output:- status is failure, and
-        resultant alert data is empty list in this case
-        """
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=self.payload)
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-        assert response_dict['data'] == []
-
-    def test_alert_data_with_only_source(self, client, url_prefix, token, alerts):
-        """
-        Test-case with only payload value of source,
-        and with existing alerts data,
-        expected output:- status is success, and
-        resultant alert data like count, total_count, hostname etc.
-        """
-        payload = {'source': 'rule'}
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
+    def test_valid_alerts_with_data(self, client, url_prefix, token, alerts, result_log):
+        resp = client.get(url_prefix + '/alerts/graph', headers={'x-access-token': token})
         assert resp.status_code == 200
         response_dict = json.loads(resp.data)
         assert response_dict['status'] == 'success'
-        data = get_results_by_alert_source(0, 10, 'rule')
-        assert response_dict['data']['count'] == 1
-        assert response_dict['data']['total_count'] == 1
-        assert response_dict['data']['results'] == data['results']
+        assert response_dict['data'] == get_alerts_data()
 
-    def test_alert_data_with_only_resolved(self, client, url_prefix, token, alerts):
-        """
-        Test-case with only payload value of resolved,
-        and with existing alerts data,
-        expected output:- status is failure, and
-        resultant alert data is empty list in this case
-        """
-        payload = {'resolved': True}
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
+    def test_get_alerts_invalid_url(self, client, url_prefix, token):
+        resp = client.get(url_prefix + '/alerts/graphs', headers={'x-access-token': token})
+        assert resp.status_code == 404
+
+    def test_invalid_request(self, client, url_prefix, token):
+        resp = client.post(url_prefix + '/alerts/graph', headers={'x-access-token': token})
+        assert resp.status_code == 405
+
+
+class TestPostAlertsData:
+
+    start, limit, source = 4, 5, "rule"
+    payload = {"start": start, "limit": limit, "source": source}
+
+    def test_valid_alerts_without_data(self, url_prefix, client, token):
+        resp = client.post(url_prefix + '/alerts/data', headers={'x-access-token': token}, data=self.payload)
         assert resp.status_code == 200
+
         response_dict = json.loads(resp.data)
         assert response_dict['status'] == 'failure'
         assert response_dict['data'] == []
 
-    def test_alert_data_with_only_event_ids(self, client, url_prefix, token, alerts):
-        """
-        Test-case with only payload value of event_ids,
-        and with existing alerts data,
-        expected output:- status is failure, and
-        resultant alert data is empty list in this case
-        """
-        payload = {'event_ids': [1]}
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
+    def test_valid_alerts_data_without_pagination(self, client, url_prefix, token, alerts):
+        resp = client.post(url_prefix + '/alerts/data', headers={'x-access-token': token}, data={"source": self.source})
         assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-        assert response_dict['data'] == []
 
-    def test_alert_data_with_only_searchterm(self, client, url_prefix, token, alerts):
-        """
-        Test-case with only payload value of searchterm,
-        and with existing alerts data,
-        expected output:- status is failure, and
-        resultant alert data is empty list in this case
-        """
-        payload = {'searchterm': 'testrule'}
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-        assert response_dict['data'] == []
-
-    def test_alert_data_with_all_payload_value(self, client, url_prefix, token, alerts):
-        """
-        Test-case with all payload value,
-        and with existing alerts data,
-        expected output:- status is success, and
-        resultant alert data like count, total_count, hostname etc.
-        Note:- results may vary based on date value
-        """
-        payload = {
-            'start':0, 'limit': 3, 'source': 'rule', 'resolved': False,
-            'event_ids': [1, 2], 'searchter': 'testrule'
-        }
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
-        assert resp.status_code == 200
         response_dict = json.loads(resp.data)
         assert response_dict['status'] == 'success'
-        data = get_results_by_alert_source(0, 10, 'rule')
-        assert response_dict['data']['count'] == 1
-        assert response_dict['data']['total_count'] == 1
-        assert response_dict['data']['results'] == data['results']
+        assert response_dict['data']['count'] == get_results_by_alert_source(start=0, limit=10, source=self.source)['count']
 
-    def test_alert_data_with_all_payload_value_with_invalid_source(self, client, url_prefix, token, alerts):
-        """
-        Test-case with all payload value with invalid source,
-        and with existing alerts data,
-        expected output:- status is failure, and
-        resultant alert is empty list in this case
-        """
-        payload = {
-            'start':0, 'limit': 3, 'source': 'test', 'resolved': False,
-            'event_ids': [1, 2], 'searchter': 'testrule'
-        }
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
+        assert response_dict['data']['results'] == get_results_by_alert_source(start=0, limit=10, source=self.source)['results']
+
+    def test_valid_alerts_data_with_pagination(self, client, url_prefix, token, alerts):
+        resp = client.post(url_prefix + '/alerts/data', headers={'x-access-token': token}, data=self.payload)
         assert resp.status_code == 200
+
         response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
+        if response_dict['data']:
+            assert response_dict['status'] == 'success'
+            assert response_dict['data'] == get_results_by_alert_source(
+                self.start, self.limit, self.source)
 
-    def test_alert_data_with_all_payload_value_with_invalid_pagination(self, client, url_prefix, token, alerts):
-        """
-        Test-case with all payload value with invalid pagination,
-        and with existing alerts data,
-        expected output:- status_code is 400
-        """
-        payload = {
-            'start':'str', 'limit': 'foo', 'source': 'rule', 'resolved': False,
-            'event_ids': [1], 'searchterm': 'testrule'
-        }
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
+            assert response_dict['data']['pagination'] == get_results_by_alert_source(
+            self.start, self.limit, self.source)['pagination']
+
+            assert response_dict['data']['data'] == get_results_by_alert_source(
+            self.start, self.limit, self.source)['data']
+        else:
+            assert response_dict['status'] == 'failure'
+            assert response_dict['data'] == []
+
+    def test_alerts_data_without_source(self, client, url_prefix, token, alerts):
+        resp = client.post(url_prefix + '/alerts/data', headers={'x-access-token': token}, data={})
         assert resp.status_code == 400
-
-    def test_alert_data_with_all_payload_value_with_start_value_none(self, client, url_prefix, token, alerts):
-        """
-        Test-case with all payload value with start value none,
-        and with existing alerts data,
-        expected output:- status_code is 400
-        """
-        payload = {
-            'start':None, 'limit': 'foo', 'source': 'rule', 'resolved': False,
-            'event_ids': [1], 'searchterm': 'testrule'
-        }
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
-        assert resp.status_code == 400
-
-    def test_alert_data_with_all_payload_value_with_limit_value_none(self, client, url_prefix, token, alerts):
-        """
-        Test-case with all payload value with limit value none,
-        and with existing alerts data,
-        expected output:- status is failure, and response_data should be empty list
-        """
-        payload = {
-            'start':0, 'limit': None, 'source': 'rule', 'resolved': False,
-            'event_ids': [1], 'searchterm': 'testrule'
-        }
-        resp = client.post(url_prefix + '/alerts', headers={'x-access-token': token}, json=payload)
-        assert resp.status_code == 200
         response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-        assert response_dict['data'] == []
+        assert 'errors' in response_dict
+        assert 'data' not in response_dict
+        assert response_dict['message'] == 'Input payload validation failed'
+
+    def test_alerts_data_invalid_url(self, client, url_prefix, token):
+        resp = client.post(url_prefix + '/data', headers={'x-access-token': token}, data=self.payload)
+        assert resp.status_code == 404
 
 
 class TestGetAlertInvestigateData:
 
-    def test_get_alert_investigate_data_without_existing_alerts(self, client, url_prefix, token):
-        """
-        Test-case without alerts data,
-        alert_id which is passing through url
-        expected output:- status is failure
-        """
-        resp = client.get(url_prefix + '/alerts/1', headers={'x-access-token': token})
+    def test_get_empty_data(self, client, url_prefix, token):
+        resp = client.get(url_prefix + '/alerts/data/1', headers={'x-access-token': token})
         assert resp.status_code == 200
         response_dict = json.loads(resp.data)
         assert response_dict['status'] == 'failure'
+        assert response_dict['data'] is None
+        # alert = dao.get_alerts_by_alert_id(1)
+        # assert response_dict['data'] == alerts_details(alert)
 
     def test_get_invalid_method(self, client, url_prefix, token):
-        """
-        Test-case with invalid request method,
-        expected output:- status code is 405
-        """
-        resp = client.post(url_prefix + '/alerts/1', headers={'x-access-token': token})
+        resp = client.post(url_prefix + '/alerts/data/1', headers={'x-access-token': token})
         assert resp.status_code == 405
 
-    def test_get_alert_investigate_data_with_invalid_alert_id(self, client, url_prefix, token, alerts):
-        """
-        Test-case with alerts data and invalid
-        alert_id which is passing through url,
-        expected output:- status is failure
-        """
-        resp = client.get(url_prefix + '/alerts/5', headers={'x-access-token': token})
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
+    def test_get_invalid_url(self, client, url_prefix, token):
+        resp = client.get(url_prefix + '/alert/data/1', headers={'x-access-token': token})
+        assert resp.status_code == 404
 
-    def test_get_alert_investigate_data_with_existing_alerts(self, client, url_prefix, token, alerts):
-        """
-        Test-case with alerts data and valid
-        alert_id which is passing through url,
-        expected output:- status is success, and
-        resultant alerts data
-        """
-        resp = client.get(url_prefix + '/alerts/1', headers={'x-access-token': token})
+    def test_get_data(self, client, url_prefix, token, alerts):
+        resp = client.get(url_prefix + '/alerts/data/1', headers={'x-access-token': token})
         assert resp.status_code == 200
         response_dict = json.loads(resp.data)
         assert response_dict['status'] == 'success'
@@ -483,188 +205,165 @@ class TestGetAlertInvestigateData:
         assert response_dict['data'] == alerts_details(alert)
 
 
-class TestUpdateAlertInvestigateData:
-
-    """
-    Test-case inside this block where this payload value is used,
-    this is optional value of payload and of boolean type,
-    so if value type is other than boolean then it will return
-    400 error, i.e., bad request
-    """
-    payload = {'resolve': None}
-
-    def test_update_alert_investigate_data_without_payload(self, client, url_prefix, token):
-        """
-        Test-case without payload value and without alerts data,
-        alert_id which is passing through url
-        expected output:- status is failure
-        """
-        resp = client.put(url_prefix + '/alerts/1', headers={'x-access-token': token})
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-
-    def test_update_alert_investigate_data_with_payload_empty_dict(self, client, url_prefix, token):
-        """
-        Test-case with payload value is empty dictionary, and without alerts data,
-        alert_id which is passing through url
-        expected output:- status is failure
-        """
-        resp = client.put(url_prefix + '/alerts/1', headers={'x-access-token': token}, json={})
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-
-    def test_update_alert_investigate_data_with_payload_value_none(self, client, url_prefix, token):
-        """
-        Test-case with payload value is none, and without alerts data,
-        alert_id which is passing through url
-        expected output:- status is failure
-        """
-        resp = client.put(url_prefix + '/alerts/1', headers={'x-access-token': token}, json=self.payload)
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-
-    def test_update_alert_investigate_data_with_resolve_value_of_payload(self, client, url_prefix, token):
-        """
-        Test-case with payload value is True/False, and without alerts data,
-        alert_id which is passing through url
-        expected output:- status is failure
-        """
-        self.payload['resolve'] = True
-        resp = client.put(url_prefix + '/alerts/1', headers={'x-access-token': token})
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-
-    def test_update_alert_investigate_invalid_method(self, client, url_prefix, token):
-        """
-        Test-case with invalid request method,
-        expected output:- status code is 405
-        """
-        resp = client.post(url_prefix + '/alerts/1', headers={'x-access-token': token})
-        assert resp.status_code == 405
-
-    def test_get_alert_investigate_data_with_invalid_alert_id(self, client, url_prefix, token, alerts):
-        """
-        Test-case with alerts data and invalid
-        alert_id which is passing through url, with payload value of true/false
-        expected output:- status is failure
-        """
-        self.payload['resolve'] = False
-        resp = client.put(url_prefix + '/alerts/5', headers={'x-access-token': token}, json=self.payload)
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'failure'
-
-    def test_get_alert_investigate_data_with_valid_id_resolve_false(self, client, url_prefix, token, alerts):
-        """
-        Test-case with alerts data and valid
-        alert_id which is passing through url, and with payload value is False
-        expected output:- status is success
-        """
-        self.payload['resolve'] = False
-        resp = client.get(url_prefix + '/alerts/1', headers={'x-access-token': token}, json=self.payload)
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'success'
-        alert = alerts_dao.get_alerts_by_alert_id(1)
-        assert alert.status == 'OPEN'
-
-    def test_get_alert_investigate_data_with_valid_id_resolve_true(self, client, url_prefix, token, alerts):
-        """
-        Test-case with alerts data and valid
-        alert_id which is passing through url, and with payload value is True
-        expected output:- status is success
-        """
-        self.payload['resolve'] = True
-        resp = client.put(url_prefix + '/alerts/1', headers={'x-access-token': token}, json=self.payload)
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == 'success'
-        alert = alerts_dao.get_alerts_by_alert_id(1)
-        assert alert.status == 'RESOLVED'
-
-
 class TestExportCsvAlerts:
+    def test_export_csv_alerts_empty_data(self, client, url_prefix, token):
+        resp = client.post(url_prefix + '/alerts/alert_source/export', headers={'x-access-token': token},
+                           data={'source': 'alienvault'})
+        assert resp.status_code == 200
+        response_dict = json.loads(resp.data)
+        assert response_dict is None
 
-    """
-    Test-case inside this block where this payload value is used,
-    this is compulsory payload value of str type, so if value is not passed
-    or type of value other than str then it will return 400 i.e., bad request
-    """
-
-    payload = {'source': None}
-
-    def test_export_csv_alerts_without_payload(self, client, url_prefix, token):
-        """
-        Test-case without payloads and without existing alerts data
-        expected output:- status_code is 400
-        """
+        """Test-case with payload """
         resp = client.post(url_prefix + '/alerts/alert_source/export', headers={'x-access-token': token})
         assert resp.status_code == 400
 
-    def test_export_csv_alerts_with_payload_empty_dict(self, client, url_prefix, token):
-        """
-        Test-case with payload value is empty dict and without existing alerts data
-        expected output:- status_code is 400
-        """
-        resp = client.post(url_prefix + '/alerts/alert_source/export', headers={'x-access-token': token}, json={})
-        assert resp.status_code == 400
-
-    def test_export_csv_alerts_with_payload_val_none(self, client, url_prefix, token):
-        """
-        Test-case with payload value none and without existing alerts data
-        expected output:- status_code is 400
-        """
-        resp = client.post(url_prefix + '/alerts/alert_source/export', headers={'x-access-token': token},
-                           json=self.payload)
-        assert resp.status_code == 400
-
-    def test_export_csv_alerts_with_valid_payload_value(self, client, url_prefix, token):
-        """
-        Test-case with valid payload value and without existing alerts data
-        expected output:- status is failure
-        """
-        self.payload['source'] = 'rule'
-        resp = client.post(url_prefix + '/alerts/alert_source/export', headers={'x-access-token': token},
-                           json=self.payload)
-        assert resp.status_code == 200
-        response_dict = json.loads(resp.data)
-        assert response_dict['status'] == "failure"
+    def test_export_csv_invalid_url(self, client, url_prefix, token):
+        resp = client.post(url_prefix + '/alert_source/export', headers={'x-access-token': token},
+                           data={'source': 'rule'})
+        assert resp.status_code == 404
 
     def test_export_csv_invalid_method(self, client, url_prefix, token):
-        """
-        Test-case with invalid request method,
-        expected output:- status code is 405
-        """
         resp = client.get(url_prefix + '/alerts/alert_source/export', headers={'x-access-token': token},
                            data={'source': 'rule'})
         assert resp.status_code == 405
 
-    def test_export_csv_alerts_with_invalid_source(self, client, url_prefix, token, alerts):
-        """
-        Test-case with invalid source name of payload value,
-        and with existing alerts data,
-        expected output:- status is failure
-        """
-        self.payload['source'] = 'test'
+    def test_export_csv_alerts_with_data(self, client, url_prefix, token, alerts):
         resp = client.post(url_prefix + '/alerts/alert_source/export', headers={'x-access-token': token},
-                           json=self.payload)
+                           data={'source': 'virustotal'})
+        assert resp.status_code == 200
+        results = alerts_dao.get_alert_source('virustotal')
+        if not results:
+            response_dict = json.loads(resp.data)
+            assert response_dict['status'] == 'failure'
+            assert response_dict['message'] == "Data couldn't find for the alert source given!"
+        else:
+            assert resp.data == get_response(results).data
+
+        """ Test-case without Payloads """
+        resp = client.post(url_prefix + '/alerts/alert_source/export', headers={'x-access-token': token})
+        assert resp.status_code == 400
+
+
+class TestProcessAnalysisParentData:
+    payload = {'process_guid': "CFA60AEC-1D78-11EA-9CAD-A4C3F0975828"}
+
+    def test_get_empty_data(self, client, url_prefix, token):
+        resp = client.post(
+            url_prefix + '/alerts/data/process/1', headers={'x-access-token': token}, data={})
+        assert resp.status_code == 400
+
+
+    def test_get_invalid_method(self, client, url_prefix, token):
+        resp = client.get(
+            url_prefix + '/alerts/data/process/1', headers={'x-access-token': token}, data=self.payload)
+        assert resp.status_code == 405
+
+    def test_get_invalid_url(self, client, url_prefix, token):
+        resp = client.post(
+            url_prefix + '/alerts/data/process', headers={'x-access-token': token}, data=self.payload)
+        assert resp.status_code == 404
+
+    def test_get_data_without_child(self, client, url_prefix, token, alerts):
+        resp = client.post(url_prefix + '/alerts/data/process/1', headers={'x-access-token': token}, data=self.payload)
+        assert resp.status_code == 200
+        response_dict = json.loads(resp.data)
+        assert response_dict['status'] == 'success'
+        alert = dao.get_alert_by_id(1)
+        assert response_dict['data'] == graph_data_based_on_process(alert, self.payload['process_guid'])
+
+    def test_get_data_with_child(self, client, url_prefix, token, alerts, result_log):
+        resp = client.post(url_prefix + '/alerts/data/process/1', headers={'x-access-token': token},
+                           data=self.payload)
+        assert resp.status_code == 200
+        response_dict = json.loads(resp.data)
+        assert response_dict['status'] == 'success'
+        alert = dao.get_alert_by_id(1)
+        assert response_dict['data'] == graph_data_based_on_process(alert, self.payload['process_guid'])
+
+
+class TestProcessAnalysisChildData:
+    payload = {'alerted_action': 'FILE_RENAME', 'process_guid': 'CFA60AEC-1D78-11EA-9CAD-A4C3F0975828'}
+
+    def test_get_empty_child_data(self, client, url_prefix, token):
+        resp = client.post(
+            url_prefix + '/alerts/data/process/child/1', headers={'x-access-token': token}, data=self.payload)
         assert resp.status_code == 200
         response_dict = json.loads(resp.data)
         assert response_dict['status'] == 'failure'
+        assert response_dict['data'] == {}
 
-    def test_export_csv_alerts_with_valid_source(self, client, url_prefix, token, alerts):
-        """
-        Test-case with valid source name of payload value,
-        and with existing alerts data,
-        expected output:- status_code is 200, and
-        a csv file data
-        """
-        self.payload['source'] = 'rule'
-        resp = client.post(url_prefix + '/alerts/alert_source/export', headers={'x-access-token': token},
-                           json=self.payload)
+    def test_get_invalid_method(self, client, url_prefix, token):
+        resp = client.get(
+            url_prefix + '/alerts/data/process/child/1', headers={'x-access-token': token}, data=self.payload)
+        assert resp.status_code == 405
+
+    def test_get_invalid_url(self, client, url_prefix, token):
+        resp = client.get(
+            url_prefix + '/data/process/child/1', headers={'x-access-token': token}, data=self.payload)
+        assert resp.status_code == 404
+
+    def test_get_data(self, client, url_prefix, token, alerts, result_log):
+        resp = client.post(
+            url_prefix + '/alerts/data/process/child/1', headers={'x-access-token': token}, data=self.payload)
         assert resp.status_code == 200
-        assert resp.data == get_response(alerts_dao.get_alert_source('rule')).data
+        response_dict = json.loads(resp.data)
+        assert response_dict['status'] == 'success'
+        alert = dao.get_alert_by_id(1)
+        assert response_dict['data'] == child_node_data(alert, self.payload['process_guid'], self.payload['alerted_action'])
+
+
+class TestRuleEndToEnd:
+    def test_rule_end_to_end(self, client, url_prefix, token, app):
+        from polylogyx.plugins import AbstractAlerterPlugin
+
+        class DummyAlerter(AbstractAlerterPlugin):
+            def __init__(self, *args, **kwargs):
+                super(DummyAlerter, self).__init__(*args, **kwargs)
+                self.calls = []
+
+            def handle_alert(self, node, match, intel_match):
+                self.calls.append((node, match))
+
+        dummy_alerter = DummyAlerter()
+
+        rule = Rule(name='DummyRule',
+                    alerters=['dummy'],
+                    description='',
+                    conditions={
+                        "condition": "AND",
+                        "rules": [
+                            {
+                                "id": "query_name",
+                                "field": "query_name",
+                                "type": "string",
+                                "input": "text",
+                                "operator": "equal",
+                                "value": "dummy-query"
+                            }
+                        ]
+                    },
+                    status='ACTIVE',
+                    severity=Rule.WARNING, recon_queries=json.dumps(ALERT_RECON_QUERIES_JSON))
+        rule.save()
+        now = dt.datetime.utcnow()
+        data = [
+            {
+                "diffResults": {
+                    "added": [
+                        {
+                            "column_name": "column_value",
+                        }
+                    ],
+                    "removed": ""
+                },
+                "name": "dummy-query",
+                "hostIdentifier": "hostname.local",
+                "calendarTime": "%s %s" % (now.ctime(), "UTC"),
+                "unixTime": now.strftime('%s')
+            }
+        ]
+        resp = client.post(url_prefix + '/alerts/data', headers={'x-access-token': token},
+                           data={'source': 'rule'})
+        assert resp.status_code == 200
+        response_dict = json.loads(resp.data)
+        # assert response_dict

@@ -225,14 +225,18 @@ function  init_querybuilder(exist_query) {
             if (!$builder) {
                 return true;
             }
+            debugger
             if (!$builder.queryBuilder('validate')) {
                 e.preventDefault();
+                $('#rules-hidden').val('');
                 return false;
             }
-            var rules = JSON.stringify($builder.queryBuilder('getRules'));
-            console.log(rules);
-            $('#rules-hidden').val(rules);
-            return true;
+            else{
+                var rules = JSON.stringify($builder.queryBuilder('getRules'));
+                console.log(rules);
+                $('#rules-hidden').val(rules);
+                return true;
+            }
         });
     }
     // var query= {'rules': [{'id': 'column', 'type': 'string', 'field': 'column', 'input': 'text', 'value': ['wqewqsadsad', '1213'], 'operator': 'column_equal'}], 'valid': True, 'condition': 'AND'};

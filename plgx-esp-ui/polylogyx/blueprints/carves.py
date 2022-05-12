@@ -17,7 +17,7 @@ ns = Namespace('carves', description='Carves related operations')
 @ns.route('/', endpoint='node_carves_list')
 @ns.doc(params={'host_identifier': 'Host identifier of the Node'})
 class NodeCarvesList(Resource):
-    '''lists out the carves for a specific node when host_identifier given otherwise returns all carves'''
+    """lists out the carves for a specific node when host_identifier given otherwise returns all carves"""
     parser = requestparse(['host_identifier'],[str],["host identifier of the node"])
 
     @ns.expect(parser)
@@ -40,14 +40,14 @@ class NodeCarvesList(Resource):
             carves = marshal(carves, wrapper.carves_wrapper)
             message = 'Successfully fetched the carves'
         if not carves: message = "carves data doesn't exists for the input given"
-        return marshal(respcls(message,status,carves),parentwrapper.common_response_wrapper)
+        return marshal(prepare_response(message,status,carves),parentwrapper.common_response_wrapper)
 
 
 @require_api_key
 @ns.route('/download/<string:session_id>', endpoint='download_carves')
 @ns.doc(params={'session_id': 'session id'})
 class DownloadCarves(Resource):
-    '''download carves through session id'''
+    """download carves through session id"""
 
     def get(self, session_id):
         status = 'failure'
@@ -57,21 +57,19 @@ class DownloadCarves(Resource):
         else:
             carve_session = dao.get_carves_by_session_id(session_id)
             if carve_session:
-                status = 'success'
-                message = 'Successfully fetched the carves'
                 data = send_file(current_app.config['BASE_URL'] + '/carves/' + carve_session.node.host_identifier + '/'+ carve_session.archive , as_attachment=True, mimetype='application/x-tar',attachment_filename='carve_session.tar')
                 return data
             else:
                 message = 'This session id does not exist'
 
-        return marshal(respcls(message,status), parentwrapper.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message,status), parentwrapper.common_response_wrapper, skip_none=True)
 
 
 @require_api_key
 @ns.route('/query/<int:query_id>/<string:host_identifier>', endpoint='get_carves_by_query_id')
 @ns.doc(params={'query_id': 'query id','host_identifier': 'host identifier'})
 class CarveSessionByQueryId(Resource):
-    '''download carves through session id'''
+    """download carves through session id"""
 
     def post(self, query_id, host_identifier):
         return self.func(query_id, host_identifier)
@@ -101,20 +99,20 @@ class CarveSessionByQueryId(Resource):
                         if carve_session:
                             status = "success"
                             message="Successfully fetched the carve"
-                            return marshal(respcls(message, status, carve_session), parentwrapper.common_response_wrapper)
+                            return marshal(prepare_response(message, status, carve_session), parentwrapper.common_response_wrapper)
                         else:
                             message="carve not started"
                     else:
                         message="query id provided is invalid"
 
-        return marshal(respcls(message,status), parentwrapper.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message,status), parentwrapper.common_response_wrapper, skip_none=True)
 
 
 @require_api_key
 @ns.route('/query', endpoint='get_carves_by_query_id_post')
 @ns.doc(params={'query_id': 'query id','host_identifier': 'host identifier'})
 class CarveSessionByPostQueryId(Resource):
-    '''downloads carves through session id'''
+    """downloads carves through session id"""
     parser = requestparse(['query_id', 'host_identifier'], [str, str], ["query id", "host_identifier"], [True, True])
 
     @ns.expect(parser)
@@ -137,10 +135,10 @@ class CarveSessionByPostQueryId(Resource):
                 if carve_session:
                     status = "success"
                     message = "Successfully fetched the carve"
-                    return marshal(respcls(message, status, carve_session), parentwrapper.common_response_wrapper)
+                    return marshal(prepare_response(message, status, carve_session), parentwrapper.common_response_wrapper)
                 else:
                     message = "carve not started"
             else:
                 message = "query id provided is invalid"
 
-        return marshal(respcls(message, status), parentwrapper.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status), parentwrapper.common_response_wrapper, skip_none=True)

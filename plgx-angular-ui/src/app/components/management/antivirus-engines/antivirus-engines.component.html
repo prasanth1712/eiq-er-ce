@@ -7,9 +7,9 @@
           <div class="kt-portlet__head">
           <div class="kt-portlet__head-label">
             <h3 class="kt-portlet__head-title">
-              Configure VirusTotal Alerts
+              VirusTotal Configuration
             </h3>&nbsp;&nbsp;
-                <i  class="badge badge-pill badge-light fa fa-info" title="PolyLoygx ESP generates an alert on match of a file hash with VirusTotal engines when the 'Minimum Matching AV Engines' of engines return a match OR at least one of the following selected engines return a match." ></i>
+                <i  class="badge badge-pill badge-light fa fa-info" title="{{project_name}} {{ProductName}} generates an alert on match of a file hash with VirusTotal engines when the 'Minimum Matching AV Engines' of engines return a match OR at least one of the following selected engines return a match." ></i>
           </div>
           <div class="kt-portlet__head-toolbar">
             <div class="kt-portlet__head-wrapper">
@@ -25,12 +25,20 @@
           <div class="kt-portlet__body" style="background:#fafafa80;">
             <div class="kt-portlet kt-portlet--mobile">
               <div class="kt-portlet__head">
+                <div class="kt-portlet__head-label">
                 <div class="row" >
                   <span class="col-form-label" style="padding-top: 3%;">Minimum Matching AV Engines:</span>&nbsp;&nbsp;
                 <div class="col-form-label col-4" >
-                  <input type="number" min="1" class=form-control [(ngModel)]="av_engines_data['min_match_count']" >
+                  <input type="number" min="1" class=form-control [(ngModel)]="av_engines_data['min_match_count']" disabled="{{hasAcess===true ? false: true}}" >
               </div>
               </div>
+              <div class="row" >
+                  <span class="col-form-label" style="padding-top: 3%;">VT Scan Retention Period:</span>&nbsp;&nbsp;
+                <div class="col-form-label col-4" >
+                  <input type="number" min="1" class=form-control [(ngModel)]="av_engines_data['vt_scan_retention_period']" disabled="{{hasAcess===true ? false: true}}" >
+              </div>
+              </div>
+            </div>
             </div>
             <!-- begin:: placeholder-loader -->
             <div class="hide_av_engines_data" >
@@ -84,12 +92,12 @@
                     </tr>
                   </thead>
                     <tbody  >
-                      
+
                       <tr  *ngFor="let engine of av_engines_data_table1['av_engines'] |keyvalue;" >
-                        <td ><input id="status" class="checkboxClass"  name="status" type="checkbox" (ngModelChange)="get_changed_data(av_engines_data_table1['av_engines'])" [ngModelOptions]="{standalone: true}" [(ngModel)]="engine.value.status"></td>
+                        <td ><input id="status" class="checkboxClass"  name="status" type="checkbox" (ngModelChange)="get_changed_data(av_engines_data_table1['av_engines'])" [ngModelOptions]="{standalone: true}" [(ngModel)]="engine.value.status" disabled="{{hasAcess===true ? false: true}}"></td>
                         <td > {{engine.key}}</td>
                       </tr>
-                   
+
                     </tbody>
                 </table>
                 <table class="table table-hover table-checkable show_av_engines_data col-3"  style="display: none;">
@@ -100,12 +108,12 @@
                     </tr>
                   </thead>
                     <tbody  >
-                      
+
                       <tr  *ngFor="let engine of av_engines_data_table2['av_engines'] |keyvalue;" >
-                        <td ><input id="status" class="checkboxClass"  name="status" type="checkbox" (ngModelChange)="get_changed_data_table2(av_engines_data_table2['av_engines'])" [ngModelOptions]="{standalone: true}" [(ngModel)]="engine.value.status"></td>
+                        <td ><input id="status" class="checkboxClass"  name="status" type="checkbox" (ngModelChange)="get_changed_data_table2(av_engines_data_table2['av_engines'])" [ngModelOptions]="{standalone: true}" [(ngModel)]="engine.value.status" disabled="{{hasAcess===true ? false: true}}"></td>
                         <td > {{engine.key}}</td>
                       </tr>
-                   
+
                     </tbody>
                 </table>
                 <table class="table table-hover table-checkable show_av_engines_data col-3"  style="display: none;">
@@ -116,12 +124,12 @@
                     </tr>
                   </thead>
                     <tbody  >
-                      
+
                       <tr  *ngFor="let engine of av_engines_data_table3['av_engines'] |keyvalue;" >
-                        <td ><input id="status" class="checkboxClass"  name="status" type="checkbox" (ngModelChange)="get_changed_data_table3(av_engines_data_table3['av_engines'])" [ngModelOptions]="{standalone: true}" [(ngModel)]="engine.value.status"></td>
+                        <td ><input id="status" class="checkboxClass"  name="status" type="checkbox" (ngModelChange)="get_changed_data_table3(av_engines_data_table3['av_engines'])" [ngModelOptions]="{standalone: true}" [(ngModel)]="engine.value.status" disabled="{{hasAcess===true ? false: true}}"></td>
                         <td > {{engine.key}}</td>
                       </tr>
-                   
+
                     </tbody>
                 </table>
                <table class="table table-hover table-checkable show_av_engines_data col-3"  style="display: none;">
@@ -132,18 +140,18 @@
                     </tr>
                   </thead>
                     <tbody  >
-                      
+
                       <tr  *ngFor="let engine of av_engines_data_table4['av_engines'] |keyvalue;" >
-                        <td ><input id="status" class="checkboxClass"  name="status" type="checkbox" (ngModelChange)="get_changed_data_table4(av_engines_data_table4['av_engines'])" [ngModelOptions]="{standalone: true}" [(ngModel)]="engine.value.status"></td>
+                        <td ><input id="status" class="checkboxClass"  name="status" type="checkbox" (ngModelChange)="get_changed_data_table4(av_engines_data_table4['av_engines'])" [ngModelOptions]="{standalone: true}" [(ngModel)]="engine.value.status" disabled="{{hasAcess===true ? false: true}}"></td>
                         <td > {{engine.key}}</td>
                       </tr>
-                   
+
                     </tbody>
                 </table>
               </div>
                 <div class="no_data"></div>
               </div>
-              <div class="kt-portlet__foot text-center">
+              <div *AppHasRole="role.adminAccess" class="kt-portlet__foot text-center">
                 <button type="submit" (click)="onSubmit()" class="btn btn-success" id="buttonvisible" ><i class="fa fa-sync-alt"></i>
                   <span>Update</span>
                 </button>

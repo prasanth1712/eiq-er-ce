@@ -7,7 +7,7 @@ import {AuthGuard}  from './_helpers/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'authentication',
+    redirectTo: 'dashboard',
     pathMatch: 'full'
   },
   {
@@ -20,8 +20,12 @@ export const routes: Routes = [
     component: GlobalComponent,
     canActivate: [AuthGuard],
     children: [{
-      path: 'manage', loadChildren: () => import('./dashboard/dashboard.module').
+      path: 'dashboard', loadChildren: () => import('./dashboard/dashboard.module').
         then(m => m.DashboardModule),
+    },
+    {
+    path: 'manage', loadChildren: () => import('./dashboard/dashboard.module').
+      then(m => m.DashboardModule),
     },
     {
       path: 'hosts', loadChildren: () => import('./components/hosts/hosts.module').
@@ -48,7 +52,7 @@ export const routes: Routes = [
         then(m => m.RuleModule),
     },
     {
-      path: 'tag', loadChildren: () => import('./components/tag/tag.module').
+      path: 'tags', loadChildren: () => import('./components/tag/tag.module').
         then(m => m.TagModule),
     },
     {
@@ -64,10 +68,6 @@ export const routes: Routes = [
         then(m => m.HuntModule),
     },
     {
-      path: 'options', loadChildren: () => import('./components/options/options.module').
-        then(m => m.OptionsModule),
-    },
-    {
       path: 'packs', loadChildren: () => import('./components/packs/packs.module').
         then(m => m.PacksModule),
     },
@@ -76,8 +76,8 @@ export const routes: Routes = [
         then(m => m.QueriesModule),
     },
     {
-      path: 'readme', loadChildren: () => import('./components/readme/readme.module').
-        then(m => m.ReadmeModule),
+      path: 'user-profile', loadChildren: () => import('./components/user-profile/user-profile.module').
+        then(m => m.UserProfileModule),
     },
     {
       path: 'search', loadChildren: () => import('./components/search/search.module').
@@ -96,14 +96,6 @@ export const routes: Routes = [
       loadChildren: () => import('./components/pagenotfound/pagenotfound.module').
         then(m => m.PagenotfoundModule),
     },
-      // {
-      //   path: '',
-      //   component: GlobalComponent,
-      //   children: [
-      //     { path: 'change-password', loadChildren: './components/management/management.module#ManagementModule' },
-      //   ]
-      // }
-
     ]
   },
   {
@@ -113,7 +105,7 @@ export const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forRoot(routes,{scrollPositionRestoration: 'enabled'})],
   exports: [RouterModule]
 })
 export class AppRoutingModule { }

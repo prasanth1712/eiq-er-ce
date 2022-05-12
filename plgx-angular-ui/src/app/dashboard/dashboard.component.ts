@@ -3,7 +3,10 @@ import {CommonapiService} from './_services/commonapi.service';
 import { first } from 'rxjs/operators';
 import { Chart } from 'chart.js';
 import 'chartjs-plugin-labels';
-
+import swal from 'sweetalert';
+import { msg } from '../dashboard/_helpers/common.msg';
+import { CommonVariableService } from './../dashboard/_services/commonvariable.service';
+import {moment} from "vis-timeline";
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
@@ -47,12 +50,16 @@ export class DashboardComponent implements OnInit {
   route: string;
   currentURL='';
   purge_duration:any;
+  project_name=this.commonvariable.APP_NAME
+  ProductNameER=this.commonvariable.ProductNameER
   constructor(
-    private commonapi: CommonapiService
+    private commonapi: CommonapiService,
+    private commonvariable: CommonVariableService,
   ) {
    }
 
   ngOnInit() {
+    this.draw_server_metrics();
     this.placholder = '';
     this.commonapi.Dashboard().pipe(first()).subscribe((res: any) => {
         this.dashboardData = res;
@@ -145,11 +152,11 @@ for(const i in distributionval){
    platform_distibution.push(distributionval[i].os_name)
    platform_distibution_count.push(distributionval[i].count)
    if(distributionval[i].os_name=="windows"){
-     backgrund_colour.push('#800080')
+     backgrund_colour.push('#2A6D7C')
    }else if(distributionval[i].os_name=="darwin"){
-     backgrund_colour.push('#f90')
+     backgrund_colour.push('#F79750')
    }else{
-     backgrund_colour.push('#36c')
+     backgrund_colour.push('#A2D9C5')
    }
 }
 if(platform_distibution_count.length==0){
@@ -195,24 +202,26 @@ var backgrund_colour=[]
 for(const i in hostval){
   if(i=="online"){
     if(hostval.online !==0){
-  Host_status_data.push("online")    
+  Host_status_data.push("online")
   Host_status_data_count.push(hostval[i])
-  backgrund_colour.push('green')
+  // backgrund_colour.push('green')
+  backgrund_colour.push('#77bfb7')
 }
   }else{
     if(hostval.offline !==0){
-    Host_status_data.push("offline")    
+    Host_status_data.push("offline")
     Host_status_data_count.push(hostval[i])
-    backgrund_colour.push("#dc3912")
+    // backgrund_colour.push("#dc3912")
+    backgrund_colour.push("#FF8080")
   }
   }
 }
 if(Host_status_data_count.length==0 ){
    $(document.getElementById('no-data-pie-Host-status-result-chart')).append("No data");
    $('.pie-chart-Host-status').show();
-   $('.pie-chart-Host-canvas').hide(); 
+   $('.pie-chart-Host-canvas').hide();
 }
- var myChart1 = new Chart('pie-chart-Host-status-pie-chart', {       
+ var myChart1 = new Chart('pie-chart-Host-status-pie-chart', {
       type: 'pie',
       data: {
           labels: Host_status_data,
@@ -247,25 +256,32 @@ if(Host_status_data_count.length==0 ){
 var top_5hosts = []
 var top_5hosts_count=[]
 for(const i in hostcolumnval){
-  top_5hosts.push(hostcolumnval[i].host_identifier)
+  top_5hosts.push(hostcolumnval[i].host_name)
   top_5hosts_count.push(hostcolumnval[i].count)
 }
 if(top_5hosts_count.length==0){
    $(document.getElementById('no-data-bar-chart-top_5_alerted_hosts')).append("No data");
    $('.alerted_hosts').hide();
 }
-
-var myChart1 = new Chart('bar-chart-top_5_alerted_hosts', {
+var myChart2 = new Chart('bar-chart-top_5_alerted_hosts', {
   type: 'bar',
   data: {
       labels:top_5hosts,
       datasets: [{
           data: top_5hosts_count,
-          backgroundColor:  "#36c" ,
+          backgroundColor: [
+                    "#2A6D7C",
+                    "#A2D9C5",
+                    "#F79750",
+                    "#794F5D",
+                    "#6EB8EC"
+                ],
           barPercentage: 0.5,
+          categoryPercentage: 1.0
       }]
   },
   options: {
+    borderSkipped:'right',
     tooltips:{
       intersect : false,
       mode:'index'
@@ -320,13 +336,19 @@ if(top_5_categories_count.length==0){
    $('.categories_data').hide();
 }
 
-var myChart1 = new Chart('bar-chart-top_5_alerted_categries', {
+var myChart3 = new Chart('bar-chart-top_5_alerted_categries', {
   type: 'bar',
   data: {
       labels:top_5_categories,
       datasets: [{
           data: top_5_categories_count,
-          backgroundColor:  "#36c" ,
+          backgroundColor: [
+                    "#2A6D7C",
+                    "#A2D9C5",
+                    "#F79750",
+                    "#794F5D",
+                    "#6EB8EC"
+                ],
           barPercentage: 0.5,
       }]
   },
@@ -334,7 +356,7 @@ var myChart1 = new Chart('bar-chart-top_5_alerted_categries', {
   options: {
     tooltips:{
       intersect : false,
-      mode:'index'
+      // mode:'index'
       },
     maintainAspectRatio: false,
     legend: {
@@ -385,13 +407,19 @@ if(top_5_rules_count.length==0){
    $('.top_rules').hide();
 }
 
-var myChart1 = new Chart('bar-chart-top_5_alerted_rules', {
+var myChart4 = new Chart('bar-chart-top_5_alerted_rules', {
   type: 'bar',
   data: {
       labels:top_5_rules,
       datasets: [{
           data: top_5_rules_count,
-          backgroundColor:  "#36c" ,
+          backgroundColor: [
+                    "#2A6D7C",
+                    "#A2D9C5",
+                    "#F79750",
+                    "#794F5D",
+                    "#6EB8EC"
+                ],
           barPercentage: 0.5,
       }]
   },
@@ -438,17 +466,355 @@ var myChart1 = new Chart('bar-chart-top_5_alerted_rules', {
     },
   },
   });
-      }
+},
+// error => {
+//     this.failuremsg(msg.failuremsg);
+// }
     );
   }
+format_date(d){
+  const format1 = "YYYY-MM-DD HH:mm:ss";
+  return  moment(d).format(format1);
+
+}
+ draw_server_metrics(){
+  var  current_date=new Date();
+   var offset= new Date().getTimezoneOffset()* 60000;
 
 
+    var start_time=new Date(current_date.getTime()+offset);
+    var end_time=new Date(current_date.getTime()+offset);
+   start_time.setHours(start_time.getHours() - 3);
+   start_time.setMinutes(0);
+   start_time.setSeconds(0);
+
+
+   end_time.setHours(end_time.getHours() +1);
+   end_time.setMinutes(0);
+   end_time.setSeconds(0);
+
+   var labels=[this.format_date(end_time)];
+  var label_date=new Date(end_time);
+
+   while(label_date.getTime()>start_time.getTime()){
+     label_date.setHours(label_date.getHours()-1);
+     labels.push(this.format_date(label_date));
+
+   }
+   console.log(labels);
+   this.commonapi.get_server_metrics({"from_time":this.format_date(start_time)}).pipe(first()).subscribe((res: any) => {
+     console.log(res);
+     var disk_usage_data=res.data.DISKUSAGE;
+     var rabbitmq_data=res.data.RABBITMQ;
+     var nginx_data=res.data.NGINX;
+     var top_hosts_generating_data=res.data.TOPHOSTS;
+     var disk_usage_graph_data=[];
+     var rabbitmq_graph_data=[];
+     var non_success_requests_graph_data=[];
+     var avg_bytes_graph_data=[];
+     var top5_hosts_graph_data=[];
+
+     disk_usage_graph_data = [disk_usage_data.free,(disk_usage_data.total-disk_usage_data.free).toFixed(2)];
+
+
+
+
+     for(var data of rabbitmq_data ){
+       rabbitmq_graph_data.push({
+         t:data.created_at,
+         y:data.value.queue_totals.messages
+
+       });
+
+     }
+
+     var success_requests_graph_data=[];
+     for(var data of nginx_data ){
+       non_success_requests_graph_data.push({
+         t:data.created_at,
+         y:data.value.failure_count
+
+       });
+       success_requests_graph_data.push({
+         t:data.created_at,
+         y:data.value.success_count
+
+       });
+
+       avg_bytes_graph_data.push({
+         t:data.created_at,
+         y:data.value.total_size
+
+       });
+
+     }
+
+var top_5hosts_label=[];
+     for(var data of top_hosts_generating_data ){
+       top5_hosts_graph_data.push({
+         t:data.hostname,
+         y:data.value
+
+       });
+       top_5hosts_label.push(data.hostname);
+
+     }
+
+
+
+     var top5_hosts= new Chart('top5_hosts_data_graph', {
+       type: 'bar',
+       data: {
+         labels:top_5hosts_label,
+         datasets: [{
+           data: top5_hosts_graph_data,
+           backgroundColor: [
+             "#2A6D7C",
+             "#A2D9C5",
+             "#F79750",
+             "#794F5D",
+             "#6EB8EC"
+           ],
+           barPercentage: 0.5,
+           categoryPercentage: 1.0
+         }]
+       },
+       options: {
+
+         borderSkipped:'right',
+         tooltips:{
+           intersect : false,
+           mode:'index',
+           callbacks: {
+             label: (item) => `${item.yLabel} events`,
+           }
+         },
+         maintainAspectRatio: false,
+         legend: {
+           display: false
+         },
+         plugins: {
+           labels: {
+             render: () => {}
+           }
+         },
+         scales: {
+           xAxes: [{
+             barThickness: 30,
+             gridLines: {
+               offsetGridLines: true,
+               display : false,
+             },
+             ticks: {
+               callback: function(label, index, labels) {
+                 var res = label.substring(0,2)+"..";
+                 return res;
+               },
+               minRotation: 45
+             }
+           }],
+           yAxes: [{
+             ticks: {
+               beginAtZero: true,
+               display: false,
+               precision:0
+             },
+             gridLines: {
+               drawBorder: false,
+             },
+            //  scaleLabel: {
+            //    display: true,
+            //    labelString: 'Count'
+            //  }
+           }]
+         },
+       },
+
+     });
+console.log(avg_bytes_graph_data);
+
+  var date_rate_graph= new Chart('date_rate_graph', {
+     type: 'line',
+     data: {
+       labels: labels,
+       datasets: [{
+         data: avg_bytes_graph_data,
+         fill: false,
+         borderColor: "rgb(110, 191, 182)",
+         lineTension: 0.1
+       }]
+     },
+     options: {
+       tooltips: {
+         callbacks: {
+           label: (item) => `${item.yLabel} bytes`,
+         },
+       },
+         legend: {
+           display: false
+       },
+       scales: {
+         xAxes: [{
+           type: 'time',
+           time: {
+             unit: 'hour'
+           }
+         }],
+         yAxes: [{
+           ticks: {
+             beginAtZero:true,
+             precision:0
+           }, scaleLabel: {
+             display: true,
+             labelString: 'Value(in bytes)'
+           }
+         }]
+       }
+     }
+   });
+
+
+
+     var myChart1 = new Chart('disk_usage-pie-chart', {
+       type: 'pie',
+       data: {
+         labels: ["Free","Used"],
+         datasets: [{
+           data: disk_usage_graph_data,
+           backgroundColor: ["rgb(110, 191, 182)","#FF8080"]
+
+         }]
+       },
+       options: {
+         responsive: false,
+         maintainAspectRatio: false,
+         plugins: {
+           labels: {
+             render: 'percentage',
+             fontColor: 'white',
+             overlap: false,
+           }
+         },
+         tooltips: {
+           callbacks: {
+
+             label: (tooltipItems, data) => {
+               return data.datasets[tooltipItems.datasetIndex].data[tooltipItems.index] + ' GB';
+             }
+           }
+           },
+         legend: {
+           display: true,
+           position: 'right',
+           onClick: null ,
+           labels: {
+             fontColor: '#333',
+             usePointStyle:true
+           }
+         },
+       }
+     });
+    var non_success_requests_graph= new Chart('non_success_requests_graph', {
+       type: 'line',
+       data: {
+         labels: labels,
+         datasets: [ {
+           label: 'Success ',
+           data: success_requests_graph_data,
+           borderColor: "rgb(110, 191, 182)",
+           backgroundColor: "rgb(110, 191, 182)",
+           fill: false,
+           hidden: true,
+         },
+           {
+             label: 'Failure',
+             data: non_success_requests_graph_data,
+             borderColor: "#FF8080",
+             fill: false,
+             backgroundColor: "#FF8080",
+           }],
+       },
+       options: {
+        legend: {
+          display: true
+        },
+         scales: {
+           xAxes: [{
+             type: 'time',
+             time: {
+               unit: 'hour'
+             }
+           }],
+           yAxes: [{
+             ticks: {
+               beginAtZero:true,
+               precision:0
+             }, scaleLabel: {
+               display: true,
+               labelString: 'Count'
+             }
+           }]
+         }
+       }
+     });
+     var rabbitmq_pending_tasks= new Chart('pending_rabbitmq_tasks_graph', {
+       type: 'line',
+       data: {
+         labels: labels,
+         datasets: [{
+           data: rabbitmq_graph_data,
+           fill: false,
+           borderColor: "rgb(110, 191, 182)",
+           lineTension: 0.1
+         }]
+       },
+       options: {
+         legend: {
+           display: false
+         },
+         scales: {
+           xAxes: [{
+             type: 'time',
+             time: {
+               unit: 'hour'
+             }
+           }],
+           yAxes: [{
+             ticks: {
+               beginAtZero:true,
+               precision:0
+             }, scaleLabel: {
+               display: true,
+               labelString: 'Count'
+             }
+           }]
+         }
+       }
+     });
+
+   });
+
+  }
 
   downloadFile(e,val){
     this.currentURL = window.location.href;
     let toArray = this.currentURL.split(':');
-    this.cpt_down = toArray[0] + ":" + toArray[1] + ":9000/downloads/" + val;
+    this.cpt_down = window.location.origin + "/downloads/" + val;
     window.open(this.cpt_down);
     }
 
+    failuremsg(msg){
+      swal({
+        icon: "warning",
+        text: msg,
+        buttons: {
+          cancel: {
+            text: "Close",
+            value: null,
+            visible: true,
+            closeModal: true,
+          },
+        },
+      })
+    }
 }

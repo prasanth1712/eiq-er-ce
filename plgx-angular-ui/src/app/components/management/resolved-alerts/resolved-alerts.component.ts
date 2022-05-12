@@ -12,7 +12,12 @@ import swal from 'sweetalert'
 declare var $: any;
 import 'datatables.net';
 
-
+class AggregatedDataTablesResponse {
+  data: any[];
+  draw: number;
+  recordsFiltereds: number;
+  recordsTotals: number;
+}
 class DataTablesResponse {
   data: any[];
   draw: number;
@@ -48,9 +53,19 @@ export class ResolvedAlertsComponent implements AfterViewInit, OnDestroy, OnInit
   contentEditable = false;
   activeAlerts: any;
   fetched = {};
-  aggregated_data:any={};
+  aggregated_data:any=[];
   alert_selectedItem:any;
-  aggregate_tab=[];
+  aggregate_tab_length:any;
+
+  aggregatedOptions: any = {};
+  myjson: any = JSON;
+  dtTriggerAggregatedAlerts: Subject<any> = new Subject();
+  @ViewChild(DataTableDirective, {static: false})
+  dtElementt: DataTableDirective;
+  aggregatelist:any;
+  AggregatedAlertsId:any;
+  Comments: any;
+
   constructor(
     private commonapi: CommonapiService,
     private commonvariable: CommonVariableService,
@@ -63,7 +78,8 @@ export class ResolvedAlertsComponent implements AfterViewInit, OnDestroy, OnInit
   toggle: boolean = false;
   ngOnInit() {
     $.fn.dataTable.ext.errMode = 'none';
-    this.titleService.setTitle(this.commonvariable.APP_NAME+"-"+"Resolved Alerts");
+    debugger
+    this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Resolved alerts");
     this.commonapi.alerts_source_count_api_resolved().subscribe((res: any) => {
       var alerttype = ['rule', 'virustotal','ioc', 'alienvault', 'ibmxforce']
       var sort_alert_type = []
@@ -109,7 +125,7 @@ export class ResolvedAlertsComponent implements AfterViewInit, OnDestroy, OnInit
 
       }, 300);
     })
-
+    this.Get_aggregated_data_filter_with_QueryName(null)
   }
 
   get_options(source) {
@@ -141,7 +157,7 @@ export class ResolvedAlertsComponent implements AfterViewInit, OnDestroy, OnInit
         this.http.post<DataTablesResponse>(environment.api_url + "/alerts", body, {
           headers: {
             'Content-Type': 'application/json',
-            'x-access-token': localStorage.getItem('JWTkey')
+            'x-access-token': localStorage.getItem('token')
           }
         }).subscribe(res => {
           this.checklist[source] = [];
@@ -164,6 +180,11 @@ export class ResolvedAlertsComponent implements AfterViewInit, OnDestroy, OnInit
           }
           if (res.data['count'] > 0 && res.data['results'] != undefined) {
             this.alertSourceData[source] = res.data['results'];
+            this.alertSourceData[source].forEach(element => {
+              if(element.verdict == '' || element.verdict == null || element.verdict ==undefined){
+                element.verdict = 'N/A'
+              }
+            });
             this.masterSelected[source] = false;
             for (const i in this.alertSourceData[source]) {
               let checkboxdata = {}
@@ -237,6 +258,15 @@ getAlertData(source) {
       this.alerted_data_json = any;
       this.toggle = true;
     }, 100);
+  }
+  showResolveComments(data){
+    debugger
+    if(data == null || data == ''){
+      this.Comments = 'No comments added'
+    }
+    else{
+      this.Comments = data
+    }
   }
 
   /*  Alerted Entry Json Editor End*/
@@ -355,80 +385,87 @@ getAlertData(source) {
         this.toggleDisplay(name);
       }
     }
-    // Start Aggregated alerts
-get_alerts_aggregated_data(id){
-  this.aggregated_data={}
-  this.aggregate_tab = [];
-  this.commonapi.get_alerts_aggregated_data(id).subscribe((res: any) => {
-   for(const i in res.data){
-     if (!this.aggregated_data.hasOwnProperty(res.data[i].name)){
-      this.aggregated_data[res.data[i].name]=[]
-      this.aggregate_tab.push(res.data[i].name)
-       }
-       this.aggregated_data[res.data[i].name].push(res.data[i].columns)
-    }
-    if(res.data.length!=0){
-      this.alerts_aggregated_data(res.data[0].name)
-    }else{
-      $("#alerts_aggretated_table").html('No results found');
-    }
-  })
-}
-alerts_aggregated_data(key){
-  this.alert_selectedItem =key
-  // $('#alerts_aggretated_table').empty();
-  document.getElementById("alerts_aggretated_table").innerHTML = '';
-  var id="alerts_aggretated_table";
-  var div_table = $("<table></table>")
-      .attr("id", key + "_table")
-      .attr("style", "margin-left:auto;width:100%;overflow-x: scroll")
-      .attr("width", "100%;")
-      .addClass("table table-striped- table-bordered  table-checkable");
-        $("#"+id).append(div_table);
-      let values=this.aggregated_data[key]
-      var columns = [];
-            var keys =  Object.keys(values[0]);
-            // var counter = 0;
-            // keys.forEach(function (key) {
-            //   counter++;
-            //   columns.push({
-            //     data: key,
-            //     title: key
-            //   });
-            // });
-            var _result = this.columndefs.columnDefs(keys);
-            var column_defs = _result.column_defs;
-            columns = _result.column;
-            $(document).ready(function() {
-              div_table.DataTable({
-              dom: "Bfrtip",
-              bLengthChange:true,
-              data: values,
-              sPaginationType:"full_numbers",
-              "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
-              columns: columns,
-              paging:true,
-              buttons: [ {extend: 'csv',filename: function () { return key;}}],
-            "language": {
-              "search": "Search: "
-            },
-            "initComplete": function (settings, json) {
-              div_table.wrap("<div style='overflow:auto; width:100%;position:relative;'></div>");
-            },
-            "columnDefs":column_defs,
-            rowCallback: function(row, data, index){
-              $('td', row).css('background-color', 'white');
-            }
-            });
-          })
 
-}
-
-
-  // End Aggregated alerts
-  close_data(){
-    document.getElementById("alerts_aggretated_table").innerHTML = '';
+  // Start Aggregated alerts
+  get_alerts_aggregated_data(id){
+    this.AggregatedAlertsId=id
+    this.aggregated_data=[]
+    $('.aggregation_loader').show();
+    $('.aggregated_table_data').hide();
+    this.commonapi.get_alerts_aggregated_data(id).subscribe((res: any) => {
+      $('.aggregation_loader').hide();
+      this.aggregate_tab_length=res.data.length
+     for(const i in res.data){
+       this.aggregated_data.push(res.data[i].query_name)
       }
+      if(this.aggregated_data!=0){
+        this.Get_aggregated_data_filter_with_QueryName(this.aggregated_data[0]);
+      }else{
 
+      }
+    })
 
+  }
+  Get_aggregated_data_filter_with_QueryName(name){
+    this.dtTriggerAggregatedAlerts.next();
+    $('.aggregated_table_data').show();
+    var that=this;
+    this.alert_selectedItem = name;
+    this.aggregatedOptions = {
+      pagingType: 'full_numbers',
+      pageLength: 10,
+      serverSide: true,
+      processing: true,
+      searching: true,
+      destroy:true,
+      "language": {
+        "search": "Search: "
+      },
+      ajax: (dataTablesParameters: any, callback) => {
+        var body = dataTablesParameters;
+        var searchitem = '';
+        if(body.search.value!= ""  &&  body.search.value.length>=3){
+          searchitem=body.search.value;
+        }
+        var payload = {
+              "query_name":this.alert_selectedItem,
+              "start":body['start'],
+              "limit":body['length'],
+              "searchterm":searchitem,
+        }
+        this.http.post<AggregatedDataTablesResponse>(environment.api_url+"/alerts/"+this.AggregatedAlertsId+"/alerted_events", payload, { headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('token')}}).subscribe(res =>{
+          this.aggregatelist = res.data['results'];
+          if(this.aggregatelist.length >0 &&  this.aggregatelist!=undefined)
+          {
+            $('#'+'AggregatedData_table_paginate').show();
+            $('#'+'AggregatedData_table_info').show();
+          }
+          else{
+            if(body.search.value=="" || body.search.value == undefined){
+              this.errorMessage="No Data Found";
+            }
+            else{
+              this.errorMessage="No Matching Record Found";
+            }
+            $('#'+'AggregatedData_table_paginate').hide();
+            $('#'+'AggregatedData_table_info').hide();
+          }
+          callback({
+
+            recordsTotal: res.data['count'],
+            recordsFiltered: res.data['count'],
+            data: []
+          });
+        });
+      },
+
+      ordering: false,
+      columns: [{ data: 'line' }]
+    }
+    // this.dtTriggerr.next();
+  }
+  action(event): void {
+    event.stopPropagation();
+  }
+   // End Aggregated alerts
 }

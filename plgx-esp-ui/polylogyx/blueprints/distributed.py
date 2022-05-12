@@ -23,10 +23,10 @@ ns = Namespace('distributed', description='distributed query related operations'
 @ns.route('/add', endpoint = 'distributed_add')
 @ns.doc(params={'query':'query', 'tags': 'tags', 'nodes':'nodes', 'description':'description for the post method'})
 class DistributedQueryClass(Resource):
-    '''
+    """
     Retrieve an osquery configuration for a given node.
     returns: an osquery configuration file
-    '''
+    """
     parser = requestparse(['query','tags','nodes','description'],[str, str, str, str],['query','tags list string seperated by commas','nodes list by comma separated','description'],[True, False, False, False])
 
     @ns.expect(parser)
@@ -62,9 +62,9 @@ class DistributedQueryClass(Resource):
                 nodes = nodedao.get_all_nodes()
 
             if nodeKeyList:
-                nodes = nodedao.extendNodesByNodeKeyList(nodeKeyList)
+                nodes = nodedao.extend_nodes_by_node_key_list(nodeKeyList)
             if tags:
-                nodes = nodedao.extendNodesByTag(tags)
+                nodes = nodedao.extend_nodes_by_tag(tags)
             query = dao.add_distributed_query(sql,args['description'])
             win_sql_query = None
 
@@ -93,4 +93,5 @@ class DistributedQueryClass(Resource):
                 message = 'No active node present'
             else:
                 return marshal({'query_id': query.id}, wrapper.add_query_wrapper)
-        return marshal(respcls(message), parentwrapper.failure_response_parent)
+
+        return marshal(prepare_response(message), parentwrapper.failure_response_parent)

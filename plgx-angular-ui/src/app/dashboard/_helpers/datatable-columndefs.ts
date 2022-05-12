@@ -73,7 +73,7 @@ export class Datatablecolumndefs {
     if (domainnameExist) {
       column_defs.push({
         render: function (data, type, full, meta) {
-          if (type === 'display') {
+          if (type === 'display' && typeof data != "undefined" ) {
             return '<div class="text-wrap width">' + '<a target="_blank" style="color:blue" href="https://www.virustotal.com/#/domain/' + data.substring(1, data.length) + '" ;>' + data + "</a></div>";
           }
         },

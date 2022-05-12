@@ -8,6 +8,14 @@ const routes: Routes = [
     path: '',
     component: AlertsComponent, 
   },
+  {
+    path: '',
+    children: [
+    {
+      path:':id', component:AlertsComponent
+    },
+  ]
+  },
 ];
 
 @NgModule({

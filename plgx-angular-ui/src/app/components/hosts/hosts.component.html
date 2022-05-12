@@ -231,7 +231,7 @@
 							<div class="kt-portlet kt-portlet--border-bottom-brand"
 								style="border-bottom: 3px solid #8e8e93; margin-right:15px; margin-bottom:0px;min-height: 76px;min-width: 116px;">
 								<div class="kt-portlet__body" style="padding: 0px;" data-skin="dark"
-									data-toggle="kt-tooltip" data-placement="top" title="Mac Platforms">
+									data-toggle="kt-tooltip" data-placement="top" title="Darwin Platforms">
 									<div class="kt-widget14" style="padding:10px;">
 
 										<div class="kt-widget14__content kt-widget21__icon">
@@ -333,13 +333,14 @@
 					 <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable row-border hover" id="host_table">
 						<thead>
 						<tr role="row">
-								<th style="min-width: 130px">Host Name</th>
+								<th style="min-width: 100px">Host Name</th>
 								<th>Online</th>
 								<th>Health</th>
-								<th style="min-width: 290px">Operating System</th>
-								<th style="min-width: 110px">IP Address</th>
-								<th class="dt-justify" style="min-width: 200px" rowspan="1" colspan="1">Tags</th>
-								<th style="min-width: 24px">Action</th>
+								<th style="min-width: 204px">Operating System</th>
+								<th style="min-width: 80px">IP Address</th>
+								<th *AppHasRole="role.adminAccess" class="dt-justify" style="min-width: 200px" rowspan="1" colspan="1">Tags</th>
+								<th *AppHasRole="role.userAccess" class="dt-justify" style="min-width: 200px" rowspan="1" colspan="1">Tags</th>
+								<th style="min-width: 20px" *AppHasRole="role.adminAccess" >Action</th>
 							</tr>
 
 						</thead>
@@ -356,21 +357,15 @@
 										>{{hostdata.display_name}}</a>
 								</td>
 								<td  *ngIf="hostdata.is_active == true;" >
-									<i class="fa fa-circle" data-toggle="kt-tooltip" title="Online" style="color: green;margin-left: 15px;"></i>
-
+									<i id="{{hostdata.host_identifier}}_online" class="fa fa-circle onlinehost" data-toggle="kt-tooltip" title="Status Online"></i>
 								</td>
-						<td *ngIf="hostdata.is_active ==false ;"><i class="fa fa-circle" data-toggle="kt-tooltip" title="Offline" style="color: #e60f0db3; margin-left: 15px;"></i>
+					    	<td *ngIf="hostdata.is_active ==false ;"><i class="fa fa-circle" data-toggle="kt-tooltip" title="Status Offline" style="color: #e60f0db3; margin-left: 15px;"></i>
                                  </td>
                                   <td *ngIf="hostdata.alerts_count !=0 ;"><kbd data-toggle="tooltip" title="Unresolved Alerts" style="background-color: orange;border-radius: 15%;margin-left: 10px;"><strong>{{hostdata.alerts_count}}</strong></kbd>
                 </td>
                 <td *ngIf="hostdata.alerts_count ==0 ;"><i class="fa fa-check-circle" data-toggle="kt-tooltip" title="No Alerts" style="color: green;margin-left: 15px;margin-top: 8px;"></i></td>
 
 								<td>
-									<span *ngIf="hostdata.os_info.platform == 'ubuntu'" class='logo-color menu-icon'
-										style='font-weight: 400;'>
-										<img alt='' src='./assets/media/logo/Linux1.svg' height='19px' width='16px' />
-										<span>&ensp;{{hostdata.os_info.name}}</span>
-									</span>
 									<span *ngIf="hostdata.os_info.platform == 'windows'" class='logo-color menu-icon'
 										style='font-weight: 400;'>
 										<img alt='' src='./assets/media/logo/windows.svg' height='19px' width='16px' />
@@ -381,81 +376,44 @@
 										<i class='fab fa-apple' style='font-size: 18px; color: #8e8e93;'></i>
 										<span>&ensp;{{hostdata.os_info.name}}</span>
 									</span>
-									<span *ngIf="hostdata.os_info.platform == 'Ubuntu'" class='logo-color menu-icon'
-										style='font-weight: 400;'>
-										<img alt='' src='./assets/media/logo/Linux1.svg' height='19px' width='16px' />
-										<span>&ensp;{{hostdata.os_info.name}}</span>
-									</span>
-									<span *ngIf="hostdata.os_info.name == 'ubuntu'" class='logo-color menu-icon'
-										style='font-weight: 400;'>
-										<img alt='' src='./assets/media/logo/Linux1.svg' height='19px' width='16px' />
-										<span>&ensp;{{hostdata.os_info.name}}</span>
-									</span>
-									<span *ngIf="hostdata.os_info.platform == 'rhel'" class='logo-color menu-icon'
-										style='font-weight: 400;'>
-										<img alt='' src='./assets/media/logo/Linux1.svg' height='19px' width='16px' />
-										<span>&ensp;{{hostdata.os_info.name}}</span>
-									</span>
 									<span *ngIf="hostdata.os_info.name == 'windows'" class='logo-color menu-icon'
 										style='font-weight: 400;'>
 										<img alt='' src='./assets/media/logo/windows.svg' height='19px' width='16px' />
 										<span>&ensp;{{hostdata.os_info.name}}</span>
 									</span>
-									<span *ngIf="hostdata.os_info.platform == 'debian'" class='logo-color menu-icon'
-
+									<span *ngIf="!['windows','darwin'].includes(hostdata.os_info.platform)" class='logo-color menu-icon'
 										style='font-weight: 400;'>
-
 										<img alt='' src='./assets/media/logo/Linux1.svg' height='19px' width='16px' />
-
 										<span>&ensp;{{hostdata.os_info.name}}</span>
-
-									</span>
-
-									<span *ngIf="hostdata.os_info.platform == 'sles'" class='logo-color menu-icon'
-
-										style='font-weight: 400;'>
-
-										<img alt='' src='./assets/media/logo/Linux1.svg' height='19px' width='16px' />
-
-										<span>&ensp;{{hostdata.os_info.name}}</span>
-
-									</span>
-
-									<span *ngIf="hostdata.os_info.platform == 'amzn'" class='logo-color menu-icon'
-
-										style='font-weight: 400;'>
-
-										<img alt='' src='./assets/media/logo/Linux1.svg' height='19px' width='16px' />
-
-										<span>&ensp;{{hostdata.os_info.name}}</span>
-
 									</span>
 								</td>
 								<td>
 									<div style="color: #25282a" class="text-wrap width">{{hostdata.last_ip}}</div>
 								</td>
-								<td class="dt-justify">
-									<tag-input [theme]="'foundation-theme'" [(ngModel)]='hostdata.tags'  [secondaryPlaceholder]="'Add tags here...'" [placeholder]="'Add tags here...'"
-										(onAdd)="hosts_addTag(hostdata.tags,hostdata.id)"
+								<td *AppHasRole="role.adminAccess"  class="dt-justify">
+									<tag-input [theme]="'foundation-theme'"  [(ngModel)]='hostdata.tags'  [secondaryPlaceholder]="'Add tags here...'" [placeholder]="'Add tags here...'"
+										(onAdd)="hosts_addTag(hostdata.tags,hostdata.id)" [validators]="validators" [errorMessages]="errorMessages"
 										(onRemove)="hosts_removeTag($event,hostdata.id)" [modelAsStrings]="true"
 										style="font-family: 'Poppins', sans-serif !important;">
 									</tag-input>
 								</td>
-								<td >
+								<td *AppHasRole="role.userAccess" class="dt-justify" style="height: 35px; width: 420px;">
+									<label class="tagAnalyst">
+										{{hostdata?.tags}}
+									</label>
+								</td>
+								<td  *AppHasRole="role.adminAccess" >
 									<i style="font-size:12px;color:orange;cursor: pointer;padding-left:15px;" (click) ="disableHost(hostdata.host_identifier)" title="Remove Host" class="fa fa fa-trash-alt"></i>
 
 								</td>
 							</tr>
 						</tbody>
-						<tbody *ngIf="hostmainvalue_data?.length === 0">
-						<tr>
-							<td></td>
-							<td><span style=" text-align: center;">
-								{{errorMessage}}
-							</span></td>
-						<!-- </div> -->
-					</tbody>
 					</table>
+					<div  *ngIf="hostmainvalue_data?.length === 0">
+						<span style=" text-align: center; padding-left: 450px;font-size: larger;font-weight: 600;">
+						 {{errorMessage}}
+						</span>
+					  </div>
 					<!-- end:: Table -->
 
 

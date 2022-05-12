@@ -1,2 +1,10 @@
 .error-template {padding: 40px 15px;text-align: center;}
 .error-actions {margin-top:15px;margin-bottom:15px;}
+.btn-dashboard{
+  color: #F7F7F7 !important;
+  border-color: #152944 !important;
+  background-color: #152944 !important;
+}
+.kt-svgg-icon g [fill]{
+  fill: #999999 !important;
+}

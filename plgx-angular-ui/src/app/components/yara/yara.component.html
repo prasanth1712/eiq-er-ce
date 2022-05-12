@@ -9,17 +9,30 @@
             <i class="kt-font-brand fa fa-user-cog"></i>
           </span>
           <h3 class="kt-portlet__head-title">
-            Upload YARA File
+             YARA Files
+             <i class="help-badge fa fa-info" title="It could take about 60-90 seconds for the agent to pick the yara signatures, based on your network."></i>
           </h3>
+        </div>
+        <div class="row">
+          <div class="" style="margin-top: 20px;">
+            <ul class="nav nav-pills nav-pills-sm nav-pills-label nav-pills-bold" role="tablist">
+              <li class="nav-item">
+                <a class="nav-link active" id="windows" style="cursor: pointer;" data-toggle="tab"  (click)="getByFilterId('windows')" role="tab"><img alt="Logo" src="./assets/media/logo/windows.svg" height="20px" width="20px" style="margin-right:5px"/>Windows</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" id="linux" style="cursor: pointer;" data-toggle="tab" (click)="getByFilterId('linux')" role="tab"><img alt="Logo" src="./assets/media/logo/Linux1.svg" height="20px" width="20px" style="margin-right:5px"/> Linux</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" id="darwin" style="cursor: pointer;" data-toggle="tab" (click)="getByFilterId('darwin')" role="tab"><i class="fab fa-2x fa-apple" style=""></i>Darwin</a>
+              </li>
+            </ul>
+          </div>
+  
         </div>
         <div class="kt-portlet__head-toolbar">
           <div class="kt-portlet__head-wrapper">
             <div class="kt-portlet__head-actions">
-              <!-- <button type="button" class="btn btn-outline-success btn-icon-sm" data-toggle="modal" data-target="#add_yara" aria-haspopup="true" aria-expanded="false">
-	              <i class="flaticon2-plus"></i>
-								<span>Add YARA </span>
-	            </button> -->
-              <button type="button" class="btn btn-outline-success btn-sm" data-toggle="modal" data-target="#add_yara" aria-haspopup="true" aria-expanded="false">
+              <button  type="button" class="btn btn-outline-success btn-sm" data-toggle="modal" data-target="#add_yara" aria-haspopup="true" aria-expanded="false">
   							<i class="fa fa-plus back_icon_align"></i>
   							<span>Add YARA File</span>
   						</button>
@@ -29,7 +42,7 @@
 	              <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
 	                <div class="modal-content">
 	                  <div class="modal-header">
-                      <h3 class="" style="color: #646c9a;">Add YARA File</h3>
+                      <h4 class="" style="color: #646c9a;">Add YARA File</h4>
 											<button type="button" class="close" (click)="clearInput()" data-dismiss="modal" aria-label="Close"></button>
 	                  </div>
 	                   <div class="modal-body kt-scroll" data-scroll="true" data-height="" data-scrollbar-shown="true">
@@ -38,7 +51,7 @@
                         <div class="col-xl-2"></div>
                           <div class="col-xl-8">
                             <div class="kt-section kt-section--first">
-                              <div class="kt-section__body">
+                              <div class="kt-section__body" style="font-size: 11px;">
                                 <div class="form-group row">
                                   <label class="col-3 col-form-label" style="color: #646c9a;">Upload File</label>
                                   <div class="custom-file col-9">
@@ -47,6 +60,33 @@
 
                                   </div>
                                 </div>
+                                <div class="form-group row required">
+                                  <label class="col-sm-2 col-form-label form--label" style="color: #646c9a;">Platforms</label>
+                                  <div class="col-10">
+                                    <div class="kt-checkbox-inline">
+                                      <label class="kt-checkbox">
+                                        <input type="checkbox" #checkboxes (change)="onItemChange($event)"   name="platforms" value="windows">
+                                        <label style="color: #646c9a;">windows</label>
+                                        <span></span>
+                                      </label>
+                                      <label class="kt-checkbox">
+                                        <input type="checkbox" #checkboxes (change)="onItemChange($event)"  name="platforms" value="linux" >
+                                        <label style="color: #646c9a;">linux</label>
+                                        <span></span>
+                                      </label>
+                                      <label class="kt-checkbox">
+                                        <input type="checkbox" #checkboxes  (change)="onItemChange($event)" name="platforms" value="darwin">
+                                        <label style="color: #646c9a;">darwin</label>
+                                        <span></span>
+                                      </label>
+                                   </div>
+                                      <!-- <input type="checkbox"  name="ssl"  formControlName="ssl" [(ngModel)]="use_ssl"
+                                      value="{{use_ssl}}" style="vertical-align: middle;min-height:3em;">&nbsp;<span style="vertical-align: middle;">Use SSL</span> -->
+                                  </div>
+                                  <!-- <span class="error-msg text-danger" *ngIf="submitted && yarafile.controls['platform_val'].errors?.required" style="font-size: 80%">
+                                    Please select any option above!
+                                  </span> -->
+                              </div>
                               </div>
                             </div>
                           </div>
@@ -56,7 +96,7 @@
 					            <!--end:: Widgets/Tasks -->
 	                    </div>
                       <div class="modal-footer align-center">
-                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" (click)="clearInput()" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-success active" data-dismiss="modal" (click)="onSubmit()">Upload</button>
                       </div>
 	                  </div>
@@ -68,8 +108,9 @@
           </div>
         </div>
       </div>
+      
       <div class="kt-portlet__body kt-portlet__body--fit">
-        <div class="" *ngIf="yara_data?.length != 0">
+        <div class="" *ngIf="yara_value.length != 0">
         <!--begin: Datatable -->
         <table class="table table-hover table-checkable">
           <thead>
@@ -78,17 +119,17 @@
               <!-- <th title="">Type</th> -->
             </tr>
           </thead>
-          <tbody>
-            <tr *ngFor="let yara of yara_data">
-               <td><a>{{ yara }}</a></td>
-               <td><button data-toggle="modal" (click)="viewFile($event)" data-target="#yara_view" value="{{yara}}" class="btn btn-info btn-sm">VIEW File</button></td>
-               <td><button (click)="deleteFile($event)" value="{{yara}}" class="btn btn-danger btn-sm">DELETE</button></td>
+          <tbody> 
+            <tr  *ngFor='let yara of yara_value'>
+               <td class="col-8"><a>{{ yara }}</a></td>
+               <td class="col-2"><button data-toggle="modal" (click)="viewFile(yara)" data-target="#yara_view" value="{{yara}}" class="btn btn-info btn-sm" style="font-size: 11px;">VIEW File</button></td>
+               <td *AppHasRole="role.adminAccess" class="col-2" ><button (click)="deleteFile(yara)" value="{{yara}}" class="btn btn-danger btn-sm" style="font-size: 11px;">DELETE</button></td>
             </tr>
           </tbody>
         </table>
         <!--end: Datatable -->
         </div>
-        <div class="" *ngIf="yara_data?.length == 0">
+        <div class="" *ngIf="yara_value.length == 0">
           <p class="txt-clr">No YARA files.</p>
         </div>
         <div class="modal left fade" id="yara_view" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="display: none; position: fixed; background-color: hsla(0, 0%, 0%, 0.45)">

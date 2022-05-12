@@ -30,9 +30,9 @@ def get_rules_data(limits):
 
 
 def get_host_data(limits):
-    return db.session.query(Alerts.node_id, Node.host_identifier, func.count(
+    return db.session.query(Alerts.node_id, Node.host_identifier, Node.node_info['computer_name'], func.count(
         Alerts.node_id)).join(Alerts.node).group_by(
-        Alerts.node_id, Node.host_identifier).filter(or_(
+        Alerts.node_id, Node.host_identifier, Node.node_info['computer_name']).filter(or_(
         Alerts.status == None, Alerts.status != Alerts.RESOLVED)).filter(and_(Node.state!=Node.DELETED, Node.state!=Node.REMOVED)).order_by(
         func.count(Alerts.node_id).desc()).limit(limits).all()
 

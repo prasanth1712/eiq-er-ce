@@ -1,0 +1,45 @@
+
+.form-group {
+    margin-bottom:1rem !important;
+}
+  
+:host ::ng-deep .users_list .cuppa-dropdown .dropdown-list{
+  position: relative;
+}
+
+.fa-circle{
+  margin-left: 15px;
+  font-size: 0.7em
+}
+
+ a:hover {
+ color: blue;
+ cursor: pointer;
+}
+.dropdown-item{
+  color:inherit;
+}
+.dropdown-menu {
+  min-width: 10rem
+}
+.columnData{
+  word-wrap: break-word
+}
+tabs-line-success.nav.nav-tabs .nav-link:hover, .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link.active,.nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link:hover, .nav-tabs.nav-tabs-line.nav-tabs-line-success a.nav-link.active {
+  color: #30B0A4;
+  border-bottom: 1px solid #30B0A4;
+  font-weight: 500;
+  }
+  table.dataTable thead th, table.dataTable thead td {
+    padding: 10px;
+     border-bottom: 1px solid #ebedf2;
+
+  }
+  ::ng-deep .table.dataTable.no-footer  {
+    border-bottom: 1px solid #ebedf2;
+  }
+  .required >label:after {
+    color: #e32;
+    content: ' *';
+    display:inline;
+  }

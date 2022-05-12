@@ -5,7 +5,6 @@ import json
 
 from .utils import *
 from polylogyx.utils import require_api_key, validate_osquery_query, create_tags, get_tags
-
 from polylogyx.dao import queries_dao as dao
 from polylogyx.wrappers import query_wrappers as wrapper
 from polylogyx.wrappers import parent_wrappers as parentwrapper
@@ -22,29 +21,29 @@ nodes_post = parser.copy()
 @ns.route('/', endpoint = "list_queries")
 @ns.doc(params={})
 class QueriesList(Resource):
-    '''List all queries of the Nodes'''
+    """List all queries of the Nodes"""
 
     @ns.marshal_with(parentwrapper.common_response_wrapper)
     def get(self):
-        '''returns API response of list of queries info'''
+        """returns API response of list of queries info"""
         queryset = dao.get_all_queries()
         data = marshal(queryset,wrapper.query_wrapper)
         for i in range(len(data)):
             data[i]['tags'] = [tag.to_dict() for tag in queryset[i].tags]
         message = "successfully fetched the queries info"
         if not data: message = "there is no data to show"
-        return respcls(message,"success",data)
+        return prepare_response(message,"success",data)
 
 
 @require_api_key
 @ns.route('/packs', endpoint = "list_packed_queries")
 @ns.doc(params={})
 class PackedQueriesList(Resource):
-    '''List all packed queries of the Nodes'''
+    """List all packed queries of the Nodes"""
 
     @ns.marshal_with(parentwrapper.common_response_wrapper)
     def get(self):
-        '''returns API response of list of packed queries info'''
+        """returns API response of list of packed queries info"""
         queryset = dao.get_all_packed_queries()
         data = marshal(queryset,wrapper.query_wrapper)
         for i in range(len(data)):
@@ -52,14 +51,14 @@ class PackedQueriesList(Resource):
             data[i]['packs'] = [pack.name for pack in queryset[i].packs]
         message = "successfully fetched the packed queries info"
         if not data: message = "there is no data to show"
-        return respcls(message,"success",data)
+        return prepare_response(message,"success",data)
 
 
 @require_api_key
 @ns.route('/<int:query_id>', endpoint = "query_by_id")
 @ns.doc(params={'query_id': 'id of the query'})
 class QueryById(Resource):
-    ''' responses the query info for the given query id'''
+    """ responses the query info for the given query id"""
 
     def get(self, query_id):
         if query_id:
@@ -68,38 +67,37 @@ class QueryById(Resource):
                 query=marshal(query_qs,wrapper.query_wrapper)
                 query['tags'] = [tag.to_dict() for tag in query_qs.tags]
                 query['packs'] = [pack.name for pack in query_qs.packs]
-                return marshal(respcls("successfully fecthed the query info for the given id","success",query) , parentwrapper.common_response_wrapper)
+                return marshal(prepare_response("successfully fecthed the query info for the given id","success",query) , parentwrapper.common_response_wrapper)
             else:
                 message = "Query with this id does not exist"
         else:
             message = "Missing query id"
-        return marshal(respcls(message), parentwrapper.failure_response_parent)
+        return marshal(prepare_response(message), parentwrapper.failure_response_parent)
 
 
 @require_api_key
 @ns.route('/<int:query_id>', endpoint = "edit_query")
 @ns.doc(params={'query_id': 'id of the query'})
 class EditQueryById(Resource):
-    '''edit query by its id'''
+    """edit query by its id"""
 
     def post(self, query_id):
         if query_id:
             query = dao.get_query_by_id(query_id)
             if query:
-                return marshal(respcls("successfully fecthed the query info for the given id","success",marshal(query,wrapper.query_wrapper)) , parentwrapper.common_response_wrapper)
+                return marshal(prepare_response("successfully fecthed the query info for the given id","success",marshal(query,wrapper.query_wrapper)) , parentwrapper.common_response_wrapper)
             else:
                 message = "Query with this id does not exist"
         else:
             message = "Missing query id"
-        return marshal(respcls(message), parentwrapper.failure_response_parent)
-
+        return marshal(prepare_response(message), parentwrapper.failure_response_parent)
 
 
 @require_api_key
 @ns.route('/add', endpoint = "add_query")
 @ns.doc(params={'name': 'name of the query', 'query':"query", 'interval':"interval for the query", 'tags':"tags of the query", 'platform':"platform", 'version':"version", 'description':"description", 'value':"value", 'snapshot':"snapshot"})
 class AddQuery(Resource):
-    '''add queries'''
+    """add queries"""
     parser = requestparse(
         ['name', 'query', 'interval', 'tags', 'platform', 'version', 'description', 'value', 'snapshot'],
         [str, str, int, str, str, str, str, str, bool],
@@ -128,7 +126,7 @@ class AddQuery(Resource):
                 query.tags = create_tags(*tags)
             query.save()
             return marshal({'query_id': query.id}, wrapper.add_query_wrapper)
-        return marshal(respcls(message), parentwrapper.failure_response_parent)
+        return marshal(prepare_response(message), parentwrapper.failure_response_parent)
 
 
 @require_api_key
@@ -169,14 +167,14 @@ class AddTagToQuery(Resource):
                 query.save()
                 status = 'success'
                 message = 'Successfully modified the tag(s)'
-        return marshal(respcls(message,status), parentwrapper.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message,status), parentwrapper.common_response_wrapper, skip_none=True)
 
 
 @require_api_key
 @ns.route('/<int:query_id>/tags', endpoint='query_tags_list')
 @ns.doc(params={'query_id': 'query id', 'tags': "tags to create to the query"})
 class ListTagsOfQuery(Resource):
-    '''list tags of a query by its query id'''
+    """list tags of a query by its query id"""
     parser = requestparse(['tags'], [str], ["list of comma separated tags to be created to the query"])
 
     def get(self, query_id):
@@ -189,7 +187,7 @@ class ListTagsOfQuery(Resource):
             data = tag_name_format(query.tags)
             status = 'success'
             message = 'Successfully fetched the tag(s)'
-        return marshal(respcls(message, status, data), parentwrapper.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status, data), parentwrapper.common_response_wrapper, skip_none=True)
 
     @ns.expect(parser)
     def post(self, query_id):
@@ -200,8 +198,6 @@ class ListTagsOfQuery(Resource):
             obj_list = get_tags_list_to_add(tags)
             query.tags.extend(obj_list)
             query.save()
-            return marshal(respcls('Successfully created the tag(s) to queries', 'success'),
+            return marshal(prepare_response('Successfully created the tag(s) to queries', 'success'),
                            parentwrapper.common_response_wrapper, skip_none=True)
-        return marshal(respcls('Query is not present for the id given!', 'failure'),
-                       parentwrapper.common_response_wrapper, skip_none=True)
-
+        return marshal(prepare_response('Query is not present for the id given!', 'failure'), parentwrapper.common_response_wrapper, skip_none=True)

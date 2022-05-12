@@ -5,7 +5,7 @@ import { AppComponent } from './app.component';
 import { GoogleChartsModule } from 'angular-google-charts';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AuthInterceptor } from './_helpers/auth.interceptor';
-import { ErrorInterceptor } from './_helpers/error.interceptor';
+// import { ErrorInterceptor } from './_helpers/error.interceptor';
 import { GlobalComponent } from './global/global.component';
 import { LayoutModule } from './layout/layout.module';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -13,7 +13,7 @@ import { CommonModule } from '@angular/common';
 import { LogoutComponent } from './logout/logout.component';
 import { ToastrModule } from 'ngx-toastr';
 import { PagenotfoundComponent } from './components/pagenotfound/pagenotfound.component';
-
+import {NgxMaterialTimepickerModule} from 'ngx-material-timepicker';
 @NgModule({
   declarations: [
     AppComponent,
@@ -30,11 +30,11 @@ import { PagenotfoundComponent } from './components/pagenotfound/pagenotfound.co
     GoogleChartsModule.forRoot(),
     LayoutModule,
     ToastrModule.forRoot(),
-
+    NgxMaterialTimepickerModule,
+   
   ],
   providers: [
-    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
-    // { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
   ],
   bootstrap: [AppComponent]
 })

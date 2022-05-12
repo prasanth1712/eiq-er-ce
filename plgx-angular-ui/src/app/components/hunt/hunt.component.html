@@ -32,15 +32,15 @@
           <div class="form-group row">
             <label class="col-2 col-form-label" style="color: #646c9a;">Hunt Type</label>
       <div class="col-8">
-      <angular2-multiselect [data]="dropdownPacknameList" [(ngModel)]="selectedPacknameItems" formControlName="hunt_type" [ngClass]="{ 'is-invalid': submitted && f.hunt_type.errors }"
+      <angular2-multiselect [data]="dropdownPacknameList" [(ngModel)]="selectedPacknameItems" formControlName="huntType" [ngClass]="{ 'is-invalid': submitted && f.huntType.errors }"
           [settings]="dropdownPacknameSettings"
           (onSelect)="onItemSelect($event)"
           (onDeSelect)="OnItemDeSelect($event)"
           (onSelectAll)="onSelectAll($event)"
           (onDeSelectAll)="onDeSelectAll($event)">
       </angular2-multiselect>
-      <div *ngIf="submitted && f.hunt_type.errors" class="invalid-feedback">
-        <div *ngIf="f.hunt_type.errors.required">Hunt Type is required</div>
+      <div *ngIf="submitted && f.huntType.errors" class="invalid-feedback">
+        <div *ngIf="f.huntType.errors.required">Hunt Type is required</div>
         </div>
       </div>
       </div>
@@ -52,7 +52,7 @@
           <div class="form-group row">
             <label class="col-2 col-form-label" style="color: #646c9a;"></label>
       <div class="col-2">
-        <select  value="3" class="form-control" (change)="get_duration($event.target.value)" style="cursor: pointer;">
+        <select  value="3" class="form-control" (change)="getDuration($event.target.value)" style="cursor: pointer;">
           <option value="2">1 day</option>
           <option value="3" selected="selected">1 week</option>
           <option value="4">1 month</option>
@@ -60,9 +60,21 @@
       </div>
       <div class="col-4" >
         <div class="row">
-          <span style="margin-top:auto;margin-bottom: auto;margin-right:10px;" >ending(UTC)</span>
+          <span style="margin-top:auto;margin-bottom: auto;margin-right:10px;" data-toggle="tooltip" data-placement="top" title="UTC Time Zone">Ending Date</span>
 
-          <ng-datepicker [(ngModel)]="datepicker_date['date']" [ngModelOptions]="{standalone: true}" (ngModelChange)="myHandler()"></ng-datepicker>
+          <!-- <ng-datepicker [(ngModel)]="datepickerDate['date']" [ngModelOptions]="{standalone: true}" (ngModelChange)="myHandler()"></ng-datepicker> -->
+          <form class="form-inline">
+            <div class="form-group">
+              <div class="input-group">
+                <input class="form-control" placeholder="yyyy-mm-dd"
+                       name="dp" [(ngModel)]="selectedDate['date']" [maxDate]="maxDate" (click)="d.toggle()" (ngModelChange)="myHandler()"  ngbDatepicker #d="ngbDatepicker">
+                <div class="input-group-append">
+                  <button class="btn calendar calender-img" (click)="d.toggle()" type="button"><i class="far fa-calendar-alt fa-2x" aria-hidden="true"></i></button>
+                </div>
+              </div>
+            </div>
+          </form>
+
         </div>
       </div>
       </div>
@@ -74,9 +86,9 @@
           <h6>Upload indicators using file, separated by newline to search across the entire collected endpoint data:</h6>
         </div>
         <div class="col-5 col-form-label">
-          <input type="file" class="custom-input-file" formControlName="indicator_file" (change)="uploadFile($event)"  name="indicator_file" id="indicator_file_md5" style="cursor: pointer;" [ngClass]="{ 'is-invalid': submitted && f.indicator_file.errors }">
-          <div *ngIf="submitted && f.indicator_file.errors" class="invalid-feedback">
-            <div *ngIf="f.indicator_file.errors.required">Please provide the File</div>
+          <input type="file" class="custom-input-file" formControlName="indicatorFile" (change)="uploadFile($event)"  name="indicatorFile" id="indicator_file_md5" style="cursor: pointer;" [ngClass]="{ 'is-invalid': submitted && f.indicatorFile.errors }">
+          <div *ngIf="submitted && f.indicatorFile.errors" class="invalid-feedback">
+            <div *ngIf="f.indicatorFile.errors.required">Please provide the File</div>
             </div>
         </div>
         <div class="col-2 col-form-label">
@@ -103,7 +115,7 @@
           </tr>
         </thead>
         <tbody >
-            <tr *ngFor="let alrowdata of search_data_output; let i = index ">
+            <tr *ngFor="let alrowdata of searchDataOutput; let i = index ">
                 <td style="vertical-align:left;">
                   <a [routerLink]="['/hosts/', alrowdata.node_id]" class="active" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="click -> Host Details" style="color:#5867dd;font-weight: 600;">{{alrowdata.hostname}}</a>
                 </td>
@@ -117,53 +129,62 @@
                     <font color='#16ace3'>
                       <div >
                         <div class="sql hljs desc-background_rules container" [class.show_1]="alrowdata.visible_1" style="cursor: pointer;">
-                          {{myjson.stringify(alrowdata.columns)}}
+                          {{alrowdata.parsedColumns}}
                         </div>
-                        <span *ngIf="myjson.stringify(alrowdata.columns).length > 300" style="cursor: pointer;" class="kt-link" (click)="alrowdata.visible_1 = !alrowdata.visible_1">{{ alrowdata.visible_1 ? 'Read less': 'Read More' }}</span>
+                        <span *ngIf="alrowdata.parsedColumns.length > 200" style="cursor: pointer;" class="kt-link" (click)="alrowdata.visible_1 = !alrowdata.visible_1">{{ alrowdata.visible_1 ? 'Read less': 'Read More' }}</span>
                       </div>
                 </font>
                   <div (click)="action($event);false" >
                     <div class="col-10"></div>
                     <th >
-                  <dt *ngFor="let subhostdata of alrowdata.columns | keyvalue">
+                  <dl *ngFor="let subhostdata of alrowdata.columns | keyvalue">
 
                     <!--md5-->
-                    <dl *ngIf="subhostdata.key=='md5'" style="word-break: break-word;padding-left: 40px;" >
+                    <dd *ngIf="subhostdata.key=='md5'" style="word-break: break-word;padding-left: 40px;" >
 
                     {{subhostdata.key}}
                     {{":"}}
 
                     <a onclick="window.open(this.href,'_blank');return false;" target="_blank"  href="https://www.virustotal.com/#/file/{{subhostdata.value}}/detection" >{{subhostdata.value}}</a>
-                    </dl>
+                    </dd>
 
                     <!--domain_name-->
-                    <dl *ngIf="subhostdata.key=='domain_name'" style="word-break: break-word;padding-left: 40px;" >
+                    <dd *ngIf="subhostdata.key=='domain_name'" style="word-break: break-word;padding-left: 40px;" >
 
                     {{subhostdata.key}}
                     {{":"}}
 
                     <a onclick="window.open(this.href,'_blank');return false;" target="_blank" href="https://www.virustotal.com/#/domain/{{subhostdata.value}}" >{{subhostdata.value}}</a>
-                    </dl>
+                    </dd>
 
                     <!--sha256-->
-                    <dl *ngIf="subhostdata.key=='sha256'" style="word-break: break-word;padding-left: 40px;" >
+                    <dd *ngIf="subhostdata.key=='sha256'" style="word-break: break-word;padding-left: 40px;" >
 
                     {{subhostdata.key}}
                     {{":"}}
 
                     <a onclick="window.open(this.href,'_blank');return false;" target="_blank" href="https://www.virustotal.com/#/file/{{subhostdata.value}}/detection" >{{subhostdata.value}}</a>
-                    </dl>
+                    </dd>
+
+                    <!--ja3_md5-->
+                    <dd *ngIf="subhostdata.key=='ja3_md5'" style="word-break: break-word;padding-left: 40px;" >
+
+                    {{subhostdata.key}}
+                    {{":"}}
+
+                    <a onclick="window.open(this.href,'_blank');return false;" target="_blank" href="https://www.virustotal.com/#/file/{{subhostdata.value}}/detection" >{{subhostdata.value}}</a>
+                    </dd>
 
 
-                    <dl *ngIf="!(subhostdata.key=='md5') && !(subhostdata.key=='domain_name') && !(subhostdata.key=='sha256')" style="word-break: break-word;padding-left: 40px;" >
+                    <dd *ngIf="!(subhostdata.key=='md5') && !(subhostdata.key=='domain_name') && !(subhostdata.key=='sha256') && !(subhostdata.key=='ja3_md5')" style="word-break: break-word;padding-left: 40px;" >
 
                       {{subhostdata.key}}
                       {{":"}}
 
                      {{subhostdata.value}}
-                    </dl>
+                    </dd>
 
-                  </dt>
+                  </dl>
                 </th>
                   </div>
                   </div>

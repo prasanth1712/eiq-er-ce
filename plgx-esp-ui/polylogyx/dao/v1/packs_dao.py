@@ -1,5 +1,5 @@
-from polylogyx.models import Pack, Tag
-from sqlalchemy import desc, or_, cast
+from polylogyx.models import Pack, Tag, db
+from sqlalchemy import desc, or_, cast, asc
 import sqlalchemy
 
 
@@ -12,7 +12,7 @@ def get_all_packs(searchterm=''):
             Pack.category.ilike('%' + searchterm + '%'),
             cast(Pack.shard, sqlalchemy.String).ilike('%' + searchterm + '%'),
         )
-        ).order_by(desc(Pack.id))
+        ).order_by(asc(Pack.name))
 
 
 def get_total_count():
@@ -43,3 +43,7 @@ def is_tag_of_pack(pack, tag):
         return True
     else:
         return False
+
+
+def get_all_packs_by_names(packs):
+    return db.session.query(Pack).filter(Pack.name.in_(packs)).all()

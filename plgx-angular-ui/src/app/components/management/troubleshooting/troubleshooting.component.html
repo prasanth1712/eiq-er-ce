@@ -1,0 +1,114 @@
+<div class="kt-grid kt-grid--hor kt-grid--root">
+    <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
+      <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
+        <div class="kt-portlet kt-portlet--mobile kt-portlet--responsive-mobile" style="margin-bottom: 0px;">
+        <!-- start:: Content -->
+        <div class="kt-portlet__head kt-portlet__head--lg">
+            <div class="kt-portlet__head-label">
+              <span class="kt-portlet__head-icon">
+                <i class="kt-font-brand fab fa-whmcs"></i>
+              </span>
+                <h3 class="kt-portlet__head-title">
+                    Troubleshooting
+                  </h3>
+
+            </div>
+            <div class="kt-portlet__head-toolbar">
+              <div class="kt-portlet__head-wrapper">
+                <div class="">
+                  <a  (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark"
+                    data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page" style="color:#93a2dd;">
+                    <i class="fas fa-chevron-left"></i>
+                    Back
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="kt-portlet__body">
+            <div class="kt-portlet">
+              <div class="kt-portlet__body">
+
+                <div class="row">
+                    <div class="col-xl-12">
+                    <h3 class="col-form-label"  style="font-weight:bold;color: #646c9a;" >Log level settings:</h3>
+                    <div class="kt-section__body">
+                        <div class="form-group row">
+                          <label class="col-3 col-form-label">ER log level</label>
+                          <div class="col-6">
+                            <select  class="form-control"  style="cursor: pointer;" (change)="onChangeESP($event.target.value)" >
+                              <option value="WARNING" [selected]="erLog == 'WARNING'">WARNING</option>
+                              <option value="INFO" [selected]="erLog == 'INFO'">INFO</option>
+                              <option value="DEBUG" [selected]="erLog == 'DEBUG'">DEBUG</option>
+                            </select>
+                          </div>
+                        </div>
+                                <div class="form-group row">
+                                  <label class="col-3 col-form-label">ER-UI log level</label>
+                                  <div class="col-6">
+                                    <select  class="form-control" style="cursor: pointer;" (change)="onChangeESPUI($event.target.value)" >
+                                      <option value="WARNING" [selected]="erUILog == 'WARNING'">WARNING</option>
+                                      <option value="INFO" [selected]="erUILog == 'INFO'">INFO</option>
+                                      <option value="DEBUG" [selected]="erUILog == 'DEBUG'">DEBUG</option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div class="form-group row">
+                                  <label class="col-3"></label>
+                                  <div class="col-6">
+                                    <button  style="width:100px"  (click)="UpdateLogServer()" class="btn btn-success"><i class="fa fa-sync-alt"></i>
+                                      <span>Update</span>
+                                    </button>
+                                  </div>
+                                </div>
+                        </div>
+                        </div>
+                </div>
+            </div>
+            </div>
+
+
+            <div class="kt-portlet">
+              <div class="kt-portlet__body">
+                <div class="row">
+                    <div class="col-xl-12">
+                    <h3 class="col-form-label"  style="font-weight:bold;color: #646c9a;" >Download Logs:</h3>
+                    <div class="kt-section__body">
+                        <div class="form-group row">
+                          <label class="col-3 col-form-label">Container name</label>
+                          <div class="col-6">
+                            <select  class="form-control" style="cursor: pointer;" (change)="onChangeLog($event.target.value)" >
+                              <option value="ER">ER</option>
+                              <option value="ER-UI">ER-UI</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="form-group row">
+                          <label class="col-3 col-form-label">Available log files</label>
+                          <div class="col-6">
+                            <select  class="form-control" [ngModel]="logFile" (ngModelChange)="selectLogFileItem($event)">
+                               <option [value]="value" *ngFor="let value of logFileList">{{value}}</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="form-group row">
+                          <label class="col-3"></label>
+                          <div class="col-6">
+                            <button  (click)="submitDownloadLogs()" class="btn btn-success" style="width:100px">
+                              <span>Download</span>
+                            </button>
+                          </div>
+                        </div>
+                        </div>
+                        </div>
+                </div>
+
+              </div>
+            </div>
+
+          <!-- End:: Portlet -->
+          </div>
+          <!-- END:: Content -->
+        </div>
+    </div>
+</div>

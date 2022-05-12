@@ -7,10 +7,10 @@ import { saveAs } from 'file-saver';
 import 'datatables.net';
 import { DataTableDirective } from 'angular-datatables';
 import { Subject } from 'rxjs';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient,HttpEventType,HttpResponse,HttpHeaderResponse } from '@angular/common/http';
+import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../../environments/environment'
-
-// import {PopoverModule} from "ngx-smart-popover";
+import { AuthorizationService } from '../../dashboard/_services/Authorization.service';
 class DataTablesResponse {
   data: any[];
   draw: number;
@@ -49,10 +49,14 @@ export class CarvesComponent implements AfterViewInit, OnInit {
   byte_value: number;
   Progress_value:number = 0;
   dtOptions: DataTables.Settings = {};
+  ShowProgress: boolean = false;
+  role={'adminAccess':this.authorizationService.adminLevelAccess,'userAccess':this.authorizationService.userLevelAccess};
    constructor(
     private commonapi:CommonapiService,
     private _location: Location,
     private http: HttpClient,
+    private toastr: ToastrService,
+    private authorizationService: AuthorizationService,
   ) { }
 
   ngOnInit() {
@@ -67,7 +71,7 @@ export class CarvesComponent implements AfterViewInit, OnInit {
       pagingType: 'full_numbers',
       pageLength: 10,
       serverSide: true,
-      processing: false,
+      processing: true,
       searching: false,
       ajax: (dataTablesParameters: any,callback) => {
       var body = dataTablesParameters;
@@ -85,13 +89,10 @@ export class CarvesComponent implements AfterViewInit, OnInit {
       if(body['searchterm']==undefined){
         body['searchterm']="";
       }
-        this.http.post<DataTablesResponse>(environment.api_url+"/carves", body, { headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('JWTkey')}}).subscribe(res =>{
+        this.http.post<DataTablesResponse>(environment.api_url+"/carves", body, { headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('token')}}).subscribe(res =>{
 
           this.carves_val = res ;
             this.carves_data = this.carves_val.data.results;
-
-          console.log(this.carves_val)
-          // this.temp_var=true;
         if(this.carves_data.length >0 &&  this.carves_data!=undefined)
         {
         this.carves_data = this.carves_val.data['results'];
@@ -122,7 +123,7 @@ export class CarvesComponent implements AfterViewInit, OnInit {
         });
       },
       ordering: false,
-      columns: [{ data: 'hostname' },{ data: 'session' },{ data: 'carves_size' },{ data: 'files' },{ data: 'blocks_aquire' },{ data: 'status' },{ data: 'created_at' },{data:'delete'}],
+      columns: [{ data: 'hostname' },{ data: 'session' },{ data: 'carves_size' },{ data: 'files' },{ data: 'blocks_aquire' },{ data: 'status' },{ data: 'created_at' }],
     }
 
 
@@ -130,33 +131,80 @@ export class CarvesComponent implements AfterViewInit, OnInit {
     //   trigger: 'focus'
     // })
   }
-
-  downloadCarve(event,carve_file_name){
-
-    console.log(event.target);
+  ProgressInfos=[];
+  FileCount:number=0;
+  CurrentFileCount:any;
+  ProgressDiv:boolean = false;
+  FileId:any;
+  InprogessInfo = 0;
+  inProgressDownloadList =[];
+  downloadCarve(event,carve_hostname,carve_file_name){
+    this.ProgressDiv = true;
     var DownloadCarvesid = event.target.id;
     var DownloadCarvesname = event.target.name;
-
-  //   this.commonapi.carves_download_api(DownloadCarvesid).subscribe(blob => {
-  //     saveAs(blob, carve_file_name+".tar");
-  //       })
-
-  this.commonapi.carves_download_api(DownloadCarvesid).subscribe((event)=> {
-    if(event['loaded'] && event['total']){
-      this.Progress_value = Math.round(event['loaded']/event['total']*100);
+    //Checking file downloading or not
+    if(this.ProgressInfos.length > 0){
+      var IsFileExist = this.ProgressInfos.find(x=>x.fileName == carve_file_name);
+      if (typeof IsFileExist != "undefined") {
+           var Progress = IsFileExist.isDownloaded;
+           if(Progress == true){ this.toastr.error('File is already downloading');
+             return;
+           }
+           else if(Progress == false){ this.toastr.error('File is already downloaded');
+             return;
+           }
+      }else{
+        this.FileCount = this.FileCount +1
+      }
     }
-    if(event['body'])
-    {
-      saveAs(event['body'], carve_file_name+".tar");
-      swal("File Download Completed", {
-        icon: "success",
-        buttons: [false],
-        timer: 2000
-      });
-    }
+    this.ProgressInfos[this.FileCount] = { progress: 0, fileId:DownloadCarvesid, fileName: carve_file_name ,isDownloaded:true};
+    this.commonapi.carves_download_api(DownloadCarvesid).subscribe((event)=> {
+        //Inprogress File DownloadList
+        if(event instanceof HttpHeaderResponse){
+          var FileId = DownloadCarvesid;
+          this.CurrentFileCount = this.ProgressInfos.findIndex(x=>x.fileId == FileId);
+          this.FileId = this.ProgressInfos.find(x=>x.fileId == FileId).fileId;
+          var obj =[];
+          this.ProgressInfos.forEach(function (Info) {
+                 if(Info.isDownloaded == true){
+                   obj.push(Info);
+                 }
+          });
+          this.inProgressDownloadList = obj;
+        }
+        //Completed File DownloadList
+        if(event instanceof HttpResponse){
+          var FileId = DownloadCarvesid;
+          var fileIndex = this.ProgressInfos.findIndex(x=>x.fileId == FileId);
+          this.InprogessInfo = this.InprogessInfo+1
+          this.ProgressInfos[fileIndex].isDownloaded = false;
+        }
+     if(event['loaded'] && event['total']){
+       var fileIndex = this.ProgressInfos.findIndex(x=>x.fileId == DownloadCarvesid);
+       this.ProgressInfos[fileIndex].progress = Math.round(event['loaded']/event['total']*100);
+     }
+
+     if(event['body'])
+     {
+        saveAs(event['body'], carve_file_name+".tar");
+        if(this.InprogessInfo == this.ProgressInfos.length){
+          swal("File Download Completed", {
+            icon: "success",
+            buttons: [false],
+            timer: 2000
+          });
+        }
+     }
   })
+
   }
 
+  EventUrlId(event){
+    var EventUrl = event['url'].split("//");
+    var Url = EventUrl[1].split("/");
+    var FileId = Url[6];
+    return FileId;
+  }
 
   /*
     This function convert bytes into carvesize format
@@ -208,6 +256,15 @@ export class CarvesComponent implements AfterViewInit, OnInit {
   goBack(){
     this._location.back();
   }
+  ToggleProgressMenu(){
+    if(this.ShowProgress){
+      document.getElementById("dropdown-div").classList.remove('show');
+      this.ShowProgress = false;
+    }else{
+      document.getElementById("dropdown-div").classList.add('show');
+      this.ShowProgress = true;
+    }
+}
 
 
 }

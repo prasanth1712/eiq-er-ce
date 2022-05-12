@@ -1,0 +1,80 @@
+<div class="kt-grid kt-grid--hor kt-grid--root">
+    <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
+      <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
+        <div class="kt-portlet kt-portlet--mobile kt-portlet--responsive-mobile" style="margin-bottom: 0px;">
+        <!-- start:: Content -->
+        <div class="kt-portlet__head kt-portlet__head--lg">
+            <div class="kt-portlet__head-label">
+              <span class="kt-portlet__head-icon">
+                <i class="kt-font-brand fab fa-whmcs"></i>
+              </span>
+                <h3 class="kt-portlet__head-title">
+                    SSO Configuration
+                  </h3>
+
+            </div>
+            <div class="kt-portlet__head-toolbar">
+              <div class="kt-portlet__head-wrapper">
+                <div class="">
+                  <a  (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark"
+                    data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page" style="color:#93a2dd;">
+                    <i class="fas fa-chevron-left"></i>
+                    Back
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="kt-portlet__body">
+            <div class="kt-portlet">
+              <div class="kt-portlet__body">
+                <form class="kt-form" id="kt_form" [formGroup]="ssoConfigureSettings" (ngSubmit)="onSubmit()">
+                <div class="row">
+                    <div class="col-xl-12">
+                    <div class="kt-section__body">
+                      <h3 class="col-form-label"  style="font-weight:bold;color: #646c9a;" >SSO Configuration:</h3>
+                      <div class="form-group row required">
+                        <label class="col-sm-3 col-form-label form--label"> IDP Metadata URL</label>
+                        <div class="col-5">
+                          <input  type="text" name="idpMetadataUrl"  formControlName="idpMetadataUrl" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-group row required">
+                      <label class="col-sm-3 col-form-label form--label"> App Name</label>
+                      <div class="col-5">
+                        <input  type="text" name="appName"  formControlName="appName" class="form-control" />
+                      </div>
+                  </div>
+                  <div  class="form-group row required">
+                    <label class="col-sm-3 col-form-label form--label"> Entity ID</label>
+                    <div class="col-5">
+                      <input  type="text" name="entityId"  formControlName="entityId" class="form-control" />
+                    </div>
+                </div>
+                <div  class="form-group row">
+                  <label class="col-3 col-form-label" data-toggle="tooltip" title="">SSO Authentication</label>
+                  <div class=" col-5">
+                    <input  type="checkbox"  name="samlAuthentication" class="" formControlName="samlAuthentication"/>
+                  </div>
+                </div>
+              </div>
+              <div  class="form-group row">
+                <label class="col-3"></label>
+                <div class="col-6">
+                  <button  style="width:100px"  type="submit" class="btn btn-success"><i class="fa fa-sync-alt"></i>
+                    <span>Update</span>
+                  </button>
+                </div>
+              </div>
+                </div>
+                </div>
+              </form>
+              </div>
+            </div>
+            </div>
+          <!-- End:: Portlet -->
+          </div>
+          <!-- END:: Content -->
+        </div>
+    </div>
+</div>

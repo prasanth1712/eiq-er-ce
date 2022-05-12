@@ -33,7 +33,6 @@
 }
 :host ::ng-deep .jsoneditor .jsoneditor-menu{
   background-color: #000000bd;
-  border: 1px solid black;
 }
 
 :host ::ng-deep .jsoneditor{
@@ -44,4 +43,7 @@
   background-color: white;
   border: 1px solid black;
   color: black;
+}
+::ng-deep .jsoneditor-poweredBy{
+  display: none
 }

@@ -94,17 +94,18 @@
                     <td>
                         <div style="color: #25282a" class="text-wrap width">{{hostdata.last_ip}}</div>
                     </td>
-                    <td class="dt-justify">                        
+                    <td class="dt-justify" *AppHasRole="role.adminAccess">                        
                       <tag-input [theme]="'foundation-theme'" [(ngModel)]='hostdata.tags'  [secondaryPlaceholder]="'Add tags here...'" [placeholder]="'Add tags here...'"
                       (onAdd)="hosts_addTag(hostdata.tags,hostdata.id)"
                       (onRemove)="hosts_removeTag($event,hostdata.id)" [modelAsStrings]="true"
                       style="font-family: 'Poppins', sans-serif !important;">
                     </tag-input>
                     </td>
-                    <td >
+                    <td *AppHasRole="role.userAccess">{{hostdata?.tags}}</td>
+                    <td *AppHasRole="role.adminAccess">
                         <i style="font-size:12px;color: #1bff06;cursor: pointer;" (click) ="addNodes(hostdata.id)" title="Restore Host" class="fa">&#xf058;</i>
                     </td>
-                    <td>
+                    <td *AppHasRole="role.adminAccess" >
                       <i style="font-size:12px;color: #fa0303;cursor: pointer;" (click) ="deleteHost(hostdata.id, hostdata.display_name)" title="Delete Host" class="fa">&#xf057;</i>
                     </td>
                 </tr>

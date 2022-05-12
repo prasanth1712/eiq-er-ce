@@ -14,7 +14,8 @@ from polylogyx.wrappers import node_wrappers as wrapper
 from polylogyx.wrappers import parent_wrappers as parentwrapper
 from polylogyx.wrappers import resultlog_wrappers as res_wrapper
 from polylogyx.wrappers import tag_wrappers as tag_wrapper
-from polylogyx.blueprints.v1.utils import SearchParser
+
+from .v1.utils import SearchParser
 
 
 ns = Namespace('nodes', description='distributed query related operations')
@@ -23,31 +24,30 @@ ns = Namespace('nodes', description='distributed query related operations')
 @require_api_key
 @ns.route('/', endpoint='all_nodes_info')
 class NodeList(Resource):
-    '''List all Nodes'''
+    """List all Nodes"""
     parser = requestparse(['platform', 'state'],[str, bool],["platform of the node", 'state of the node whether active or in-active'],[False, False])
 
     @ns.expect(parser)
     @ns.marshal_with(parentwrapper.common_response_wrapper)
     def get(self):
-        '''returns list of all nodes information'''
+        """returns list of all nodes information"""
         args = self.parser.parse_args()
         queryset = dao.filterNodesByStateActivity(args['platform'], args['state'])
-
         data = marshal(queryset, wrapper.nodewrapper)
         for i in range(len(data)):
             data[i]['tags'] = [tag.to_dict() for tag in queryset[i].tags]
         message="nodes data fetched successfully"
         if not data: message = "There are no data to be shown and it is empty"
-        return respcls(message,"success",data)
+        return prepare_response(message,"success",data)
 
 
 @require_api_key
 @ns.route('/<string:host_identifier>', endpoint='node_info_by_id')
 @ns.doc(params={'host_identifier': 'Host identifier of the Node'})
 class NodesByHostId(Resource):
-    '''Get node info by its ID'''
+    """Get node info by its ID"""
     def get(self, host_identifier):
-        '''returns specific node info by filtering the object through the host identifier'''
+        """returns specific node info by filtering the object through the host identifier"""
         node_qs = dao.get_node_by_host_identifier(host_identifier)
         if host_identifier:
             if node_qs:
@@ -55,12 +55,12 @@ class NodesByHostId(Resource):
                 node = marshal(node_qs, wrapper.nodebyid_wrapper)
                 node['system_data'] = system_data
                 node['tags'] = [tag.to_dict() for tag in node_qs.tags]
-                return marshal(respcls("Successfully fetched the node info", 'success', node),parentwrapper.common_response_wrapper, skip_none=True)
+                return marshal(prepare_response("Successfully fetched the node info", 'success', node),parentwrapper.common_response_wrapper, skip_none=True)
             else:
                 message="Node with this identifier does not exist"
         else:
             message="Missing host identifier"
-        return marshal(respcls(message), parentwrapper.failure_response_parent)
+        return marshal(prepare_response(message), parentwrapper.failure_response_parent)
 
 
 # Nodes schedule query results
@@ -69,7 +69,7 @@ class NodesByHostId(Resource):
 @ns.route('/schedule_query/<string:host_identifier>', endpoint='node_schedule_query_by_id')
 @ns.doc(params={'host_identifier': 'Host identifier of the Node'})
 class NodeScheduleQuery(Resource):
-    '''returns node schedule query for the host_identifier given'''
+    """returns node schedule query for the host_identifier given"""
 
     def get(self, host_identifier):
         node = dao.get_node_by_host_identifier(host_identifier)
@@ -89,14 +89,14 @@ class NodeScheduleQuery(Resource):
             status = 'success'
             message = 'Successfully received schedule query results'
             if not data: message = "There are no data to be shown and it is empty"
-        return marshal(respcls(message, status, data), parentwrapper.common_response_wrapper)
+        return marshal(prepare_response(message, status, data), parentwrapper.common_response_wrapper)
 
 
 @require_api_key
 @ns.route('/schedule_query/results', endpoint='node_schedule_query_results')
 @ns.doc(params={'host_identifier': 'Host identifier of the Node', 'query_name':'query', 'start': 'start count', 'limit':'end count'})
 class NodeScheduleQueryResults(Resource):
-    '''Node schedule query results for the host_identifier,query,start,limit given'''
+    """Node schedule query results for the host_identifier,query,start,limit given"""
     parser = requestparse(['host_identifier', 'query_name', 'start', 'limit'], [str, str, int, int], ["host identifier of the node", "query", "start count","end count"], [True, True, False, False])
 
     @ns.expect(parser)
@@ -138,14 +138,17 @@ class NodeScheduleQueryResults(Resource):
             except:
                 message = 'Start and limit must be integer'
             if not data: message = "There are no data to be shown and it is empty"
-        return marshal(respcls(message,status,data), parentwrapper.common_response_wrapper, skip_none=False)
+        return marshal(prepare_response(message,status,data), parentwrapper.common_response_wrapper, skip_none=False)
 
+
+
+# Modify Tag section
 
 @require_api_key
 @ns.route('/tag/edit', endpoint='node_tag_edit')
 @ns.doc(params={'host_identifier': 'Host identifier of the Node', 'add_tags':'list of comma separated tags needed to be added for the node', 'remove_tags': 'list of comma separated tags needed to be removed from the node'})
 class EditTagToNode(Resource):
-    '''edits tags to a node by its host_identifier'''
+    """edits tags to a node by its host_identifier"""
     parser = requestparse(['host_identifier', 'add_tags', 'remove_tags'], [str, str, str], ["host identifier of the node", "list of comma separated tags needed to be added for the node", "list of comma separated tags needed to be removed from the node"], [True, False, False])
 
     @ns.expect(parser)
@@ -175,14 +178,16 @@ class EditTagToNode(Resource):
             status = 'success'
             message = 'Successfully modified the tag(s)'
 
-        return marshal(respcls(message,status), parentwrapper.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message,status), parentwrapper.common_response_wrapper, skip_none=True)
+
+
 
 
 @require_api_key
 @ns.route('/<string:host_identifier>/tags', endpoint='node_tags_list')
 @ns.doc(params={'host_identifier': 'Host identifier of the Node', 'tags': 'list of comma separated tags to careate'})
 class ListTagsOfNode(Resource):
-    '''list/creates tags of a node by its host_identifier'''
+    """list/creates tags of a node by its host_identifier"""
     parser = requestparse(['tags'], [str], ["list of comma separated tags to create to the node"])
 
     def get(self, host_identifier):
@@ -195,7 +200,7 @@ class ListTagsOfNode(Resource):
             data = marshal(node.tags,tag_wrapper.tag_name_wrapper)
             status = 'success'
             message = 'Successfully fetched the tag(s)'
-        return marshal(respcls(message,status,data), parentwrapper.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message,status,data), parentwrapper.common_response_wrapper, skip_none=True)
 
 
     @ns.expect(parser)
@@ -214,14 +219,14 @@ class ListTagsOfNode(Resource):
             message = 'Successfully created the tag(s) to node'
             status = 'success'
 
-        return marshal(respcls(message,status), parentwrapper.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message,status), parentwrapper.common_response_wrapper, skip_none=True)
 
 
 @require_api_key
 @ns.route('/search/export', endpoint="nodes_search_export")
 @ns.doc(params={})
 class ExportNodeSearchQueryCSV(Resource):
-    '''export node search query to csv'''
+    """export node search query to csv"""
     parser = requestparse(['conditions', 'host_identifier'], [dict, str], ["conditions to search for", 'host_identifier of the node'], [True, False])
 
     @ns.expect(parser)
@@ -233,20 +238,20 @@ class ExportNodeSearchQueryCSV(Resource):
             node_id = get_node_id_by_host_id(host_identifier)
         except:
             message = "no node found for the host_id given"
-            return marshal(respcls(message, "failure"), parentwrapper.common_response_wrapper, skip_none=True)
+            return marshal(prepare_response(message, "failure"), parentwrapper.common_response_wrapper, skip_none=True)
         try:
             search_rules=SearchParser()
             root = search_rules.parse_group(conditions)
         except Exception as e:
             message=str(e)
-            return marshal(respcls(message, "failure"), parentwrapper.common_response_wrapper, skip_none=True)
+            return marshal(prepare_response(message, "failure"), parentwrapper.common_response_wrapper, skip_none=True)
 
         filter = root.run('', [], 'result_log')
         try:
             results = dao.node_result_log_search_results(filter, node_id)
         except:
             message = "Unable to find data for the payload given"
-            return marshal(respcls(message, "failure"), parentwrapper.common_response_wrapper, skip_none=True)
+            return marshal(prepare_response(message, "failure"), parentwrapper.common_response_wrapper, skip_none=True)
         output_dict_data = {}
         if results:
             for result in results:
@@ -260,14 +265,14 @@ class ExportNodeSearchQueryCSV(Resource):
             bio = BytesIO()
             writer = csv.writer(bio)
             if not output_dict_data.keys():
-                return marshal(respcls("Unable to find data for the payload given", "failure"), parentwrapper.common_response_wrapper, skip_none=True)
+                return marshal(prepare_response("Unable to find data for the payload given", "failure"), parentwrapper.common_response_wrapper, skip_none=True)
             for key in output_dict_data.keys():
                 writer.writerow([host_identifier,key,len(output_dict_data[key])])
                 query_column_keys = output_dict_data[key][0].keys()
                 writer.writerow(query_column_keys)
                 for item in output_dict_data[key]:
                     writer.writerow([item.get(query_column_key, '') for query_column_key in query_column_keys])
-                writer.writerow(["", "", ""])
+                writer.writerow(["","",""])
 
             bio.seek(0)
 
@@ -281,14 +286,14 @@ class ExportNodeSearchQueryCSV(Resource):
 
         else:
             message = "there are no matching results for the payload given"
-        return marshal(respcls(message, "failure"),parentwrapper.common_response_wrapper, skip_none = True)
+        return marshal(prepare_response(message, "failure"),parentwrapper.common_response_wrapper, skip_none = True)
 
 
 @require_api_key
 @ns.route('/<string:host_identifier>/queryResult', endpoint = "query result by host id")
 @ns.doc(params = {})
 class GetQueryResultsOfNode(Resource):
-    '''get query results for specific node by the host identifier given'''
+    """get query results for specific node by the host identifier given"""
     parser = requestparse(['start', 'length', 'search[value]', 'columns[0][data]'], [int, int, str, str], ['start', 'length', 'search[value]', 'columns[0][data]'], [True, True, True, False])
 
     @ns.expect(parser)
@@ -298,7 +303,7 @@ class GetQueryResultsOfNode(Resource):
         try: node_id = get_node_id_by_host_id(host_identifier)
         except:
             message="there is no node with this host_identifier"
-            return marshal(respcls(message, "failure"),
+            return marshal(prepare_response(message, "failure"),
                            parentwrapper.common_response_wrapper)
 
         startPage = 1
@@ -309,14 +314,14 @@ class GetQueryResultsOfNode(Resource):
         for name in names:
             nameResult[name[0]] = get_results_by_query(startPage, perPageRecords, node_id, name[0], args)
         if not nameResult: message = "There are no query result data to be shown and it is empty"
-        return marshal(respcls("Query results are fetched successfully", "success", nameResult), parentwrapper.common_response_wrapper)
+        return marshal(prepare_response("Query results are fetched successfully", "success", nameResult), parentwrapper.common_response_wrapper)
 
 
 @require_api_key
 @ns.route('/<string:host_identifier>/activity', endpoint = "node_activity")
 @ns.doc(params = {})
 class NodeActivity(Resource):
-    '''returns node activity of a node through its host_identifier'''
+    """returns node activity of a node through its host_identifier"""
     import datetime
     parser = requestparse(['timestamp'],[str],["current time stamp"])
 
@@ -328,25 +333,27 @@ class NodeActivity(Resource):
             node_id = get_node_id_by_host_id(host_identifier)
         except:
             message = "there is no node with this host_identifier"
-            return marshal(respcls(message, "failure"),
+            return marshal(prepare_response(message, "failure"),
                            parentwrapper.common_response_wrapper)
-        if not node_id: return marshal(respcls("there is no node with this host_identifier", "failure"),
+        if not node_id: return marshal(prepare_response("there is no node with this host_identifier", "failure"),
                                        parentwrapper.common_response_wrapper)
 
         node = dao.nodeActivityQuery(node_id)
         try:
             timestamp = dt.datetime.strptime(args['timestamp'], '%b %d %Y %I:%M%p')
+            #timestamp = dt.datetime.fromtimestamp(float(timestamp))
         except Exception:
             timestamp = dt.datetime.utcnow()
             timestamp -= dt.timedelta(days=30)
         queries_packs = get_queries_or_packs_of_node(node_id)
         queries_packs = [r for r, in queries_packs]
+        # recent = node.result_logs.filter(ResultLog.timestamp > timestamp, ResultLog.action != 'removed').all()
         data = {}
         data['node'] = marshal(node,wrapper.node_tag_wrapper)
         data['queries_packs'] = queries_packs
         message = "Node activity is fetched successfully"
         if not data: message = "There are no data to be shown and it is empty"
-        return marshal(respcls(message, "success", data),parentwrapper.common_response_wrapper,skip_none=True)
+        return marshal(prepare_response(message, "success", data),parentwrapper.common_response_wrapper,skip_none=True)
 
 
 

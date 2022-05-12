@@ -17,10 +17,10 @@
    height: 50px;
    padding: 15px;
    cursor: pointer;
-   background-image: linear-gradient(to right, #b8bccc , #ffffff)!important;
-   color: #282829;
+   /* background-image: linear-gradient(to right, #b8bccc , #ffffff)!important;
+   color: #282829; */
    font-size: 15px;
-   font-family: monospace;
+   /* font-family: monospace; */
    }
    .portlet-body_align {
    height: 705px;
@@ -36,13 +36,13 @@
    font-size: 100%;
    color: #e83e8c;
    word-break: break-word;
-   font-family: SFMono-Regular,Mekt-notification__item-details txt-fmlynlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+   /* font-family: SFMono-Regular,Mekt-notification__item-details txt-fmlynlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace; */
    }
    .head-table {
    font-weight: 600 !important;
    }
    .txt-fmly{
-   font-family: Poppins;
+   /* font-family: Poppins; */
    font-size: 1rem;
    font-weight: 400;
    }
@@ -71,5 +71,7 @@
       font-size: 1.1rem;
       font-weight: 600;
       color:  #464457;
-   } 
-   
+   }
+   ::ng-deep table thead{
+     display: none !important;
+   }

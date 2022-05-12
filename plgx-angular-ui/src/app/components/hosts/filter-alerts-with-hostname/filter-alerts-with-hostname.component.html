@@ -29,20 +29,18 @@
                         </div>
 
                       </div>
-
+                      <!-- <div class="kt-separator kt-separator--border-dashed kt-separator--space-lg"></div> -->
                     </div>
-                    <!-- <div class="kt-separator kt-separator--border-dashed kt-separator--space-lg"></div> -->
+                    <div class="col-xl-2"></div>
                   </div>
-                  <div class="col-xl-2"></div>
-                <!-- </div> -->
-              </form>
-              <!--end:: Widgets/Tasks -->
-            </div>
-            <div class="modal-footer align-center">
-              <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+                </form>
+                <!--end:: Widgets/Tasks -->
+              </div>
+              <div class="modal-footer align-center">
+                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+              </div>
             </div>
           </div>
-        </div>
         </div>
         <!--End:: Modal-->
         <!-- begin:: Content -->
@@ -124,6 +122,14 @@
                 </ul>
               </div>
             </div>
+            <div class="kt-portlet__head-toolbar">
+              <div class="kt-portlet__head-wrapper">
+                <a href="javascript:void(0);" (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page">
+                  <i class="fas fa-chevron-left back_icon_align"></i>
+                  Back
+                </a>
+              </div>
+            </div>
           </div>
 
           <div class="kt-portlet__body" style="padding: 0px;" *ngFor="let alert_source of alertSource;let i = index">
@@ -131,178 +137,240 @@
             <!--begin: Datatable -->
             <div id="div_{{ alert_source.name}}" class="alert_source_div"
                  style="display: none;padding: 25px;">
-                   <!-- Start:: datepicker -->
-                  <div class="row  mt-3 mb-4 mx-2">
-                    <h4 class="center" style="margin-top: auto;margin-left:10px;margin-bottom: auto;" ><i class="fa fa-filter" data-toggle="tooltip" data-placement="top" title="Filter"></i> Alerts : </h4>
-                    <div  style="display:none" class="col-sm-2">
-                      <select value="2" class="form-control" (change)="update_graph(alert_source.name)" id="type_{{alert_source.name}}">
-                        <option value="1" >starting</option>
-                        <option value="2" selected="selected">ending</option>
 
-                      </select>
-                    </div>
-                    <div class="col-sm-2">
-
-                      <select  value="3" class="form-control" (change)="update_graph(alert_source.name)" id="duration_{{alert_source.name}}">
-                        <option value="2">1 day</option>
-                        <option value="3" selected="selected">1 week</option>
-                        <option value="4">1 month</option>
-                      </select>
-                    </div>
-                    <div class=" col-sm-4"  >
+              <div class="kt-portlet alert_body_val">
+                <div class="kt-portlet__body" style="padding: 0px;">
+                  <div class="row mt-3">
+                    <div class="col-12">
                       <div class="row">
-                        <span style="margin-top:auto;margin-bottom: auto;margin-right:10px;" >ending(UTC)</span>
+                          <h4 class="center" style="margin-top: auto;margin-left:10px;margin-bottom: auto;" ><i class="fa fa-filter" data-toggle="tooltip" data-placement="top" title="Filter"></i> Alerts : </h4>
+                            <div class="col-2">
 
-                        <ng-datepicker   [ngModelOptions]="{standalone: true}" [(ngModel)]="datepicker_date[alert_source.name]" (ngModelChange)="myHandler(alert_source.name)" ></ng-datepicker>
+                              <select  value="3" class="form-control" (change)="update_graph(alert_source.name)" id="duration_{{alert_source.name}}">
+                                <option value="2">1 day</option>
+                                <option value="3" selected="selected">1 week</option>
+                                <option value="4">1 month</option>
+                              </select>
+                            </div>
+                            <div class=" col-4" *ngIf="options" >
+                              <div class="row">
+                                <span style="margin-top:auto;margin-bottom: auto;margin-right:10px;" >ending(UTC)</span>
+
+                                <ng-datepicker    [options]="options[alert_source.name]"  [ngModelOptions]="{standalone: true}" [(ngModel)]="datepicker_date[alert_source.name]" (ngModelChange)="myHandler(alert_source.name)" ></ng-datepicker>
+                              </div>
+                            </div>
+                            <div class="col-5" >
+                              <button  *ngIf="events_ids.length>0" class="btn btn-success   pull-right" (click)='Get_total_alerts_based_on_alert_type(alert_data?.source)' title="Get total alerts">Reset</button>
+                            </div>
+
+                      </div>
+                   </div>
+                  </div>
+                  <!-- <div style="margin-top: 10px;" class="row">
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+                      <div id="{{ alert_source.name}}_timeline"></div>
+                    </div>
+                  </div> -->
+                </div>
+              </div>
+
+              <table id="{{alert_source.name}}_table" *ngIf="all_options" datatable
+                     [dtOptions]="all_options[alert_source.name]" [dtTrigger]="dtTrigger[alert_source.name]"
+                     class="table table-hover table-checkable alerts_datatable" style="text-align: center;">
+                <thead>
+                <tr>
+
+                  <th style="text-align:center">
+                    <input type="checkbox" [(ngModel)]="masterSelected[alert_source.name]"
+                           name="{{alert_source.name}}_checklist" value="m1"
+                           (change)="checkUncheckAll(alert_source.name)"/>
+
+                    <div class="resolve_alerts_dropdown-btn">
+                      <div class="dropdown-toggle" data-toggle="dropdown" title="Select" aria-haspopup="true"
+                           aria-expanded="false">
+                        <div class="dropdown-menu">
+                          <a class="dropdown-item" (click)="resolvedAllSelected(alert_source.name)">Resolve Selected</a>
+                        </div>
                       </div>
                     </div>
+                  </th>
 
-                  </div>
-                    <!-- End:: datepicker -->
-                    <table id="{{alert_source.name}}_table" *ngIf="all_options" datatable
-                    [dtOptions]="all_options[alert_source.name]" [dtTrigger]="dtTrigger[alert_source.name]"
-                    class="table table-hover table-checkable" style="text-align: center;">
-              <thead>
-              <tr>
+                  <th>Host</th>
+                  <th>Severity</th>
+                  <th>Created At</th>
 
-                <th style="text-align:center">
-                  <input type="checkbox" [(ngModel)]="masterSelected[alert_source.name]"
-                          name="{{alert_source.name}}_checklist" value="m1"
-                          (change)="checkUncheckAll(alert_source.name)"/>
+                  <th>
+                    <span *ngIf="alert_source.name == 'virustotal'">Intel Data</span>
+                    <span *ngIf="alert_source.name == 'alienvault' ">Intel Data</span>
+                    <span *ngIf="alert_source.name == 'rule' ">Rule Name</span>
+                  </th>
+                  <th>Alerted Entry</th>
+                  <!-- <th>Investigate</th> -->
+                  <th>
+                    <span *ngIf="alert_source.name == 'rule' ">Aggregated Count</span>
+                  </th>
+                  <th class="status">Status</th>
+                </tr>
+                </thead>
+                <tbody *ngIf="alertSourceData">
+                <tr *ngFor="let alrowdata of alertSourceData[alert_source.name]; let i = index ">
+                  <td *ngIf="this.checklist[alert_source.name].length !=0">
+                    <input type="checkbox" name="{{alert_source.name}}_checklist"
+                           [(ngModel)]="checklist[alert_source.name][i].isSelected"
+                           (change)="isAllSelected(alert_source.name)"/>
+                  </td>
+                  <td style="vertical-align:middle;">
+                    <a [routerLink]="['/hosts', alrowdata.node_id]" class="active" data-skin="dark"
+                       data-toggle="kt-tooltip" data-placement="top" title="click -> Host Details"
+                       style="color:#5867dd;font-weight: 600;">{{alrowdata.hostname}}</a>
+                  </td>
+                  <td style="vertical-align:middle;">
+                    <span *ngIf="alrowdata.severity == 'CRITICAL'" class='logo-color menu-icon' style='font-weight: 400;'
+                          data-toggle='kt-tooltip' data-placement='top' title='CRITICAL'><img alt=''
+                                                                                              src='./assets/media/icons/error.svg'
+                                                                                              height="35" width="35"
+                                                                                              alt=""/></span>
+                    <span *ngIf="alrowdata.severity == 'INFO'" class='logo-color menu-icon' style='font-weight: 400;'
+                          data-toggle='kt-tooltip' data-placement='top' title='INFO'><img alt=''
+                                                                                          src='./assets/media/icons/info.svg'
+                                                                                          height="35" width="35" alt=""/></span>
+                    <span *ngIf="alrowdata.severity == 'WARNING'" class='logo-color menu-icon' style='font-weight: 400;'
+                          data-toggle='kt-tooltip' data-placement='top' title='WARNING'><img alt=''
+                                                                                             src='./assets/media/icons/warning.svg'
+                                                                                             height="35" width="35"
+                                                                                             alt=""/></span>
+                    <span *ngIf="alrowdata.severity == 'LOW'" class='logo-color menu-icon' style='font-weight: 400;'
+                          data-toggle='kt-tooltip' data-placement='top' title='LOW'><img alt=''
+                                                                                         src='./assets/media/icons/info.svg'
+                                                                                         height="35" width="35"
+                                                                                         alt=""/></span>
 
-                  <div class="dropdown-btn-1">
-                    <div class="dropdown-toggle" data-toggle="dropdown" title="Select" aria-haspopup="true"
-                          aria-expanded="false">
-                      <div class="dropdown-menu">
-                        <a class="dropdown-item" (click)="resolvedAllSelected(alert_source.name)">Resolve Selected</a>
-                      </div>
-                      </div>
-                      </div>
-                </th>
-                <th>Host</th>
-                <th>Severity</th>
-                <th>Created At</th>
+                  </td>
+                  <td style="vertical-align:middle;">
+                    {{alrowdata["created_at"] | dateAgo}}
+                  </td>
 
-                <th>
-                  <span *ngIf="alert_source.name == 'virustotal'">Intel Data</span>
-                  <span *ngIf="alert_source.name == 'alienvault' ">Intel Data</span>
-                  <span *ngIf="alert_source.name == 'rule' ">Rule Name</span>
-                </th>
-                <th>Alerted Entry</th>
-                <th>
-                  <span *ngIf="alert_source.name == 'rule' ">Aggregated Count</span>
-                </th>
-                <th>Status</th>
-              </tr>
-              </thead>
-              <tbody *ngIf="alertSourceData">
-              <tr *ngFor="let alrowdata of alertSourceData[alert_source.name]; let i = index ">
-                <td *ngIf="this.checklist[alert_source.name].length !=0">
-                  <input type="checkbox" name="{{alert_source.name}}_checklist"
-                         [(ngModel)]="checklist[alert_source.name][i].isSelected"
-                         (change)="isAllSelected(alert_source.name)"/>
-                </td>
-                <td style="vertical-align:middle;">
-                  <a [routerLink]="['/hosts', alrowdata.node_id]" class="active" data-skin="dark"
-                     data-toggle="kt-tooltip" data-placement="top" title="click -> Host Details"
-                     style="color:#5867dd;font-weight: 600;">{{alrowdata.hostname}}</a>
-                </td>
-                <td style="vertical-align:middle;">
-                  <span *ngIf="alrowdata.severity == 'CRITICAL'" class='logo-color menu-icon' style='font-weight: 400;'
-                        data-toggle='kt-tooltip' data-placement='top' title='CRITICAL'><img alt=''
-                                                                                            src='./assets/media/icons/error.svg'
-                                                                                            height="35" width="35"
-                                                                                            alt=""/></span>
-                  <span *ngIf="alrowdata.severity == 'INFO'" class='logo-color menu-icon' style='font-weight: 400;'
-                        data-toggle='kt-tooltip' data-placement='top' title='INFO'><img alt=''
-                                                                                        src='./assets/media/icons/info.svg'
-                                                                                        height="35" width="35" alt=""/></span>
-                  <span *ngIf="alrowdata.severity == 'WARNING'" class='logo-color menu-icon' style='font-weight: 400;'
-                        data-toggle='kt-tooltip' data-placement='top' title='WARNING'><img alt=''
-                                                                                           src='./assets/media/icons/warning.svg'
-                                                                                           height="35" width="35"
-                                                                                           alt=""/></span>
-                  <span *ngIf="alrowdata.severity == 'LOW'" class='logo-color menu-icon' style='font-weight: 400;'
-                        data-toggle='kt-tooltip' data-placement='top' title='LOW'><img alt=''
-                                                                                       src='./assets/media/icons/info.svg'
-                                                                                       height="35" width="35"
-                                                                                       alt=""/></span>
+                  <td style="vertical-align:middle;">
+                    <a *ngIf="alert_source.name == 'rule' ;" [routerLink]="['/rules/',alrowdata.rule?.id,'edit']" class="active"  data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="click -> Rule Details" style='font-weight: 600;color: #5867dd;'><code>{{alrowdata.rule?.name}}</code></a>
+                    <span *ngIf="alert_source.name == 'virustotal'" class='logo-color menu-icon' style='font-weight: 600;cursor: pointer;color: #5867dd;' data-toggle='modal' data-target="#myModal" (click)="showdata(alrowdata.intel_data, 'intel_data')" data-placement='top' title='View VirusTotal Data'><img alt='' src='./assets/media/viewfile.svg'  height="25px" width="25px" alt="" /></span>
+                    <span *ngIf=" alert_source.name == 'alienvault'"  class='logo-color menu-icon' style='font-weight: 600;cursor: pointer;color: #5867dd;' data-toggle='modal' data-target="#myModal" (click)="showdata(alrowdata.intel_data, 'intel_data')" data-placement='top' title='View AlienVault OTX Data'><img alt='' src='./assets/media/viewfile.svg'  height="25px" width="25px" alt="" /></span>
+                  </td>
+                  <td style="vertical-align:middle;">
+                    <span class='logo-color menu-icon' style='font-weight: 400; cursor: pointer;' data-toggle='modal'
+                          data-target="#myModal" data-placement='top'
+                          (click)="showdata(alrowdata.alerted_entry, 'alert_entry')" title='View Alerted Entry'><img
+                      alt='' src='./assets/media/viewfile.svg' height="25px" width="25px" alt=""/></span>
+                  </td>
+                  <!-- <td style="vertical-align:middle;">
+                    <a class='logo-color menu-icon' style='font-weight: 400;'
+                       [routerLink]="['/alerts',alrowdata.id,'alert-data']" data-toggle='kt-tooltip' data-placement='top'
+                       title='Investigate the alert'><img alt='' src='./assets/media/research.svg' height="25px"
+                                                          width="25px" alt=""/></a>
+                  </td> -->
+                  <td style="vertical-align:middle;">
+                    <a *ngIf="alert_source.name == 'rule' " data-toggle="modal" href="#Agg_alerts" (click)="getAlertsAggregatedData(alrowdata.id)">{{alrowdata.aggregated_events_count}}</a>
+                    <!-- <span *ngIf="alert_source.name == 'rule' ">{{alrowdata.aggregated_events_count}}</span> -->
+                  </td>
+                  <td style="vertical-align:middle;">
+                    <button  class="btn btn-outline-secondary btn-sm alerts_resolve_btn_width" style="color:#5867dd" (click)="resolveAlert(alrowdata.id,alert_source.name)"> RESOLVE
+                    </button>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
 
-                </td>
-                <td style="vertical-align:middle;">
-                  {{alrowdata["created_at"] | dateAgo}}
-                </td>
-
-                <td style="vertical-align:middle;">
-                  <a *ngIf="alert_source.name == 'rule' ;" [routerLink]="['/rules/',alrowdata.rule?.id,'edit']" class="active"  data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="click -> Rule Details" style='font-weight: 600;color: #5867dd;'><code>{{alrowdata.rule?.name}}</code></a>
-                  <span *ngIf="alert_source.name == 'virustotal'" class='logo-color menu-icon' style='font-weight: 600;cursor: pointer;color: #5867dd;' data-toggle='modal' data-target="#myModal" (click)="showdata(alrowdata.intel_data, 'intel_data')" data-placement='top' title='View VirusTotal Data'><img alt='' src='./assets/media/viewfile.svg'  height="25px" width="25px" alt="" /></span>
-                  <span *ngIf=" alert_source.name == 'alienvault'"  class='logo-color menu-icon' style='font-weight: 600;cursor: pointer;color: #5867dd;' data-toggle='modal' data-target="#myModal" (click)="showdata(alrowdata.intel_data, 'intel_data')" data-placement='top' title='View AlienVault OTX Data'><img alt='' src='./assets/media/viewfile.svg'  height="25px" width="25px" alt="" /></span>
-                </td>
-                <td style="vertical-align:middle;">
-                  <span class='logo-color menu-icon' style='font-weight: 400; cursor: pointer;' data-toggle='modal'
-                        data-target="#myModal" data-placement='top'
-                        (click)="showdata(alrowdata.alerted_entry, 'alert_entry')" title='View Alerted Entry'><img
-                    alt='' src='./assets/media/viewfile.svg' height="25px" width="25px" alt=""/></span>
-                </td>
-                <td style="vertical-align:middle;">
-                  <a *ngIf="alert_source.name == 'rule' " data-toggle="modal" href="#Agg_alerts" (click)="get_alerts_aggregated_data(alrowdata.id)">{{alrowdata.aggregated_events_count}}</a>
-                </td>
-                <td style="vertical-align:middle;">
-                  <button  class="btn btn-outline-secondary btn-sm" style="color:#5867dd" (click)="resolveAlert(alrowdata.id,alert_source.name)"> RESOLVE
-                  </button>
-                </td>
-              </tr>
-              </tbody>
-            </table>
-
-            <div *ngIf="this.errorMessage[alert_source.name] !=''">
-              <span style=" text-align: center; padding-left: 300px;font-size: larger;font-weight: 600;">
-              {{errorMessage[alert_source.name]}}
-            </span>
-            </div>
-          </div>
-
-          <!--end: Datatable -->
-        </div>
-        <div class="no_data" style="display: none; padding-left: 20px;margin-top: 15px;">
-        </div>
-           <!--Begin:: Modal-->
-        <div class="modal fade" id="Agg_alerts" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="max-width:100%;">
-          <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h3 class="kt-portlet__head-title" style="font-size: 15px">
-                  Other Alerts in the aggregated cluster
-                </h3>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="close_data()" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Close"></button>
+              <div *ngIf="this.errorMessage[alert_source.name] !=''" class="text-center">
+                <span style=" text-align: center;font-size: larger;font-weight: 600;">
+                {{errorMessage[alert_source.name]}}
+              </span>
               </div>
-                <div class="modal-body">
-                  <div class="card-body query_tab">
-                        <div  class="tab-content">
-                            <div class="" >
-                                    <ul  class="nav nav-pills nav-fill nav-background" role="tablist">
-                                      <li *ngFor="let aggregated_data_values of aggregated_data | keyvalue;" class="nav-item">
-                                        <a class="nav-link" data-toggle="tab" (click)="alerts_aggregated_data(aggregated_data_values.key)"[ngClass]="{'active': alert_selectedItem == aggregated_data_values.key}" style="cursor: pointer;">{{ aggregated_data_values.key}}</a>
-                                      </li>
-                                    </ul>
-                                      <div id="alerts_aggretated_table">
-                                      </div>
-                            </div>
-                        </div>
-                  </div>
+            </div>
+
+            <!--end: Datatable -->
+          </div>
+          <div class="no_data" style="display: none; padding-left: 20px;margin-top: 15px;">
+          </div>
+        </div>
+        <!--Begin:: Modal-->
+          <div class="modal fade" id="Agg_alerts" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="max-width:100%;">
+            <div class="modal-dialog modal-lg" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h3 class="kt-portlet__head-title" style="font-size: 15px">
+                    Other Alerts in the aggregated cluster
+                  </h3>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Close"></button>
                 </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" (click)="close_data()" data-dismiss="modal">Close</button>
+                  <div class="modal-body">
+                    <div class="card-body query_tab">
+                          <div  class="tab-content">
+                              <div class="" >
+                                  <div  *ngIf="aggregateTabLength==0"class="alerts_aggretated_table">No data found</div>
+                                  <ul  class="nav nav-pills nav-fill nav-background nav-wd" role="tablist" *ngIf="aggregatedData.length <= 1">
+                                    <li *ngFor="let aggregatedDataValues of aggregatedData " class="nav-item">
+                                      <a class="nav-link" data-toggle="tab" (click)="GetAggregatedDataFilterWithQueryName(aggregatedDataValues)"[ngClass]="{'active': alertSelectedItem == aggregatedDataValues}" style="cursor: pointer;">{{ aggregatedDataValues}}</a>
+                                    </li>
+                                  </ul>
+                                  <ul  class="nav nav-pills nav-fill nav-background" role="tablist" *ngIf="aggregatedData.length > 1">
+                                    <li *ngFor="let aggregatedDataValues of aggregatedData" class="nav-item">
+                                      <a class="nav-link" data-toggle="tab" (click)="GetAggregatedDataFilterWithQueryName(aggregatedDataValues)"[ngClass]="{'active': alertSelectedItem == aggregatedDataValues}" style="cursor: pointer;">{{ aggregatedDataValues}}</a>
+                                    </li>
+                                  </ul>
+                                      <div class="aggregated_table_data">
+                                        <table id="AggregatedData_table" datatable [dtOptions]="aggregatedOptions" [dtTrigger]="dtTriggerAggregatedAlerts"  class="table table-bordered table-hover table-checkable aggregated_table" >
+                                          <thead>
+                                              <tr>
+                                                <th>{{alertSelectedItem}}</th>
+                                              </tr>
+                                          </thead>
+                                          <tbody>
+                                            <tr *ngFor="let aggregated_value of aggregatelist" style="font-size: 13px; font-family:Poppins; font-weight: 600;">
+                                              <td class="cell-breakWord">
+                                                <div (click)="ele.class = ele.class == 'showChildren' ? '' : 'showChildren'" [ngClass]="{ hideChildren : ele.class !== 'showChildren' }" #ele >
+                                                  <font color='#16ace3'>
+                                                     <div >
+                                                       <div class="sql hljs desc-background_rules container px-0" [class.show_columns]="aggregated_value.visible_1" style="cursor: pointer;">
+                                                          {{myjson.stringify(aggregated_value.columns)}}
+                                                        </div>
 
+                                                     </div>
+                                                  </font>
+                                                  <div>
+                                                    <div class="col-10"></div>
+                                                    <th >
+                                                       <dt *ngFor="let subhostdata of aggregated_value.columns | keyvalue">
+                                                         <dl  style="word-break: break-word;padding-left: 45px;" >
+                                                            {{subhostdata.key}}
+                                                            {{":"}}
+                                                          {{subhostdata.value}}
+                                                       </dl>
+                                                     </dt>
+                                                  </th>
+                                                 </div>
+                                                </div>
+                                              </td>
+
+                                           </tr>
+                                          </tbody>
+                                      </table>
+                                       </div>
+                                       <div *ngIf="aggregatelist?.length === 0" class="text-center">
+                                         <span style="font-size: larger;font-weight: 600;">
+                                           {{errorMessage}}
+                                         </span>
+                                       </div>
+                              </div>
+                          </div>
+                    </div>
+                  </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+
+                </div>
               </div>
             </div>
           </div>
-        </div>
-         <!--End:: Modal-->
-
+           <!--End:: Modal-->
       </div>
     </div>
   </div>
-</div>
-
-

@@ -2,12 +2,12 @@
 $ph-bg:                   #fff !default;
 $ph-color:                #ced4da !default;
 $ph-border-radius:        2px !default;
- 
+
 $ph-gutter:               30px !default;
 $ph-spacer:               15px !default;
- 
+
 $ph-avatar-border-radius: 50% !default;
- 
+
 $ph-animation-duration:   .8s !default;
 
 /* @import url("../../../css/pack.css");
@@ -31,7 +31,7 @@ $ph-animation-duration:   .8s !default;
 
 }
 .portlet-body_align {
-  height: 680px;
+  height: 720px;
   margin-bottom:0px;
   border: 15px solid #ebedf2;
   padding: 10px;
@@ -116,7 +116,7 @@ table {
 }
 a:hover {
   color: #2739c1;
- 
+
 }
 .btn-outline-success:hover {
   color: #ffffff;
@@ -125,7 +125,7 @@ a:hover {
 }
 
 @import "~node_modules/ngx-chips/core/styles/core/_core.scss";
-$foundation-primary: #518c24f2;
+$foundation-primary: #52B2A8;
 $foundation-primary-dark: darken($foundation-primary, 10%);
 $font-family: "Poppins", sans-serif !important;
 
@@ -173,8 +173,29 @@ $foundation-icon-theme: (
     @include icon-theme($foundation-icon-theme);
 }
 ::ng-deep tag-input .ng2-tag-input.foundation-theme{
-  border-bottom: 2px solid  #fff; 
+  border-bottom: 2px solid  #fff;
 }
 ::ng-deep tag-input .ng2-tag-input.foundation-theme tag delete-icon svg {
     height: 25px;
+}
+
+.delete_query_backGround_colour:hover{
+  background: #f0f3ff;
+  padding:15%;
+}
+::ng-deep .queries_body .dataTables_wrapper .dataTables_paginate{
+  width: 100% !important;
+  padding:2px;
+}
+::ng-deep .queries_body .dataTables_wrapper .dataTables_paginate .pagination .page-item > .page-link{
+  min-width:1.8rem !important;
+}
+.fnt-size{
+  font-size: 13px !important;
+}
+.txt-trim{
+  white-space: nowrap !important;
+  width: 200px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }

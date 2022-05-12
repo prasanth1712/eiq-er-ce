@@ -15,3 +15,12 @@ alerts_wrapper = api.model('alerts_wrapper', {
 	'status': fields.String(default=None),
 	'source_data': fields.Raw()
 })
+
+
+alert_analyst_notes_wrapper= api.model('alert_analyst_notes_wrapper',{
+	'id':fields.Integer(default=None),
+	'notes': fields.Raw(default=None),
+	'created_at': fields.DateTime(default=None),
+	'updated_at': fields.DateTime(default=None),
+	'user_id': fields.Integer(default=None)
+})

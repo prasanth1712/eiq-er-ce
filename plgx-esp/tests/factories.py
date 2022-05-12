@@ -2,12 +2,11 @@
 from factory import Sequence
 from factory.alchemy import SQLAlchemyModelFactory
 
-from polylogyx.database import db
-from polylogyx.models import (
-    Node, Pack, Query, Tag, FilePath,
-    DistributedQuery, DistributedQueryTask, DistributedQueryResult,
-    ResultLog, StatusLog, Rule
-)
+from polylogyx.db.database import db
+from polylogyx.db.models import (Alerts, DistributedQuery,
+                                 DistributedQueryResult, DistributedQueryTask,
+                                 FilePath, Node, Pack, Query, ResultLog, Rule,
+                                 StatusLog, Tag, ResultLogScan)
 
 
 class BaseFactory(SQLAlchemyModelFactory):
@@ -17,66 +16,65 @@ class BaseFactory(SQLAlchemyModelFactory):
 
 
 class NodeFactory(BaseFactory):
-
     class Meta:
         model = Node
 
 
-class PackFactory(BaseFactory):
+class AlertFactory(BaseFactory):
+    class Meta:
+        model = Alerts
 
+
+class PackFactory(BaseFactory):
     class Meta:
         model = Pack
 
 
 class QueryFactory(BaseFactory):
-
     class Meta:
         model = Query
 
 
 class TagFactory(BaseFactory):
-
     class Meta:
         model = Tag
 
 
 class FilePathFactory(BaseFactory):
-
     class Meta:
         model = FilePath
 
 
 class DistributedQueryFactory(BaseFactory):
-
     class Meta:
         model = DistributedQuery
 
 
 class DistributedQueryTaskFactory(BaseFactory):
-
     class Meta:
         model = DistributedQueryTask
 
 
 class DistributedQueryResultFactory(BaseFactory):
-
     class Meta:
         model = DistributedQueryResult
 
 
 class ResultLogFactory(BaseFactory):
-
     class Meta:
         model = ResultLog
 
 
-class StatusLogFactory(BaseFactory):
+class ResultLogScanFactory(BaseFactory):
+    class Meta:
+        model = ResultLogScan
 
+
+class StatusLogFactory(BaseFactory):
     class Meta:
         model = StatusLog
 
 
 class RuleFactory(BaseFactory):
-
     class Meta:
         model = Rule

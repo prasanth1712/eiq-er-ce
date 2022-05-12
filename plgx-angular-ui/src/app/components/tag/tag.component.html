@@ -17,7 +17,7 @@
           <div class="kt-portlet__head-toolbar">
             <div class="kt-portlet__head-wrapper">
               <div class="">
-                <button type="button" class="btn btn-outline-success btn-icon-sm" data-toggle="modal" data-target="#add_tags" aria-haspopup="true" aria-expanded="false">
+                <button  *AppHasRole="role.adminAccess"  type="button" class="btn btn-outline-success btn-icon-sm" data-toggle="modal" data-target="#add_tags" aria-haspopup="true" aria-expanded="false">
                   <i class="fa fa-plus-square"></i>
                   Add Tag
                 </button>
@@ -40,7 +40,7 @@
                                   <div class="form-group row">
                                     <label class="col-3 col-form-label" for="value">Tag</label>
                                     <div class="col-9">
-                                      <textarea [(ngModel)]="clearValue" class="form-control" formControlName="tags" name="value" placeholder="Enter tags here, one tag per line" spellcheck="false"></textarea>
+                                      <textarea [(ngModel)]="clearValue" maxlength="48" class="form-control" formControlName="tags" name="value" placeholder="Enter tags here, one tag per line" spellcheck="false"></textarea>
                                     </div>
                                   </div>
                                 </div>
@@ -52,9 +52,9 @@
                         </div>
                         <div class="modal-footer align-center">
                           <!-- <button type="reset" class="btn btn-outline-secondary">Clear</button> -->
-                          <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                          <button type="button" (click)="Cancel()" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
                           <button type="submit" (click)="onSubmit()" data-dismiss="modal" class="btn btn-success">Add</button>
-             
+
                         </div>
                       </div>
                     </div>
@@ -68,7 +68,7 @@
         <div class="kt-portlet__body">
           <div class="" style="margin-bottom: 60px;" >
             <!--begin: Datatable -->
-            <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable table-bordered"  >
+            <table  datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable table-bordered"  >
               <!-- class="table table-hover table-checkable row-border hover" -->
               <thead>
                 <tr>
@@ -76,29 +76,29 @@
                   <th>Hosts</th>
                   <th>Packs</th>
                   <th>Queries</th>
-                  <th>Action</th>
+                  <th *AppHasRole="role.adminAccess" >Action</th>
                 </tr>
               </thead>
               <tbody *ngIf="tags_data!=0">
                 <tr *ngFor="let tag of tags_data">
                   <td >
-                    <span class="label" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Details">
-                      <a [routerLink] = "['./tagged', tag.value]">
-                        {{ tag.value }}
+                    <span class="label" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="{{ tag.value }}">
+                      <a class="truncateTxt" [routerLink] = "['./tagged', tag.value]">
+                        <p>{{ tag.value }}</p>
                       </a>
                     </span>
                   </td>
                   <td>{{ tag.nodes.length }}</td>
                   <td>{{ tag.packs.length }}</td>
                   <td>{{ tag.queries.length }}</td>
-                  <td style="text-align: center;">
+                  <td *AppHasRole="role.adminAccess" style="text-align: center;">
                     <button (click)="deleteTag($event)" value="{{tag.value}}" class="btn btn-outline-danger btn-sm" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Delete Tag">
                       Delete
                     </button>
                   </td>
                 </tr>
               </tbody>
-           
+
             </table>
             <div  *ngIf="tags_data?.length == 0">
               <span style=" text-align: center; padding-left: 450px;font-size: larger;font-weight: 600;">

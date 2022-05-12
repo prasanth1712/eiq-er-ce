@@ -6,8 +6,7 @@ from flask import send_file, current_app
 from flask_restplus import marshal
 from polylogyx.blueprints.v1.utils import (
     get_host_id_by_node_id)
-from polylogyx.dao.v1.hosts_dao import getHostNameByNodeId
-
+from polylogyx.dao.v1.hosts_dao import get_host_name_by_node_id
 from polylogyx.dao.v1 import rules_dao, common_dao, hosts_dao, carves_dao
 from polylogyx.models import db, Node, Tag, Alerts, Query, Pack, CarveSession, DistributedQueryTask
 from polylogyx.wrappers.v1 import carve_wrappers as wrapper
@@ -18,10 +17,10 @@ class ApiError(Exception):
 
 
 class BaseApiTest:
-    '''Base Api Test Class'''
+    """Base Api Test Class"""
 
     def __init__(self, base="https://localhost:5000/services/api/v1", username="admin", password="admin", proxies=None):
-        ''' sets variables including the headers '''
+        """ sets variables including the headers """
         self.base = base
         self.username = username
         self.password = password
@@ -35,7 +34,7 @@ class BaseApiTest:
         self.allQueries = obj_utils.get_list_of_all_queries()
 
     def fetch_token(self):
-        ''' fetches the token from the login api '''
+        """ fetches the token from the login api """
 
         url = self.base + '/login'
         request_data = {'username': self.username, 'password': self.password}
@@ -51,7 +50,7 @@ class BaseApiTest:
         return {'headers_post': self.headers_post, 'headers_get': self.headers_get, 'headers_file': self.headers_file}
 
     def get_request(self, url, payload=None, timeout=None):
-        ''' method to get the data from a url '''
+        """ method to get the data from a url """
 
         try:
             if payload: response = requests.get(self.base + url, json=payload, proxies=self.proxies, timeout=timeout,headers=self.headers_get, verify=False)
@@ -62,7 +61,7 @@ class BaseApiTest:
         return self.handle_response(response)
 
     def post_request(self, url, payload, timeout=None, files=None, is_multipart_form=False):
-        ''' method to post a data to the url for the payload given '''
+        """ method to post a data to the url for the payload given """
 
         try:
             if not is_multipart_form:
@@ -96,7 +95,7 @@ class BaseApiTest:
         return True
 
     def handle_response(self, response):
-        ''' response will be returned to the call '''
+        """ response will be returned to the call """
         return json.dumps(self._return_response_and_status_code(response=response))
 
     def _return_response_and_status_code(self, response, json_results=True):
@@ -151,7 +150,7 @@ class TestUtils:
         carves = marshal(carves_dao.get_carves_all().offset(0).limit(10).all(), wrapper.carves_wrapper)
         total_count = carves_dao.get_carves_all().count()
         for carve in carves:
-            carve['hostname'] = getHostNameByNodeId(carve['node_id'])
+            carve['hostname'] = get_host_name_by_node_id(carve['node_id'])
         carves = {'count': total_count, 'results': carves}
         return carves
 
@@ -162,9 +161,14 @@ class TestUtils:
                              wrapper.carves_wrapper)
             total_count = carves_dao.get_carves_by_node_id(node.id).count()
             for carve in carves:
-                carve['hostname'] = getHostNameByNodeId(carve['node_id'])
+                carve['hostname'] = get_host_name_by_node_id(carve['node_id'])
             carves = {'count': total_count, 'results': carves}
             return carves
+
+    def get_query_dict(self):
+        data = [query_obj.to_dict() for query_obj in db.session.query(Query).filter(Query.id==1).all()][0]
+        if data: return {'name':data['name'], 'id':data['id'], 'sql':data['query']}
+        else: return False
 
     def get_pack(self):
         data = [query_obj.to_dict() for query_obj in db.session.query(Pack).filter(Pack.id==1).all()][0]

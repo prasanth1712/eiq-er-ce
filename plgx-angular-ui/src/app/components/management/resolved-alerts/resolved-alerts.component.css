@@ -16,11 +16,7 @@ td {
   ::ng-deep .table.dataTable.no-footer  {
     border-bottom: 1px solid #ebedf2;
   }
-  .dropdown-btn-1 {
-    margin-top: -17px;
-    margin-left: 36px;
-    cursor: pointer;
-}
+
 .dataTables_wrapper .dataTable th {
     color: #595d6e;
 }
@@ -34,4 +30,15 @@ td {
   padding-top:7px;
   padding-left:10px;
   font-size:1.2rem
+}
+
+::ng-deep .dataTables_wrapper .dataTables_paginate .pagination .page-item {
+  padding: 0.2rem;
+}
+.show_columns{
+  overflow: visible_1;
+  height: auto;
+}
+.hideChildren>div{
+  display: none;
 }

@@ -22,7 +22,6 @@
  }
  body {
    color: #646c9a;
-   font-family: Poppins;
  }
  .custom-input-file {
   width: 100%;
@@ -34,7 +33,7 @@
   border-radius: 4px;
 }
 
-:host ::ng-deep .btn-secondary:active, 
+:host ::ng-deep .btn-secondary:active,
 :host ::ng-deep .btn-secondary:hover{
   background-color: #518c24f2 !important;
   border-color: #518c24f2 !important;
@@ -45,6 +44,9 @@
 .hideChildren>div{
   display: none;
   }
+.showChildren>div{
+    display: block;
+}
   .cell-breakWord {
     word-wrap: break-word;
     max-width: 1px;
@@ -84,8 +86,4 @@ table.dataTable thead th, table.dataTable thead td {
 .show_1{
   overflow: visible_1;
   height: auto;
-}
-
-::ng-deep .ngx-datepicker-container{
-  z-index: 999;
 }

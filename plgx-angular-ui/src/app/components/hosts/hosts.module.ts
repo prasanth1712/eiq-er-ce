@@ -21,10 +21,11 @@ import { HostSearchPipe } from '../../dashboard/pipes/host-search.pipe';
 import { ActivitySearchPipe } from './Activity-search.pipe';
 import {NgDatepickerModule} from "ng2-datepicker";
 import { FilterAlertsWithHostnameComponent } from './filter-alerts-with-hostname/filter-alerts-with-hostname.component';
-
-
-
-
+import {NgxMaterialTimepickerModule} from 'ngx-material-timepicker';
+import { ToastrModule } from 'ngx-toastr';
+import { AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
+import { AceEditorModule } from 'ng2-ace-editor';
+import { SharedModule } from '../../shared/shared.module';
 @NgModule({
   declarations: [HostsComponent,NodesComponent,ActivityComponent,HostSearchPipe,ActivitySearchPipe,FilterAlertsWithHostnameComponent],
   imports: [
@@ -41,8 +42,13 @@ import { FilterAlertsWithHostnameComponent } from './filter-alerts-with-hostname
     Ng2SearchPipeModule,
     NgJsonEditorModule,
     NgxPaginationModule,
-    NgDatepickerModule
-    
+    NgDatepickerModule,
+    NgxMaterialTimepickerModule,
+    ToastrModule.forRoot(),
+    AngularMultiSelectModule,
+    AceEditorModule,
+    SharedModule
+
   ],
   exports:[HostsComponent,NodesComponent,ActivityComponent],
 })

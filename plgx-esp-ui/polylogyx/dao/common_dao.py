@@ -20,8 +20,10 @@ def options_query():
 def options_filter_by_key(k):
     return Options.query.filter(Options.name == k).first()
 
+
 def create_option(k,v):
     return Options.create(name=k, option=v)
+
 
 def create_option_by_option(option):
     return Options.create(name=PolyLogyxServerDefaults.plgx_config_all_options, option=option)

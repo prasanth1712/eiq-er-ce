@@ -1,3 +1,11 @@
+.tagAnalyst{
+    display: block;
+    flex-direction: row;
+    flex-wrap: wrap;
+    position: relative;
+    cursor: text;
+    padding-top: 5px;
+}
 .datatable__search input {
     margin-left: .5em;
     display: inline-block;
@@ -16,24 +24,21 @@
 }
 .table td {
     padding: 0rem;
-    font-family: Poppins;
     font-size: 12px;
 }
 .table th {
     font-weight: 500;
     // padding: 0rem;
     padding-left: 0px;
-    font-family: Poppins;
 }
 .ng2-tag-input {
-    font-family: 'Poppins';
     border-bottom: none;
     padding-bottom: 0rem;
 
   }
 
 @import "~node_modules/ngx-chips/core/styles/core/_core.scss";
-$foundation-primary: green;
+$foundation-primary: #52B2A8;
 $foundation-primary-dark: darken($foundation-primary, 10%);
 $font-family: "Poppins", sans-serif !important;
 
@@ -100,8 +105,17 @@ table.dataTable {
     margin-left: 21px;
     cursor: pointer;
   }
-
-
+.hide{
+  display: none;
+ }
+ .clr-red{
+   color: red;
+   padding-left: 2px;
+ }
+ .onlinehost{
+   color: green;
+   margin-left: 15px;
+ }
 table.dataTable thead th, table.dataTable thead td {
 
     border-bottom: 1px solid #ebedf2;}

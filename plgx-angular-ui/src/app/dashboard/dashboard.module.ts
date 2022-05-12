@@ -15,11 +15,8 @@ import { HostsComponent } from '../components/hosts/hosts.component';
 import { HuntComponent } from '../components/hunt/hunt.component';
 import { IocComponent } from '../components/ioc/ioc.component';
 import { LiveQueriesComponent } from '../components/live-queries/live-queries.component';
-
-import { OptionsComponent } from '../components/options/options.component';
 import { PacksComponent } from '../components/packs/packs.component';
 import { QueriesComponent } from '../components/queries/queries.component';
-import { ReadmeComponent } from '../components/readme/readme.component';
 import { RuleComponent } from '../components/rule/rule.component';
 import { SearchComponent } from '../components/search/search.component';
 import { TagComponent } from '../components/tag/tag.component';
@@ -63,7 +60,6 @@ import { GlobalModule } from '../global/global.module';
     // OptionsComponent,
     // PacksComponent,
     // QueriesComponent,
-    // ReadmeComponent,
     // RuleComponent,
     // SearchComponent,
     // TagComponent,

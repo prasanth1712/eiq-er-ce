@@ -2,8 +2,9 @@ import datetime as dt
 
 from flask import current_app
 
-from sqlalchemy import or_, text
-from polylogyx.models import db, Node, NodeData,  ResultLog, Tag
+from sqlalchemy import or_, text, desc
+from polylogyx.models import db, Node, NodeData, ResultLog, Tag, NodeQueryCount
+
 
 def get_all_nodes():
     return Node.query.all()
@@ -12,7 +13,7 @@ def get_node_by_host_identifier(host_identifier):
     return db.session.query(Node).filter(
             or_(Node.host_identifier == host_identifier, Node.node_key == host_identifier)).first()
 
-def getNodeById(node_id):
+def get_node_by_id(node_id):
     return db.session.query(Node).filter(Node.id == node_id).first()
 
 def getNodeData(node_id):
@@ -32,11 +33,11 @@ def getResultLogsOffsetLimit(node, timestamp, action, query_name, start, limit):
                                                         ResultLog.action != action,
                                                         ResultLog.name == query_name).offset(start).limit(limit)
 
-def extendNodesByNodeKeyList(nodeKeyList):
+def extend_nodes_by_node_key_list(nodeKeyList):
     return Node.query.filter(or_(
                         Node.node_key.in_(nodeKeyList), Node.host_identifier.in_(nodeKeyList))).all()
 
-def extendNodesByTag(tags):
+def extend_nodes_by_tag(tags):
     return Node.query.filter(
                         Node.tags.any(
                             Tag.value.in_(tags))).all()
@@ -46,7 +47,7 @@ def getResultLogsByHostId(node, timestamp, query_name):
 
 
 def engineQuery(node_data_str):
-    return db.engine.execute(text(node_data_str))
+    return db.session.execute(text(node_data_str))
 
 def queryStrList(name, node_id, searchColumn, searchTerm):
     return db.session.query(ResultLog.columns) \
@@ -67,6 +68,8 @@ def resultLogNamesQuery(node_id):
 def nodeActivityQuery(node_id):
     return Node.query.filter_by(id=node_id) \
             .options(db.lazyload('*')).first()
+
+
 
 def filterNodesByStateActivity(platform = None, state = None):
     checkin_interval = current_app.config['POLYLOGYX_CHECKIN_INTERVAL']

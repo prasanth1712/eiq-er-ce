@@ -406,5 +406,4 @@ OPERATOR_MAP = {
     'matches_wildcard': MatchesWildCardCondition,
 
     'not_matches_wildcard': NotMatchesWildCardCondition,
-
 }

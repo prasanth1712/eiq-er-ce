@@ -2,7 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { CommonapiService } from '../../dashboard/_services/commonapi.service';
 import { ConditionalExpr } from '@angular/compiler';
 import { Router, ActivatedRoute, ParamMap } from '@angular/router';
-
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
+import { Subject, Subscription } from 'rxjs';
+import { AuthorizationService } from '../../dashboard/_services/Authorization.service';
+class DataTablesResponse {
+  data: any[];
+  draw: number;
+  recordsFiltered: number;
+  recordsTotal: number;
+}
 @Component({
   selector: 'app-rule',
   templateUrl: './rule.component.html',
@@ -18,35 +27,36 @@ export class RuleComponent implements OnInit {
   searchText:any;
   show=false;
   selectedItem:any;
-  public rule_alert :any = [];
-  public rule_alert_val :any = [];
-  public tactics_alert :any =[];
-  public rule_tactics_val :any =[];
-  sorted_rule_data_name_id=[];
+  public ruleAlert :any = [];
+  public ruleAlertVal :any = [];
+  public tacticsAlert :any =[];
+  public ruleTacticsVal :any =[];
   conditionLenght: any
-
+  role={'adminAccess':this.authorizationService.adminLevelAccess,'userAccess':this.authorizationService.userLevelAccess}
 
   constructor(
     private commonapi: CommonapiService,
-    private router: Router
+    private router: Router,
+    private http: HttpClient,
+    private authorizationService: AuthorizationService,
   ) { }
 
 getById(event, newValue,rule_id){
   this.selectedItem = newValue;
   console.log(newValue,rule_id)
   this.ruleid = rule_id;
-  this.rule_alert_val = [];
+  this.ruleAlertVal = [];
   // this.rule_alert1 = [];
-  this.rule_tactics_val = [];
-  this.tactics_alert = [];
+  this.ruleTacticsVal = [];
+  this.tacticsAlert = [];
    for(const i in this.rule.data.results){
         if (this.rule.data.results[i].id == this.ruleid){
           this.ruledata =this.rule.data.results[i];
-          this.rule_alert_val = this.getStringConcatinated(this.rule.data.results[i].alerters);
+          this.ruleAlertVal = this.getStringConcatinated(this.rule.data.results[i].alerters);
           this.rule_condition = this.ruledata.conditions.condition;
           this.rules = this.ruledata.conditions.rules;
           this.conditions = this.ruledata.conditions;
-          this.rule_tactics_val = this.getStringConcatinated(this.rule.data.results[i].tactics);
+          this.ruleTacticsVal = this.getStringConcatinated(this.rule.data.results[i].tactics);
   }
   }
   localStorage.setItem('rule_name',this.ruledata.name);
@@ -59,46 +69,103 @@ getById(event, newValue,rule_id){
   this.conditions = this.ruledata.conditions;
   this.rule_condition = this.ruledata.conditions.condition;
   this.rules = this.ruledata.conditions.rules;
-  this.rule_alert_val = [];
-  this.rule_tactics_val = [];
-  this.tactics_alert = []
+  this.ruleAlertVal = [];
+  this.ruleTacticsVal = [];
+  this.tacticsAlert = []
    for(const i in this.rule.data.results){
       if (this.rule.data.results[i].id == this.ruleid){
         this.ruledata =this.rule.data.results[i];
-        this.rule_alert_val = this.getStringConcatinated(this.rule.data.results[i].alerters);
-        this.rule_tactics_val = this.getStringConcatinated(this.rule.data.results[i].tactics);
+        this.ruleAlertVal = this.getStringConcatinated(this.rule.data.results[i].alerters);
+        this.ruleTacticsVal = this.getStringConcatinated(this.rule.data.results[i].tactics);
   }
   localStorage.setItem('rule_name',this.ruledata.name);
   }
   this.conditionLenght = this.conditions.rules.length
 }
   ngOnInit() {
-    this.commonapi.rules_api().subscribe((res: any) => {
+     this.getRuleList();
+  }
+
+ruleList:any;
+errorMessage:any;
+sortedRuleDataNameId = [];
+dtOptions: DataTables.Settings = {};
+dtTrigger: Subject<any> = new Subject();
+getRuleList(){
+  this.dtOptions = {
+    pagingType: 'full_numbers',
+    pageLength: 10,
+    serverSide: true,
+    processing: true,
+    searching: true,
+    lengthChange: false,
+    info:false,
+    scrollCollapse: true,
+    "language": {
+      "search": "Search: "
+    },
+    ajax: (dataTablesParameters: any,callback) => {
+      var body = dataTablesParameters;
+      body['limit']=body['length'];
+      if(body.search.value!= ""  &&  body.search.value.length>=1){
+         body['searchterm']=body.search.value;
+      }
+      if(body['searchterm']==undefined){
+          body['searchterm']="";
+      }
+
+      this.http.post<DataTablesResponse>(environment.api_url+"/rules", body,{ headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('token')}}).subscribe(res =>{
+      this.ruleList = res.data['results'];
+      if(this.ruleList.length >0 &&  this.ruleList!=undefined){
+        this.ruleList = res.data['results'];
+        this.ruleList.sort((x,y) => y.name - x.name)
+        $('.dataTables_paginate').show();
         this.rule = res;
-        console.log(res,"res")
-        this.sorted_rule_data_name_id=[];
+        this.sortedRuleDataNameId=[];
         let name_and_percentage=[]
         $('.rule_body2').hide();
-        if( this.rule.data.count ==0){
-          $('.no_data').append('No Rules Present')
-          $('.rule_body').hide();
-        }else{
-          $('.rule_body').show();
-          for (const i in this.rule.data.results){
-            name_and_percentage=[]
-            name_and_percentage.push(this.rule.data.results[i].name)
-            var d =  Math.pow(10,10);
-            var num=Number((Math.round((this.rule.data.results[i].alerts_count*100/this.rule.data.total_alerts) * d) / d).toFixed(1))
-            name_and_percentage.push(num)
-            name_and_percentage.push(this.rule.data.results[i].id)
-            this.sorted_rule_data_name_id.push(name_and_percentage)
+        $('.rule_body').show();
+        for (const i in this.rule.data.results){
+          name_and_percentage=[]
+          name_and_percentage.push(this.rule.data.results[i].name)
+          var d =  Math.pow(10,10);
+          if(this.rule.data.total_alerts>0){
+              var num=Number((Math.round((this.rule.data.results[i].alerts_count*100/this.rule.data.total_alerts) * d) / d).toFixed(1))
+              name_and_percentage.push(num)
+          }else{
+               name_and_percentage.push(0)
           }
-          this.getfirst_data(this.rule.data.results[0]);
+          name_and_percentage.push(this.rule.data.results[i].id)
+          this.sortedRuleDataNameId.push(name_and_percentage)
         }
+        this.getfirst_data(this.rule.data.results[0]);
 
-  });
-
+      }else{
+        if(body.search.value=="" || body.search.value == undefined){
+          this.errorMessage = "No results found";
+          $('.dataTables_paginate').hide();
+        }
+        else{
+          this.errorMessage = "No search results found";
+          $('.dataTables_paginate').hide();
+        }
+      }
+        callback({
+          recordsTotal: res.data['total_count'],
+          recordsFiltered: res.data['count'],
+          data: []
+        });
+      });
+    },
+    ordering: false,
+    columns: [{data: 'Rule' }]
+  }
 }
+
+ngAfterViewInit(): void {
+  this.dtTrigger.next();
+}
+
 showShortDesciption = true
 
 alterDescriptionText() {

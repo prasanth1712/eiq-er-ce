@@ -13,7 +13,7 @@
     Rule Monitoring
   </h3>
 </div>
-<div class="kt-portlet__head-toolbar">
+<div *AppHasRole="role.adminAccess" class="kt-portlet__head-toolbar">
   <div class="kt-portlet__head-wrapper">
     <div class="">
       <!-- <a [routerLink]="{[./manage],}" href="{{ url_for('manage.add_rule') }}" class="btn btn-outline-success btn-icon-sm"> -->
@@ -25,28 +25,19 @@
   </div>
 </div>
 </div>
-
+<div  *ngIf="ruleList?.length === 0" class="mt-5 text-center">
+  <span class="kt-nodata-msg">
+   No rules configured
+  </span>
+  </div>
 <div class="no_data" style="text-align: center;margin-top: 10px;"></div>
-<div class="kt-portlet__body rule_body" >
-<!-- {% if rules %} -->
-<!--Begin:: Content -->
-<div class="kt-content">
+<div class="kt-portlet__body rule_body">
+<div class="" *ngIf="ruleList?.length != 0">
   <div class="row">
     <div class="col-md-4">
       <!--begin::Portlet-->
       <div class="kt-portlet no-mar-botom portlet-body_align">
-
         <div class="kt-portlet__body" style="padding: 0px;">
-          <!--begin: Search Table -->
-          <div class="">
-            <div class="kt-input-icon kt-input-icon--left" style="margin-bottom: 10px;">
-              <input type="text" class="form-control" placeholder="Search here..." id="search_rule_name" [(ngModel)]="searchText">
-              <span class="kt-input-icon__icon kt-input-icon__icon--left">
-                <span><i class="la la-search"></i></span>
-              </span>
-            </div>
-          </div>
-          <!--end: Search Table -->
           <div class="rule_body2" style="height: 565px; overflow-x:scroll; margin-bottom:25px;">
             <div class="ph-item">
             <div class="ph-col-12">
@@ -83,25 +74,31 @@
                 </div>
               </div>
           </div>
-          <!--begin::Notifications-->
-          <div class="rule_body "  style="height: 565px; overflow-x:scroll; margin-bottom:25px">
-            <div *ngFor="let rules of (sorted_rule_data_name_id |rulesearch:searchText) as result" class="kt-notification conf-div" id="search_query-name-list" style="cursor:pointer;" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="{{rules[0]}}">
-              <div *ngIf="rules === -1">No Matching Record Found</div>
-              <div *ngIf="rules != -1">
-              <div class="kt-notification__item-title list-group"  [ngClass]="{'active': selectedItem == rules[0]}" >
-              <a (click)='getById($event, rules[0],rules[2])' data-target="{{rules[0]}}" class="kt-notification__item conf-link">
-                <div *ngIf="rules[1]<=10" id="circle1" class="col-2" style="min-height: 50px !important;min-width: 50px !important;padding-top: 14px;">{{rules[1]}}%</div>
-                <div *ngIf="rules[1]>=50" id="circle" class="col-2" style="min-height: 50px !important;min-width: 50px !important;padding-top: 14px;">{{rules[1]}}%</div>
-                <div *ngIf="rules[1]>10 && rules[1]<50" id="circle2" class="col-2" style="min-height: 50px !important;min-width: 50px !important;padding-top: 14px;">{{rules[1]}}%</div>
-                <div class="kt-notification__item-details">
-                    <div  id="element2" style="padding-left: 3%;">{{rules[0]}}</div>
-                </div>
-              </a>
-              </div>
-            </div>
-            </div>
+          <div class="rule_body "  style="height: 770px; margin-bottom:15px">
+            <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable row-border hover" id="host_table" style="boder:none">
+            <thead class="d-none"></thead>
+             <tbody>
+               <div *ngFor="let rules of sortedRuleDataNameId as result" class="kt-notification conf-div" id="search_query-name-list" style="cursor:pointer;font-size:12px" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="{{rules[0]}}">
+                 <div class="kt-notification__item-title list-group"  [ngClass]="{'active': selectedItem == rules[0]}" >
+                 <a (click)='getById($event, rules[0],rules[2])' data-target="{{rules[0]}}" class="kt-notification__item conf-link">
+                   <div *ngIf="rules[1]<=10" id="circle1" class="col-2" style="min-height: 42px !important;min-width: 42px !important;padding-top: 13px;">{{rules[1]}}%</div>
+                   <div *ngIf="rules[1]>=50" id="circle" class="col-2" style="min-height: 42px !important;min-width: 42px !important;padding-top: 13px;">{{rules[1]}}%</div>
+                   <div *ngIf="rules[1]>10 && rules[1]<50" id="circle2" class="col-2" style="min-height: 42px !important;min-width: 42px !important;padding-top: 13px;">{{rules[1]}}%</div>
+                   <div class="kt-notification__item-details">
+                       <div  id="element2" style="padding-left: 3%;">{{rules[0]}}</div>
+                   </div>
+                 </a>
+                 </div>
+               </div>
+
+             </tbody>
+             </table>
+             <div  *ngIf="ruleList?.length === 0">
+               <span style=" text-align: center;font-weight: 600;">
+                {{errorMessage}}
+               </span>
+             </div>
           </div>
-          <!--End::Notifications-->
         </div>
       </div>
       <!--end::Portlet-->
@@ -140,7 +137,7 @@
           <div class="kt-portlet__head-toolbar">
             <div class="kt-portlet__head-actions">
               <a  [routerLink] = "['./',ruleid,'alert']" class="btn btn-outline-success " style="height:28px;width:100px;padding-bottom: 17%;">View Alerts</a>&nbsp;&nbsp;
-              <a [routerLink] = "['./',ruleid,'edit']" class="btn btn-clean btn-sm btn-icon btn-icon-md" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Edit Rule">
+              <a *AppHasRole="role.adminAccess" [routerLink] = "['./',ruleid,'edit']" class="btn btn-clean btn-sm btn-icon btn-icon-md" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Edit Rule">
 
                 <i class="far fa-edit"></i>
                 </a>
@@ -183,7 +180,7 @@
               </div>
             </div>
         </div>
-        <div class="kt-portlet__body rule_body" style="height: 565px; overflow-x:scroll; margin-bottom:25px; padding: 1.25rem;display: none;">
+        <div class="kt-portlet__body rule_body" style="height: 673px; overflow-x:scroll; margin-bottom:25px; padding: 1.25rem;display: none;">
           <table class="table table-striped- table-bordered table-hover table-checkable">
             <tbody>
               <tr>
@@ -193,18 +190,15 @@
                             <div class="sql hljs desc-background_rules container" [class.show_1]="ruledata.visible_1">
                               {{ruledata.description}}
                             </div>
-                            <span *ngIf="ruledata.description.length > 200" style="cursor: pointer;" class="kt-link" (click)="ruledata.visible_1 = !ruledata.visible_1">{{ ruledata.visible_1 ? 'Read less': 'Read More' }}</span>
+                            <span *ngIf="ruledata.description.length > 200" style="cursor: pointer;" class="kt-link fnt-green" (click)="ruledata.visible_1 = !ruledata.visible_1">{{ ruledata.visible_1 ? 'Read less': 'Read More' }}</span>
                           </div>
-                          <!-- <div *ngIf="ruledata?.description.length == 0">
-                            <p class="txt-clr">No Description.</p>
-                          </div> -->
                         </td>
               </tr>
 
               <tr>
                 <td class="head-table">Alerters</td>
                 <td class="conf-table-val">
-                  {{rule_alert_val}}
+                  {{ruleAlertVal}}
                 </td>
               </tr>
               <tr>
@@ -215,56 +209,13 @@
               </tr>
               <tr>
                 <td class="head-table">Status</td>
-                <!-- <td class="conf-table-val">
-                  {{ruledata.status}}
-                </td> -->
                 <td class="conf-table-val">
                   <div *ngIf="ruledata?.status =='ACTIVE'">
                   <div class="desc-background_rules"><i class="fa fa-check"></i></div>
-                  <!-- <span class="col-md-1"></span> -->
                   </div>
                     <div *ngIf="ruledata?.status !='ACTIVE'">
                   <div class="desc-background_rules"><i class="fa fa-times"></i></div>
-                  <!-- <span class="col-md-1"></span> -->
                   </div>
-                </td>
-              </tr>
-
-              <tr>
-                <td class="head-table">Conditions</td>
-                <td class="conf-table-val">
-                  <div *ngIf="conditions == {}">
-                    <div class="desc-background_rules" [class.show_2]="ruledata.visible_2">
-                      No conditions found
-                    </div>
-                  </div>
-                  <div class="container" [class.show_2]="ruledata.visible_2" *ngIf="conditionLenght">
-                  <ul class="left-align" *ngIf="conditions != {}">
-                    <ng-template #recursiveList let-conditions>
-                      <li>{{conditions.condition}}</li>
-                      <span *ngFor="let item of conditions.rules">
-                        <li *ngIf="item.rules == undefined">
-                          <div *ngIf="item.id == 'column'">
-                            <div *ngIf="isString(item.value)==true">
-                              Column "{{item.value}}" {{item.operator | slice:7}}
-                            </div>
-                            <div *ngIf="isString(item.value)==false">
-                              Column "{{item.value[0]}}" {{item.operator | slice:7}} "{{item.value[1]}}"
-                            </div>
-                          </div>
-                          <div *ngIf="item.id != 'column'">
-                            Column "{{item.id}}" {{item.operator}} "{{item.value}}"
-                          </div>
-                        </li>
-                        <ul *ngIf="item.rules != undefined">
-                          <ng-container *ngTemplateOutlet="recursiveList; context:{ $implicit: item }"></ng-container>
-                        </ul>
-                      </span>
-                    </ng-template>
-                    <ng-container *ngTemplateOutlet="recursiveList; context:{ $implicit: conditions }"></ng-container>
-                  </ul>
-                  </div>
-                  <span *ngIf="conditionLenght >= 1" style="cursor: pointer;" class="kt-link" (click)="ruledata.visible_2 = !ruledata.visible_2">{{ ruledata.visible_2 ? 'Read less': 'Read More' }}</span>
                 </td>
               </tr>
               <tr *ngIf="ruledata?.type !=null">
@@ -283,7 +234,7 @@
               <tr>
                 <td class="head-table">Tactics</td>
                 <td>
-                    {{rule_tactics_val}}
+                    {{ruleTacticsVal}}
                   </td>
               </tr>
             </ng-container>

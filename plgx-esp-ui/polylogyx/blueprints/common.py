@@ -7,8 +7,6 @@ from flask import jsonify, request, send_file, current_app
 from flask_restplus import Namespace, Resource, marshal
 
 from polylogyx.dao import common_dao as dao
-
-from .utils import *
 from polylogyx.blueprints.utils import *
 from polylogyx.utils import require_api_key
 from polylogyx.wrappers import parent_wrappers as parentwrapper
@@ -23,7 +21,7 @@ ns = Namespace('common_api', description='all normal purpose apis operations', p
 @ns.route('/changepw', endpoint='change_password')
 @ns.doc(params = {'old_password':"old password", 'new_password':"new password", 'confirm_new_password':"confirm new password"})
 class ChangePassword(Resource):
-    '''changes user password'''
+    """changes user password"""
     parser = requestparse(['old_password', 'new_password', 'confirm_new_password'], [str, str, str], ["old password", "new password", "confirm new password"])
 
     @ns.expect(parser)
@@ -42,14 +40,14 @@ class ChangePassword(Resource):
                 message = "old password is not matching"
         else:
             message = "new password and confirm new password are not matching for the user"
-        return marshal(respcls(message,status),parentwrapper.common_response_wrapper,skip_none=True)
+        return marshal(prepare_response(message,status),parentwrapper.common_response_wrapper,skip_none=True)
 
 
 @require_api_key
 @ns.route('/options/add', endpoint = "add_options")
 @ns.doc(params = {'option':"option data", 'name':"name for the option"})
 class AddOption(Resource):
-    '''Add Options'''
+    """Add Options"""
     parser = requestparse(['option'],[dict],["option data"],[True])
 
     @ns.expect(parser)
@@ -76,13 +74,13 @@ class AddOption(Resource):
             option = dao.create_option_by_option(json.dumps(args['option']))
             data = json.loads(option.option)
         if not data: message = "options you updated are null and no data exists to show"
-        return marshal(respcls("options are updated successfully","success",data),parentwrapper.common_response_wrapper,skip_none=True)
+        return marshal(prepare_response("options are updated successfully","success",data),parentwrapper.common_response_wrapper,skip_none=True)
 
 
 @require_api_key
 @ns.route('/hunt-upload', endpoint="hunt_file_upload")
 class FileUpload(Resource):
-    '''hunt file upload'''
+    """hunt file upload"""
 
     from werkzeug import datastructures
     parser = requestparse(['file', 'type', 'host_identifier', "query_name", "start", "limit"],
@@ -144,15 +142,14 @@ class FileUpload(Resource):
             message = "successfully fetched the data through the hunt file uploaded"
             status = "success"
 
-        return marshal(respcls(message, status, data), parentwrapper.common_response_wrapper, skip_none=True)
-
+        return marshal(prepare_response(message, status, data), parentwrapper.common_response_wrapper, skip_none=True)
 
 
 @require_api_key
 @ns.route('/search', endpoint="search")
 @ns.doc(params={})
 class Search(Resource):
-    ''' Search Operation '''
+    """ Search Operation """
     parser = requestparse(['conditions', 'host_identifier', 'query_name', 'start', 'limit'], [dict, str, str, int, int],
                           ["conditions to search for", 'host_identifier of the node', 'query_name', 'start', 'limit'],
                           [True, False, False, False, False])
@@ -178,7 +175,7 @@ class Search(Resource):
             root = search_rules.parse_group(conditions)
         except Exception as e:
             message = str(e)
-            return marshal(respcls(message, status),
+            return marshal(prepare_response(message, status),
                            parentwrapper.common_response_wrapper, skip_none=True)
 
         try:
@@ -211,14 +208,14 @@ class Search(Resource):
             message = "successfully fetched the data through the payload given"
             status = "success"
 
-        return marshal(respcls(message, status, data), parentwrapper.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status, data), parentwrapper.common_response_wrapper, skip_none=True)
 
 
 @require_api_key
 @ns.route('/queryresult/delete', endpoint = "delete_queryresult")
 @ns.doc(params = {'days_of_data':"no.of days of data to delete"})
 class DeleteQueryResult(Resource):
-    '''Deleting the scheduled query result will be done here'''
+    """Deleting the scheduled query result will be done here"""
     parser = requestparse(['days_of_data'],[int],["no.of days of data to delete"])
 
     def func(self):
@@ -226,7 +223,7 @@ class DeleteQueryResult(Resource):
         since = dt.datetime.now() - dt.timedelta(hours=24 * int(args['days_of_data']))
         dao.del_result_log_obj(since)
         db.session.commit()
-        return marshal(respcls("query result data is deleted successfully","success"),parentwrapper.common_response_wrapper,skip_none=True)
+        return marshal(prepare_response("query result data is deleted successfully","success"),parentwrapper.common_response_wrapper,skip_none=True)
 
     @ns.expect(parser)
     def post(self):
@@ -237,7 +234,7 @@ class DeleteQueryResult(Resource):
 @ns.route('/queryresult/<int:days_of_data>', endpoint = "preview_queryresult")
 @ns.doc(params = {'days_of_data':"no.of days of data to preview"})
 class PreviewQueryResult(Resource):
-    '''Previewing the scheduled query result will be done here'''
+    """Previewing the scheduled query result will be done here"""
 
     def get(self, days_of_data=None):
         from polylogyx.wrappers import resultlog_wrappers
@@ -248,15 +245,16 @@ class PreviewQueryResult(Resource):
         if not data:
             message = "there is no data display, its empty!"
             status = "failure"
-        return marshal(respcls(message, status, data),
+        return marshal(prepare_response(message, status, data),
                        parentwrapper.common_response_wrapper, skip_none=True)
+
 
 
 @require_api_key
 @ns.route('/schedule_query/export', endpoint="schedule_query_export")
 @ns.doc(params = {})
 class ExportScheduleQueryCSV(Resource):
-    '''exports schedule query results into a csv file'''
+    """exports schedule query results into a csv file"""
     parser = requestparse(['query_name', 'host_identifier'], [str, str], ["name of the query", "host identifier of the node"])
 
     @ns.expect(parser)
@@ -266,6 +264,7 @@ class ExportScheduleQueryCSV(Resource):
         query_name = all_args['query_name']
         host_identifier = all_args['host_identifier']
         node_id = get_node_id_by_host_id(host_identifier)
+
         record_query = dao.record_query(node_id,query_name)
 
         results = [r for r, in record_query]
@@ -294,12 +293,11 @@ class ExportScheduleQueryCSV(Resource):
         )
         return file_data
 
-
 @require_api_key
 @ns.route('/nodes_csv')
 @ns.doc(params = {})
 class NodesCSV(Resource):
-    '''returns a csv file object with nodes info as data'''
+    """returns a csv file object with nodes info as data"""
     def get(self):
         headers = [
             'Display name',
@@ -346,7 +344,7 @@ class NodesCSV(Resource):
 @ns.route('/apikeys', endpoint='add_apikey')
 @ns.doc(params = {'vt_key':"vt key",'IBMxForceKey':"IBMxForceKey",'IBMxForcePass':"IBMxForcePass",'otx_key':"otx_key"})
 class UpdateApiKeys(Resource):
-    '''adds API keys'''
+    """adds API keys"""
     parser = requestparse(['vt_key', 'IBMxForceKey', 'IBMxForcePass','otx_key'], [str, str, str,str],
                           ['vt key', 'IBMxForceKey', 'IBMxForcePass','otx key'],[False,False,False,False])
 
@@ -409,7 +407,7 @@ class UpdateApiKeys(Resource):
         for threat_intel_credential in threat_intel_credentials:
             API_KEYS[threat_intel_credential.intel_name] = threat_intel_credential.credentials
         if not API_KEYS: message = "Api keys data doesn't exists"
-        return marshal(respcls("API keys were updated successfully","success",API_KEYS),parentwrapper.common_response_wrapper,skip_none=True)
+        return marshal(prepare_response("API keys were updated successfully","success",API_KEYS),parentwrapper.common_response_wrapper,skip_none=True)
 
     @ns.expect(parser)
     def post(self):
@@ -421,5 +419,5 @@ class UpdateApiKeys(Resource):
         for threat_intel_credential in threat_intel_credentials:
             API_KEYS[threat_intel_credential.intel_name] = threat_intel_credential.credentials
         if not API_KEYS: message = "Api keys data doesn't exists"
-        return marshal(respcls("API keys were fetched successfully","success",API_KEYS),parentwrapper.common_response_wrapper,skip_none=True)
+        return marshal(prepare_response("API keys were fetched successfully","success",API_KEYS),parentwrapper.common_response_wrapper,skip_none=True)
 

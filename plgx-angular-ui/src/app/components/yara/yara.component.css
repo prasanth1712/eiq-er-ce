@@ -2,11 +2,11 @@
     color: #518c24;
 }
 
-.btn-success.active{
+/* .btn-success.active{
   color: #fff !important;
   background-color: #518c24 !important;
   border-color: #518c24 !important;
-}
+} */
 
 .fa-lg {
   font-size: 1.5rem !important;
@@ -55,4 +55,7 @@
     font-weight: 400;
     border: 1px solid #ebedf2;
     border-radius: 4px;
+  }
+  .swal-title {
+    font-size: 11px !important;
   }

@@ -6,6 +6,8 @@ import { environment } from '../../../environments/environment';
 import 'datatables.net';
 import { DataTableDirective } from 'angular-datatables';
 import { Subject } from 'rxjs';
+import { AuthorizationService } from '../../dashboard/_services/Authorization.service';
+import { FormGroup, FormBuilder, Validators, FormControl } from '@angular/forms';
   class DataTablesResponse {
     data: any[];
     draw: number;
@@ -34,9 +36,12 @@ import { Subject } from 'rxjs';
     dtElement: DataTableDirective;
   dtTrigger: Subject<any> = new Subject();
     errorMessage:any;
+    role={'adminAccess':this.authorizationService.adminLevelAccess,'userAccess':this.authorizationService.userLevelAccess}
     constructor(
         private commonapi: CommonapiService,
-        private http: HttpClient
+        private http: HttpClient,
+        private authorizationService: AuthorizationService,
+        private fb: FormBuilder,
     ) { }
 
     ngOnInit() {
@@ -48,8 +53,12 @@ import { Subject } from 'rxjs';
         serverSide: true,
         processing: true,
         searching: true,
+        scrollCollapse: true,
         // scrollX: true,
-        // "scrollY": '470px',
+        // "scrollY": '400px',
+        "initComplete": function (settings, json) {
+          $("#host_table").wrap("<div style='overflow:auto; width:100%;position:relative;max-height:480px'></div>");
+         },
         "language": {
           "search": "Search: "
         },
@@ -69,26 +78,24 @@ import { Subject } from 'rxjs';
               body['searchterm']="";
             }
 
-          this.http.post<DataTablesResponse>(environment.api_url+"/hosts", body,{ headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('JWTkey')}}).subscribe(res =>{
+          this.http.post<DataTablesResponse>(environment.api_url+"/hosts", body,{ headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('token')}}).subscribe(res =>{
             localStorage.removeItem('nodeid');
             this.hostmainvalue_data = res.data['results'];
-          if(this.hostmainvalue_data.length >0 &&  this.hostmainvalue_data!=undefined)
-          {
-          this.hostmainvalue_data = res.data['results'];
-          this.hostmainvalue_data.sort((x,y) => y.is_active - x.is_active)
+          if(this.hostmainvalue_data.length >0 &&  this.hostmainvalue_data!=undefined){
+            this.hostmainvalue_data = res.data['results'];
+            this.hostmainvalue_data.sort((x,y) => y.is_active - x.is_active)
             $('.dataTables_paginate').show();
             $('.dataTables_info').show();
           }else{
-            if(body.search.value=="" || body.search.value == undefined)
-            {
-              this.errorMessage="No Data Found";
+            if(body.search.value=="" || body.search.value == undefined){
+              this.errorMessage = "No Host Found";
               $('.dataTables_paginate').hide();
               $('.dataTables_info').hide();
             }
             else{
-              this.errorMessage="No Matching Record Found";
-              $('.dataTables_paginate').show();
-              $('.dataTables_info').show();
+              this.errorMessage = "No Matching Record Found";
+              $('.dataTables_paginate').hide();
+              $('.dataTables_info').hide();
             }
           }
             callback({
@@ -102,7 +109,7 @@ import { Subject } from 'rxjs';
         columns: [{ data: 'display_name' },{data:'online'},{data:'health'},{ data: 'os_info' }, { data: 'last_ip' }, { data: 'tags' },{ data: 'delete' }]
       }
 
-      this.token_value = localStorage.getItem('JWTkey');
+      this.token_value = localStorage.getItem('token');
       $(document).ready(() => {
           var TableRow = '';
               TableRow += '<button type="button" value =this.token_value href="javascript:void(0);" id ="export_option" class="btn btn-outline-success btn-sm btn-icon-sm" title="Download CSV File" alt="" value="" >' + '<i class="la la-download"></i>' + 'Export'
@@ -137,6 +144,22 @@ import { Subject } from 'rxjs';
           });
       });
     }
+    value : any;
+
+    private startsWithAt(control: FormControl) {
+      if (control.value.length > 50 ) {
+          return {
+              'startsWithAt@': true
+          };
+      }
+
+      return null;
+  }
+  public validators = [this.startsWithAt];
+  public errorMessages = {
+    'startsWithAt@': 'Tag should not be more then 50 characters'
+};
+
     get_hosts_count(){
       this.commonapi.Hosts_count().subscribe((res:any) => {
         this.windows_online = res.data.windows.online;
