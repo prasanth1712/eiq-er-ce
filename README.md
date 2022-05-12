@@ -46,7 +46,7 @@ EclecticIQ Endpoint Response includes two primary components: server and client.
 To learn more about the EclecticIQ Endpoint Response Community Edition, review the following:
 
 - [EclecticIQ Endpoint Response Community Edition 3.5.1 Release Notes](docs/eiq_er_ce_release_notes.pdf)
-- [EclecticIQ Endpoint Response Community Edition 3.5.1 Deployment Notes](docs/eiq_er_ce_deployment_guide.pdf)
+- [EclecticIQ Endpoint Response Community Edition 3.5.1 Deployment Guide](docs/eiq_er_ce_deployment_guide.pdf)
 - [EclecticIQ Endpoint Response Community Edition 3.5.1 Product Guide](docs/eiq_er_ce_product_guide.pdf)
 - [EclecticIQ Endpoint Response Community Edition 3.5.1 Troubleshooting Guide](docs/eiq_er_ce_troubleshooting_guide.pdf)
 
