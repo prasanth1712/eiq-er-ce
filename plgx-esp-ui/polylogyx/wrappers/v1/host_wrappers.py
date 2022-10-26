@@ -1,17 +1,19 @@
-from flask_restplus import fields
-from polylogyx.blueprints.v1.external_api import api
+#from flask_restful import fields
+from flask_restful import fields
+import datetime
+#from polylogyx.blueprints.v1.external_api import api
 
 # Node Wrappers
-node_info_wrapper = api.model('node_info_wrapper', {
+node_info_wrapper =  {
     'computer_name': fields.String(),
     'hardware_model': fields.String(),
     'hardware_serial': fields.String(),
     'hardware_vendor': fields.String(),
     'physical_memory': fields.String(),
     'cpu_physical_cores': fields.String()
-})
+}
 
-nodewrapper = api.model('nodewrapper', {
+nodewrapper =  {
     'id':fields.Integer(),
     'host_identifier': fields.String(),
     'node_key': fields.String(),
@@ -27,19 +29,19 @@ nodewrapper = api.model('nodewrapper', {
     'last_result': fields.DateTime(default = None),
     'last_config': fields.DateTime(default = None),
     'last_query_read': fields.DateTime(default = None),
-    'last_query_write': fields.DateTime(default = None),
-})
+    'last_query_write': fields.DateTime(default = None)
+}
 
-node_tag_wrapper = api.model('node_tag_wrapper', {
+node_tag_wrapper ={
     'host_identifier': fields.String(),
     'node_key': fields.String()
-})
+}
 
-node_status_log_wrapper = api.model('node_status_log_wrapper', {
+node_status_log_wrapper ={
     'line': fields.Integer(),
     'message': fields.String(),
     'severity': fields.Integer(),
     'filename': fields.String(),
-    'created': fields.DateTime(),
+    'created': fields.String(default=datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')),
     'version': fields.String(),
-})
+}

@@ -6,10 +6,10 @@
         <div class="kt-portlet kt-portlet--last kt-portlet--responsive-mobile" id="kt_page_portlet">
           <div class="kt-portlet__head kt-portlet__head--lg">
             <div class="kt-portlet__head-label">
-              <span class="kt-portlet__head-icon">
-                <i class="fa fa-user  fnt-green"></i>
+              <span class="kt-portlet__head-icon custom-header-icon-container">
+                <i class="fa fa-user  fnt-green custom-header-icon"></i>
               </span>
-              <h3 class="kt-portlet__head-title">               
+              <h3 class="kt-portlet__head-title custom-header-title">
                 Edit User Details
               </h3>
             </div>
@@ -25,9 +25,9 @@
           </div>
           <!--begin::Form-->
           <div class="kt-portlet__body py-2">
-            <form class="kt-form mt-4" id="kt_form" [formGroup]="EditUserForm" (ngSubmit)="onSubmit()">    
+            <form class="kt-form mt-4" id="kt_form" [formGroup]="EditUserForm" (ngSubmit)="onSubmit()">
               <div class="row">
-                <div class="col-xl-11">        
+                <div class="col-xl-11">
                   <div class="kt-section kt-section--first">
                     <div class="kt-section__body">
                         <div class="form-group row required">
@@ -36,6 +36,7 @@
                               <input  type="text" placeholder="Username"  name="userName"  formControlName="userName" class="form-control" [ngClass]="{ 'is-invalid': submitted && f.userName.errors }"/>
                                 <div *ngIf="submitted && f.userName.errors" class="invalid-feedback">
                                   <div *ngIf="f.userName.errors.required">User Name is required</div>
+                                  <div *ngIf="f.userName.errors.maxlength">User Name can be max 48 characters long</div>
                               </div>
                             </div>
                         </div>
@@ -67,7 +68,7 @@
                                   <div *ngIf="f.email.errors.pattern">Email must be a valid email address</div>
                                 </div>
                           </div>
-                        </div>  
+                        </div>
                         <div class="form-group row required">
                             <label class="col-sm-2 col-form-label form--label">Role</label>
                             <div class="col-10">
@@ -75,7 +76,7 @@
                                 <ng-container *ngFor="let role of roleslist let i=index">
                                 <div class="kt-radio-inline">
                                   <div class="col-2">
-                                  <label class="kt-radio">                            
+                                  <label class="kt-radio">
                                     <input type="radio"   name="role"   formControlName="role" class="form-control"  [value]="role" >
                                     <label >{{role}}</label>
                                     <span></span>
@@ -86,7 +87,7 @@
                               </div>
                                 <span class="error-msg text-danger" *ngIf="submitted && EditUserForm.controls['role'].errors?.required" style="font-size: 80%">
                                   Please select any option above!
-                                </span>          
+                                </span>
                             </div>
                         </div>
                         <div class="form-group row">
@@ -94,15 +95,15 @@
                           <div class="col-7">
                             <div class="kt-radio-inline">
                           <ng-container *ngIf="getuser?.status ==false" >
-                            <label class="kt-radio">                            
-                              <input type="radio"   name="status"   formControlName="status" class="form-control"  [value]="true" >
+                            <label class="kt-checkbox">
+                              <input type="checkbox"   name="status"   formControlName="status" class="form-control"  [value]="true" >
                               <label >Re-activate</label>
                               <span></span>
                             </label>
                           </ng-container>
                           <ng-container *ngIf="getuser?.status ==true" >
-                            <label class="kt-radio">                            
-                              <input type="radio"   name="status"   formControlName="status" class="form-control"  [value]="false" >
+                            <label class="kt-checkbox">
+                              <input type="checkbox"   name="status"   formControlName="status" class="form-control"  [value]="false" >
                               <label >De-activate</label>
                               <span></span>
                             </label>
@@ -120,9 +121,10 @@
                   </div>
                   <div class="kt-portlet__foot ">
                     <div class="kt-form__actions kt-form__actions--center">
-                      <button  class="btn btn-success">                      
+                      <!-- <button  class="btn btn-success">
                         <span>Update</span>
-                      </button>
+                      </button> -->
+                      <appbutton text="Update" btnClass="btn-small"></appbutton>
                     </div>
                   </div>
                 </div>
@@ -135,4 +137,3 @@
    </div>
 </div>
   <!-- end:: Content -->
-  

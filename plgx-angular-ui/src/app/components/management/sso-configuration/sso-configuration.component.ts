@@ -28,12 +28,13 @@ export class SsoConfigurationComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Configuration");
+    this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"SSO Settings");
+    const urlRegex = /^((http|https|ftp|www|wss):\/\/)?([a-zA-Z0-9\~\!\@\#\$\%\^\&\*\(\)_\-\=\+\\\/\?\.\:\;\'\,]*)(\.)([a-zA-Z0-9\~\!\@\#\$\%\^\&\*\(\)_\-\=\+\\\/\?\.\:\;\'\,]+)/g;
     this.ssoConfigureSettings = this.fb.group({
       samlAuthentication: [false],
-      idpMetadataUrl: [''],
-      appName: [''],
-      entityId: ['']
+      idpMetadataUrl: ['', [Validators.required, Validators.pattern(urlRegex)]],
+      appName: ['',Validators.required],
+      entityId: ['',Validators.required]
     });
     this.getPlatformSettings();
     if(localStorage.getItem('roles') == 'analyst'){
@@ -43,12 +44,14 @@ export class SsoConfigurationComponent implements OnInit {
 
   getPlatformSettings(){
     this.commonapi.getConfigurationSettings().subscribe(res => {
-    this.ssoConfigureSettings.patchValue({
-      samlAuthentication: JSON.parse(res.data.sso_enable),
-      idpMetadataUrl:  res.data.sso_configuration.idp_metadata_url,
-      appName: res.data.sso_configuration.app_name,
-      entityId: res.data.sso_configuration.entity_id
-    });
+      if(res.data.hasOwnProperty('sso_configuration')){
+        this.ssoConfigureSettings.patchValue({
+          samlAuthentication: JSON.parse(res.data.sso_enable),
+          idpMetadataUrl:  res.data.sso_configuration.idp_metadata_url,
+          appName: res.data.sso_configuration.app_name,
+          entityId: res.data.sso_configuration.entity_id
+        });
+      }
     });
   }
 
@@ -56,6 +59,9 @@ export class SsoConfigurationComponent implements OnInit {
 
   onSubmit() {
     this.submitted = true;
+    if (this.ssoConfigureSettings.invalid) {
+        return;
+    }
       Swal.fire({
         title: 'Are you sure want to update?',
         icon: 'warning',
@@ -71,7 +77,6 @@ export class SsoConfigurationComponent implements OnInit {
           this.commonapi.putConfigurationSettings(payload).subscribe(res => {
               if (res['status'] == 'success') {
                 this.msgHandler.successMessage(res['status'],res['message'],false,2500);
-                this.getPlatformSettings()
               } else {
                 this.msgHandler.warningMessage(res['status'],res['message']);
               }

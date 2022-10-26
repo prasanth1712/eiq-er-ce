@@ -35,6 +35,8 @@ export class ConfigureEmailComponent implements OnInit {
   sslConnection:boolean = false;
   tlsConnection:boolean = false;
   noneConnection:boolean = false;
+  isDisableTest:boolean = false;
+  isDisableUpdate:boolean = false;
   role={'adminAccess':this.authorizationService.adminLevelAccess,'userAccess':this.authorizationService.userLevelAccess}
   constructor(
     private fb: FormBuilder,
@@ -47,7 +49,7 @@ export class ConfigureEmailComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Email setting" );
+    this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Email" );
     this.ConfigureEmail = this.fb.group({
       senderEmail: ['', Validators.required],
       senderPassword: ['', Validators.required],
@@ -56,7 +58,11 @@ export class ConfigureEmailComponent implements OnInit {
       emailRecipients: ['', Validators.required],
       ssl:['']
     });
+   this.getconfiguredEmailData();
+  }
+  get f() { return this.ConfigureEmail.controls; }
 
+  getconfiguredEmailData(){
     this.commonapi.configuredEmail().subscribe(res => {
       this.conf_email = res;
       console.log(this.conf_email);
@@ -72,7 +78,6 @@ export class ConfigureEmailComponent implements OnInit {
       }
     })
   }
-  get f() { return this.ConfigureEmail.controls; }
 
   onSubmit() {
     this.submitted = true;
@@ -95,8 +100,11 @@ export class ConfigureEmailComponent implements OnInit {
               Swal.showLoading()
             }
           })
+          this.isDisableTest = true;
+          setTimeout(()=>{ this.isDisableTest = false }, 30000);
           this.commonapi.UpdateconfigureEmail(this.f.senderEmail.value, this.f.senderPassword.value,
             this.f.smtpServer.value, this.f.smtpPort.value, this.f.emailRecipients.value,this.sslConnection,this.tlsConnection).subscribe(res => {
+              this.isDisableTest = false;
               this.EmailSubmit = res;
               Swal.close()
               if (this.EmailSubmit.status == 'failure') {
@@ -119,7 +127,11 @@ export class ConfigureEmailComponent implements OnInit {
 
                 // })
               }
-            });
+            },error => { // Error...
+              Swal.close();
+              this.isDisableTest = false;
+              this.failureMessgae(msg.failuremsg)
+             });
         }
       })
     }
@@ -201,8 +213,11 @@ export class ConfigureEmailComponent implements OnInit {
           Swal.showLoading()
         }
       })
+      this.isDisableUpdate = true;
+      setTimeout(()=>{ this.isDisableUpdate = false }, 30000);
       this.commonapi.TestEmail(arg.value.emailRecipients, arg.value.senderEmail, arg.value.smtpServer, arg.value.senderPassword, arg.value.smtpPort,this.sslConnection,this.tlsConnection).subscribe(res => {
         this.EmailTest = res;
+        this.isDisableUpdate = false;
         Swal.close();
         if (this.EmailTest.status == 'failure') {
           Swal.fire({
@@ -224,6 +239,7 @@ export class ConfigureEmailComponent implements OnInit {
           })
         }
       },error => { // Error...
+        this.isDisableUpdate = false;
         if(error.message == "Timeout has occurred"){
           Swal.close();
           this.toastr.error(msg.requestTimeout);
@@ -254,10 +270,6 @@ export class ConfigureEmailComponent implements OnInit {
   }
 
   clearForm() {
-    this.submitted = false;
-    this._location.back();
-    setTimeout(() => {
-      this.conf_port_data = 465;
-    }, 100);
+    this.getconfiguredEmailData();
   }
 }

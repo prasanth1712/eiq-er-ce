@@ -3,7 +3,8 @@ import { Routes, RouterModule } from '@angular/router';
 import { HostsComponent } from './hosts.component';
 import { NodesComponent } from './nodes/nodes.component';
 import { ActivityComponent } from './activity/activity.component';
-import { FilterAlertsWithHostnameComponent } from './filter-alerts-with-hostname/filter-alerts-with-hostname.component';
+import { AlertsComponent } from 'src/app/widgets/alerts/alerts.component';
+// import { FilterAlertsWithHostnameComponent } from './filter-alerts-with-hostname/filter-alerts-with-hostname.component';
 
 const routes: Routes = [
   {
@@ -25,7 +26,7 @@ const routes: Routes = [
   {
     path: '',
     children: [{
-      path: ':id/alerts', component: FilterAlertsWithHostnameComponent,
+      path: ':id/alerts', component: AlertsComponent,
     }]
   },
 ];

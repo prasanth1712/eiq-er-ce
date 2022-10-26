@@ -27,7 +27,6 @@ class TestEmailerAlerter:
             query_name="",
             node_id=1,
             rule_id=1,
-            recon_queries="",
             result_log_uid="",
             type="",
             source="",
@@ -79,7 +78,6 @@ class TestEmailerAlerter:
             query_name="",
             node_id=1,
             rule_id=None,
-            recon_queries="",
             result_log_uid="",
             type="",
             source="",
@@ -104,8 +102,8 @@ class TestEmailerAlerter:
                 "timestamp": "bar",
                 "columns": {"boo": "baz", "kung": "bloo"},
             },
-            data="",
             alert_id=1,
+            data=""
         )
 
         expected_subject = (

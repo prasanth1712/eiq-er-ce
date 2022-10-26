@@ -32,60 +32,40 @@ export const routes: Routes = [
         then(m => m.HostsModule),
     },
     {
-      path: 'management', loadChildren: () => import('./components/management/management.module').
+      path: 'settings', loadChildren: () => import('./components/management/management.module').
         then(m => m.ManagementModule),
     },
     {
-      path: 'alerts', loadChildren: () => import('./components/alerts/alerts.module').
+      path: 'hostconfiguration', loadChildren: () => import('./components/hosts-configuration/hosts-configuration.module').
+        then(m => m.HostsConfigurationModule),
+    },
+    {
+      path: 'alerts', loadChildren: () => import('./widgets/alerts/alerts.module').
         then(m => m.AlertsModule),
     },
     {
-      path: 'live-queries', loadChildren: () => import('./components/live-queries/live-queries.module').
+      path: 'live-query', loadChildren: () => import('./components/live-queries/live-queries.module').
         then(m => m.LiveQueriesModule),
     },
     {
-      path: 'ioc', loadChildren: () => import('./components/ioc/ioc.module').
-        then(m => m.IocModule),
-    },
-    {
-      path: 'rules', loadChildren: () => import('./components/rule/rule.module').
-        then(m => m.RuleModule),
-    },
-    {
-      path: 'tags', loadChildren: () => import('./components/tag/tag.module').
-        then(m => m.TagModule),
+      path: 'rules', loadChildren: () => import('./components/rules/rules.module').
+        then(m => m.RulesModule),
     },
     {
       path: 'carves', loadChildren: () => import('./components/carves/carves.module').
         then(m => m.CarvesModule),
     },
     {
-      path: 'config', loadChildren: () => import('./components/config/config.module').
-        then(m => m.ConfigModule),
-    },
-    {
       path: 'hunt', loadChildren: () => import('./components/hunt/hunt.module').
         then(m => m.HuntModule),
     },
     {
-      path: 'packs', loadChildren: () => import('./components/packs/packs.module').
-        then(m => m.PacksModule),
-    },
-    {
-      path: 'queries', loadChildren: () => import('./components/queries/queries.module').
-        then(m => m.QueriesModule),
-    },
-    {
-      path: 'user-profile', loadChildren: () => import('./components/user-profile/user-profile.module').
+      path: 'profile', loadChildren: () => import('./components/user-profile/user-profile.module').
         then(m => m.UserProfileModule),
     },
     {
       path: 'search', loadChildren: () => import('./components/search/search.module').
         then(m => m.SearchModule),
-    },
-    {
-      path: 'yara', loadChildren: () => import('./components/yara/yara.module').
-        then(m => m.YaraModule),
     },
     {
       path: 'pagenotfound', loadChildren: () => import('./components/pagenotfound/pagenotfound.module').
@@ -105,7 +85,7 @@ export const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes,{scrollPositionRestoration: 'enabled'})],
+  imports: [RouterModule.forRoot(routes,{ scrollPositionRestoration: 'enabled', relativeLinkResolution: 'legacy' })],
   exports: [RouterModule]
 })
 export class AppRoutingModule { }

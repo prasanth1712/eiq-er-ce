@@ -1,15 +1,15 @@
-from flask_restplus import Namespace, Resource
+from flask_restful import Resource
 from flask import abort
-
+from polylogyx.blueprints.v1.external_api import api
 from polylogyx.blueprints.v1.utils import *
 from polylogyx.dao.v1 import configs_dao
 from polylogyx.wrappers.v1 import parent_wrappers
 from polylogyx.authorize import admin_required
+from polylogyx.cache import refresh_cached_config
 
-ns = Namespace('configs', description='Configurations resources blueprint')
 
 
-@ns.route('/all', endpoint='list_configs')
+@api.resource('/configs/all', endpoint='list_configs')
 class ConfigList(Resource):
     """
         Lists out all configs
@@ -21,7 +21,7 @@ class ConfigList(Resource):
                    Please check the REST API documentation for more information about the new APIs")
 
 
-@ns.route('/view', endpoint='list_config_by_platform')
+@api.resource('/configs/view' ,endpoint='list_config_by_platform')
 class GetConfigByPlatformOrNode(Resource):
     """
         Lists the config by its Platform or host_identifier
@@ -33,7 +33,7 @@ class GetConfigByPlatformOrNode(Resource):
                    Please check the REST API documentation for more information about the new APIs")
 
 
-@ns.route('/update', endpoint='update_config_by_platform')
+@api.resource('/configs/update', endpoint='update_config_by_platform')
 class EditConfigByPlatform(Resource):
     """
         Lists or edits the config by its Platform
@@ -45,7 +45,7 @@ class EditConfigByPlatform(Resource):
                    Please check the REST API documentation for more information about the new APIs")
 
 
-@ns.route('/toggle', endpoint='toggle_config')
+@api.resource('/configs/toggle' ,endpoint='toggle_config')
 class ToggleConfigByPlatform(Resource):
     """
         Toggle default config between shallow and deep
@@ -57,7 +57,7 @@ class ToggleConfigByPlatform(Resource):
                    Please check the REST API documentation for more information about the new APIs")
 
 
-@ns.route('', endpoint='configs')
+@api.resource('/configs', endpoint='configs')
 class Configs(Resource):
     """
         Configs Resource
@@ -67,22 +67,24 @@ class Configs(Resource):
                                ["Name of the config", "json of filters", "json of queries",
                                 "platform name(windows/linux/darwin)",
                                 "conditions to auto assign config", "description of the config"],
-                               [True, False, False, True, False, False],
+                               [True, False, True, True, False, False],
                                [None, None, None, ["linux", "windows", "darwin"], None, None],
-                               [None, {}, None, None, None, None])
+                               [None, {}, None, None, {}, None])
     get_parser = requestparse([], [], [], [], [])
 
     @admin_required
-    @ns.expect(post_parser)
     def post(self):
         """
             Adds a new config by cloning other config or from list of queries and filters
         """
         args = self.post_parser.parse_args()
         name = args['name']
+        args['name'] = args['name'].strip()  # Cropping out the spaces
         data = None
         status = "failure"
-        if configs_dao.get_config(platform=args['platform'], name=args['name']):
+        if args['name'] is not None and not args['name']:
+            message = 'Config name provided is not acceptable!'
+        elif configs_dao.get_config(platform=args['platform'], name=args['name']):
             message = 'Config with this name already exists!'
         elif configs_dao.is_configs_number_exceeded(args['platform']):
             message = "Configs number limit of the platform is reached!"
@@ -94,15 +96,16 @@ class Configs(Resource):
         else:
             new_config = configs_dao.add_config_by_platform(args['name'], args['platform'], args['conditions'],
                                                     args['description'])
-            configs_dao.add_queries_from_json(args['queries'], args['platform'], new_config)
-            configs_dao.add_default_filters(args['filters'], args['platform'], new_config)
+            configs_dao.add_queries_from_json(args['queries'], new_config)
+            configs_dao.add_default_filters(args['filters'], new_config)
+            refresh_cached_config()
             current_app.logger.info("Config is added for {0} platform with name - {1}".format(args['platform'], name))
             status = "success"
             message = "Config is added successfully"
             data = new_config.id
-        return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper)
 
-    @ns.expect(get_parser)
+
     def get(self):
         """
             Returns all configs present in db
@@ -115,7 +118,7 @@ class Configs(Resource):
         return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/<int:config_id>', endpoint='config_by_id')
+@api.resource('/configs/<int:config_id>' ,endpoint='config_by_id')
 class Config(Resource):
     """
         Config by ID
@@ -128,7 +131,7 @@ class Config(Resource):
                           [False, False, False, False, False], [None, None, None, None, None],
                           [None, None, None, None, None])
 
-    @ns.expect(get_parser)
+    
     def get(self, config_id=None):
         """
             Returns full dict config for the ID given
@@ -138,13 +141,12 @@ class Config(Resource):
             data = configs_dao.get_config_dict(config)
             status = "success"
             message = "Fetched the config successfully"
-            return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper, skip_none=True)
+            return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper)
         else:
             current_app.logger.info("Config id given is not a valid one!")
             abort(404, 'Config id is not valid!')
 
     @admin_required
-    @ns.expect(put_parser)
     def put(self, config_id=None):
         """
             Modifies a config for ID given
@@ -155,9 +157,14 @@ class Config(Resource):
         filters = args['filters']
         conditions = args['conditions']
         description = args['description']
+        if args['name']:
+            args['name'] = args['name'].strip()  # Cropping out the spaces
         is_payload_valid = True
         message = None
         if config:
+            if args['name'] is not None and not args['name']:
+                message = "Config name provided is not acceptable!"
+                is_payload_valid = False
             if queries:
                 for query in queries:
                     if 'status' not in queries[query] or 'interval' not in queries[query]:
@@ -170,19 +177,19 @@ class Config(Resource):
                 is_payload_valid = False
             if is_payload_valid:
                 configs_dao.edit_config_by_platform(config, filters, queries, args['name'], conditions, description)
+                refresh_cached_config()
                 current_app.logger.info(
                     "Config is updated for {0} platform with name {1}".format(config.platform, config.name))
                 status = "success"
                 message = "Config is updated successfully for the platform given"
             else:
                 status = 'failure'
-            return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
+            return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)
         else:
             current_app.logger.info('Config id is not valid!')
             abort(404, 'Config id is not valid!')
 
     @admin_required
-    @ns.expect(delete_parser)
     def delete(self, config_id=None):
         """
             Deletes a config with ID given
@@ -193,21 +200,22 @@ class Config(Resource):
             status = "failure"
             message = "Default configs cannot be deleted!"
             current_app.logger.info("Default configs cannot be deleted!")
-            return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper, skip_none=True)
+            return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper)
         elif config:
             hosts = configs_dao.get_nodes_list_of_config(config)
             configs_dao.assign_default_config_to_config_nodes(config)
             data = configs_dao.delete_config(config)
+            refresh_cached_config()
             status = "success"
             message = "Config is deleted successfully"
             current_app.logger.warning("Config is deleted successfully")
-            return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper, skip_none=True)
+            return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper)
         else:
             current_app.logger.info("Config is not present for the id given!")
             abort(404, 'Config id is not valid!')
 
 
-@ns.route('/<int:config_id>/assign', endpoint='assign_config_by_id')
+@api.resource('/configs/<int:config_id>/assign' ,endpoint='assign_config_by_id')
 class AssignNodeConfig(Resource):
     """
         Assigns a config to single/multiple node(s)
@@ -216,7 +224,6 @@ class AssignNodeConfig(Resource):
                           [False, False], [None, None], [None, None])
 
     @admin_required
-    @ns.expect(parser)
     def put(self, config_id=None):
         """
             Assigns a config to single/multiple node(s)
@@ -233,7 +240,7 @@ class AssignNodeConfig(Resource):
                         config.name, args['host_identifiers'], args['tags']))
                 status = "success"
                 message = "Config is assigned to the hosts successfully"
-                return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
+                return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)
             else:
                 current_app.logger.info('Host Identifiers or Tags are required!')
                 abort(400, 'Host Identifiers or Tags are required!')
@@ -242,14 +249,14 @@ class AssignNodeConfig(Resource):
             abort(404, 'Config id is not valid!')
 
 
-@ns.route('/<int:config_id>/hosts', endpoint='hosts_list_by_config')
+@api.resource('/configs/<int:config_id>/hosts', endpoint='hosts_list_by_config')
 class HostsListByConfig(Resource):
     """
         Hosts list by config id
     """
     parser = requestparse([], [], [], [], [], [])
 
-    @ns.expect(parser)
+    
     def get(self, config_id=None):
         """
             Hosts list by config id
@@ -259,7 +266,7 @@ class HostsListByConfig(Resource):
             nodes = [node.get_dict() for node in configs_dao.get_nodes_list_of_config(config)]
             status = "success"
             message = "Hosts are retried for the config"
-            return marshal(prepare_response(message, status, nodes), parent_wrappers.common_response_wrapper, skip_none=True)
+            return marshal(prepare_response(message, status, nodes), parent_wrappers.common_response_wrapper)
         else:
             current_app.logger.info('Config id is not valid!')
             abort(404, 'Config id is not valid!')

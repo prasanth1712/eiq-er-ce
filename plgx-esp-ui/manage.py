@@ -3,30 +3,21 @@
 # force a mode else, the best mode is selected automatically from what's
 # installed
 # -*- coding: utf-8 -*-
-import ast
 import glob
 import ssl
-import time
-import datetime as dt
 from os.path import abspath, dirname, join
+import click
 
-import pika
-
-from flask import current_app, request
-from flask_migrate import MigrateCommand
-from flask_script import Command, Manager, Server, Shell
-from flask_script.commands import Clean, ShowUrls
-from flask_sockets import Sockets
+from flask import current_app, request, g
+from flask_sockets import Sockets, Rule
 
 from polylogyx import create_app, db
 from polylogyx.models import ThreatIntelCredentials
-from polylogyx.settings import CurrentConfig, RabbitConfig
+from polylogyx.settings import  RabbitConfig
+from polylogyx.settings import CurrentConfig, DevConfig, TestConfig
 import json
 import socketio
-import datetime as dt
 import functools
-import logging
-import threading
 import time
 import pika
 
@@ -46,43 +37,16 @@ with app.app_context():
     validate_osquery_query('select * from processes;')
 
 
-def _make_context():
-    return {'app': app, 'db': db}
+@click.argument('remaining', required=False)
+@app.cli.command("test", help="Runs unit testcases")
+def test(remaining=[]):
+    test_cls = Test()
+    if remaining:
+        remaining = [remaining]
+    test_cls.run(remaining)
 
 
-class SSLServer(Command):
-    """
-    Run WSGI server with SSL context
-    """
-    def run_server(self):
-        from gevent import pywsgi
-        from werkzeug.debug import DebuggedApplication
-        from geventwebsocket.handler import WebSocketHandler
-
-        validate_osquery_query('select * from processes;')
-        pywsgi.WSGIServer(('', 5000), DebuggedApplication(app),
-                          handler_class=WebSocketHandler,
-                          keyfile='../nginx/private.key', certfile='../nginx/certificate.crt'
-                          ).serve_forever()
-
-    def run(self, *args, **kwargs):
-        if __name__ == '__main__':
-            from werkzeug.serving import run_with_reloader
-            run_with_reloader(self.run_server())
-
-
-manager = Manager(app)
-manager.add_command('server', Server())
-
-manager.add_command('shell', Shell(make_context=_make_context))
-manager.add_command('db', MigrateCommand)
-manager.add_command('clean', Clean())
-manager.add_command('urls', ShowUrls())
-manager.add_command('ssl', SSLServer())
-
-
-@manager.add_command
-class test(Command):
+class Test():
     name = 'test'
     capture_all_args = True
 
@@ -99,7 +63,7 @@ class test(Command):
         return exit_code
 
 
-@manager.command
+@app.cli.command('add_existing_yara_filenames_to_json',help="mapping old yara files to json")
 def add_existing_yara_filenames_to_json():
     import os
     from os import walk
@@ -108,6 +72,9 @@ def add_existing_yara_filenames_to_json():
     for (dirpath, dirnames, filenames) in walk(current_app.config['BASE_URL'] + "/yara/"):
         file_list.extend(filenames)
         break
+    if len(file_list)==0:
+        with open(os.path.join(current_app.config['BASE_URL'], 'yara', 'list.txt'), 'w') as the_file:
+            pass
     files = [file_name + '\n' for file_name in file_list if file_name != 'list.txt' and file_name != 'list.json']
     jsonfile = os.path.join(current_app.config['BASE_URL'], 'yara', 'list.json')
     if not os.path.isfile(jsonfile) :
@@ -118,89 +85,10 @@ def add_existing_yara_filenames_to_json():
             json.dump(data, jsonfile)
 
 
-@manager.option('--specs_dir')
-@manager.option('--export_type', default='sql', choices=['sql', 'json'])
-@manager.option('--target_file', default='osquery_schema.sql')
-def extract_ddl(specs_dir, export_type, target_file):
-    """
-    Extracts CREATE TABLE statements or JSON Array of schema from osquery's table specifications
-
-    python manage.py extract_ddl --specs_dir /Users/polylogyx/osquery/specs --export_type sql
-            ----> to export to osquery_schema.sql file
-    python manage.py extract_ddl --specs_dir /Users/polylogyx/osquery/specs --export_type json
-            ----> to export to osquery_schema.json file
-    """
-    from polylogyx.extract_ddl import extract_schema, extract_schema_json
-    current_app.logger.info("Importing OSQuery Schema to json/sql format...")
-    spec_files = []
-    spec_files.extend(glob.glob(join(specs_dir, '*.table')))
-    spec_files.extend(glob.glob(join(specs_dir, '**', '*.table')))
-    if export_type == 'sql':
-        ddl = sorted([extract_schema(f) for f in spec_files], key=lambda x: x.split()[2])
-        opath = join(dirname(__file__), 'polylogyx', 'resources', target_file)
-        content = '\n'.join(ddl)
-    elif export_type == 'json':
-        full_schema = []
-        for f in spec_files:
-            table_dict = extract_schema_json(f)
-            if table_dict['platform']:
-                full_schema.append(table_dict)
-        opath = join(dirname(__file__), 'polylogyx', 'resources', target_file)
-        content = json.dumps(full_schema)
-    else:
-        print("Export type given is invalid!")
-        opath = None
-        content = None
-
-    with open(opath, 'w') as f:
-        if export_type == 'sql':
-            f.write('-- This file is generated using "python manage.py extract_ddl"'
-                    '- do not edit manually\n')
-        f.write(content)
-    current_app.logger.info('OSQuery Schema is exported to the file {} successfully'.format(opath))
-
-
-@manager.option('--IBMxForceKey')
-@manager.option('--IBMxForcePass')
-@manager.option('--VT_API_KEY')
-def add_api_key(IBMxForceKey, IBMxForcePass, VT_API_KEY):
-    import os
-    ibm_x_force_credentials = ThreatIntelCredentials.query.filter(ThreatIntelCredentials.intel_name == 'ibmxforce').first()
-
-    vt_credentials = ThreatIntelCredentials.query.filter(ThreatIntelCredentials.intel_name == 'virustotal').first()
-    if vt_credentials:
-        current_app.logger.info('Virus Total Key already exists')
-    else:
-        credentials = {}
-        credentials['key'] = VT_API_KEY
-        ThreatIntelCredentials.create(intel_name='virustotal', credentials=credentials)
-        current_app.logger.info("Added VirusTotal Key successfully!")
-    OTX_API_KEY = os.environ.get('ALIENVAULT_OTX_KEY')
-    if OTX_API_KEY:
-        otx_credentials = ThreatIntelCredentials.query.filter(ThreatIntelCredentials.intel_name == 'alienvault').first()
-        if otx_credentials:
-            current_app.logger.info('AlienVault  Key already exists')
-        else:
-            credentials={}
-            credentials['key'] = OTX_API_KEY
-            ThreatIntelCredentials.create(intel_name='alienvault', credentials=credentials)
-            current_app.logger.info("Added AlienVault Key successfully!")
-
-    if ibm_x_force_credentials:
-        current_app.logger.info('Ibm Key already exists')
-    else:
-        credentials={}
-        credentials['key'] = IBMxForceKey
-        credentials['pass'] = IBMxForcePass
-        ThreatIntelCredentials.create(intel_name='ibmxforce', credentials=credentials)
-        current_app.logger.info("Added IBMXForce Key successfully!")
-    exit(0)
-
-
-@sockets.route('/distributed/result')
+@sockets.route('/distributed/result',websocket=True)
 def distributed_result(ws):
     """
-    Web socket URL to fetch the results of live query results published from ESP container
+    Web socket URL to fetch the results of live queries published from ESP container
     """
     message = str(ws.receive())
     try:
@@ -211,7 +99,7 @@ def distributed_result(ws):
         print(str(e))
 
 
-@sockets.route('/csv/export')
+@sockets.route('/csv/export',websocket=True)
 def csv_export(ws):
     """
     Web socket URL to fetch the results of csv export published from  celery task
@@ -302,11 +190,12 @@ class Consumer:
         acknowledged = False
         status = self.push_results_to_web_socket(body)
         if not acknowledged:
+            # If not acknowledged from response action section listed above, it has to be acknowledged
             cb = functools.partial(self.ack_message, delivery_tag, status)
             self.connection.add_callback_threadsafe(cb)
 
     def push_results_to_web_socket(self, body):
-        """Pushes the results to the web socket end, connected to fetch results of LiveQuery/ResponseAction"""
+        """Pushes the results to the web socket end, connected to fetch results of LiveQuery"""
         if self.ws and not self.ws.closed:
             self.ws.send(body)
             return True
@@ -361,15 +250,46 @@ def add_response_headers(response):
     return response
 
 
-from polylogyx.log_setting import _set_log_level_to_db,_check_log_level_exists
-
-
-@manager.option("--log_level", default="WARNING")
 def set_log_level(log_level):
-    if not _check_log_level_exists():
-        _set_log_level_to_db(log_level)
+    from polylogyx.log_setting import get_log_level_setting, update_log_level_setting
+    if not get_log_level_setting():
+        update_log_level_setting(log_level)
+
+
+@click.option("--log_level", default="WARNING", help="Log level that application server uses to log")
+@app.cli.command('set_log_level', help="Updates the er server log level")
+def set_log_level_command(log_level):
+    set_log_level(log_level)
+
+
+sockets.url_map.add(Rule('/distributed/result', endpoint=distributed_result, websocket=True))
+sockets.url_map.add(Rule('/csv/export', endpoint=csv_export, websocket=True))
+
+@app.cli.command('show_urls', help="lists all urls")
+def list_routes():
+    import urllib
+    output = []
+    for rule in app.url_map.iter_rules():
+        methods = ','.join(rule.methods)
+        line = urllib.parse.unquote("{:50s} {:50s} {}".format(rule.endpoint, methods, rule))
+        output.append(line)
+    for line in sorted(output):
+        print(line)
 
 
 if __name__ == '__main__':
-    manager.run()
-
+    if CurrentConfig == DevConfig:
+        ssl_context = ('../nginx/certificate.crt', '../nginx/private.key')
+        app.run(debug=True, use_debugger=True, use_reloader=False, passthrough_errors=True,
+                host='0.0.0.0', port=5001,
+                ssl_context=ssl_context,
+                )
+    elif CurrentConfig == TestConfig:
+        test(['tests/'])
+    else:
+        print("""
+        Please set ENV env variable correctly!
+        for production env -- 'export ENV=prod'
+        for test env -- 'export ENV=test'
+        """)
+        exit(1)

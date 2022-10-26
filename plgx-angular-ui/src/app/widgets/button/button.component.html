@@ -1,0 +1,6 @@
+
+<button class="btn" [ngClass] = "btnClass" (click)="emitEvent" type="{{btnType}}" [disabled]="isDisabled" [attr.data-dissmiss]="modalDismiss" [routerLink]="btnLink">
+        <i *ngIf="icon" class="fa {{icon}}">
+        </i>{{text}}<span *ngIf=isLoading class="spinner-border spinner-border-sm" role="status" aria-hidden="true">
+        </span>
+</button>

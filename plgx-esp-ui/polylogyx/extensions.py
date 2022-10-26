@@ -5,7 +5,6 @@ from flask_ldap3_login import LDAP3LoginManager
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_migrate import Migrate
-from flask_caching import Cache
 from flask_sqlalchemy import SQLAlchemy
 from flask_authorize import Authorize
 from werkzeug.exceptions import HTTPException
@@ -13,6 +12,8 @@ from flask import g
 from raven import Client
 from raven.contrib.celery import register_signal, register_logger_signal
 from raven.contrib.flask import Sentry
+
+import redis
 
 
 def make_celery(app, celery):
@@ -66,12 +67,56 @@ class MyUnauthorizedException(HTTPException):
     description = 'Access to this resource is Forbidden!'
 
 
+class RedisClient(object):
+    def __init__(self, app=None, **kwargs):
+        self._redis_client = None
+        self.provider_class = redis.Redis
+        self.provider_kwargs = kwargs
+
+        if app is not None:
+            self.init_app(app)
+
+    @classmethod
+    def from_custom_provider(cls, provider, app=None, **kwargs):
+        assert provider is not None, "your custom provider is None, come on"
+
+        # We never pass the app parameter here, so we can call init_app
+        # ourselves later, after the provider class has been set
+        instance = cls(**kwargs)
+
+        instance.provider_class = provider
+        if app is not None:
+            instance.init_app(app)
+        return instance
+
+    def init_app(self, app, **kwargs):
+        self.provider_kwargs.update(kwargs)
+        self._redis_client = self.provider_class(host=app.config.get('REDIS_HOST'), 
+                                                port=app.config.get('REDIS_PORT'), 
+                                                password=app.config.get('REDIS_PASSWORD'), 
+                                                db=0, 
+                                                **self.provider_kwargs
+                                            )
+
+    def __getattr__(self, name):
+        return getattr(self._redis_client, name)
+
+    def __getitem__(self, name):
+        return self._redis_client[name]
+
+    def __setitem__(self, name, value):
+        self._redis_client[name] = value
+
+    def __delitem__(self, name):
+        del self._redis_client[name]
+
+
 bcrypt = Bcrypt()
 db = SQLAlchemy()
 mail = Mail()
 migrate = Migrate()
-cache = Cache()
 authorize = Authorize(current_user=get_current_user, exception=MyUnauthorizedException, strict=False)
 ldap_manager = LDAP3LoginManager()
 login_manager = LoginManager()
 sentry = Sentry()
+redis_client = RedisClient()

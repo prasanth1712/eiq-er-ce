@@ -13,21 +13,22 @@ import { QueryBuilderModule } from "angular2-query-builder";
 
 import { RouterModule } from '@angular/router';
 // import {TableModule} from 'primeng/table';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule,HTTP_INTERCEPTORS } from '@angular/common/http';
 import { NgJsonEditorModule } from 'ang-jsoneditor';
 import {NgxPaginationModule} from 'ngx-pagination';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HostSearchPipe } from '../../dashboard/pipes/host-search.pipe';
 import { ActivitySearchPipe } from './Activity-search.pipe';
-import {NgDatepickerModule} from "ng2-datepicker";
-import { FilterAlertsWithHostnameComponent } from './filter-alerts-with-hostname/filter-alerts-with-hostname.component';
+import {DatepickerModule} from "ng2-datepicker";
 import {NgxMaterialTimepickerModule} from 'ngx-material-timepicker';
 import { ToastrModule } from 'ngx-toastr';
 import { AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { SharedModule } from '../../shared/shared.module';
+import {NgbDatepickerModule, NgbModule} from '@ng-bootstrap/ng-bootstrap';
+import { AuthInterceptor } from 'src/app/_helpers/auth.interceptor';
+
 @NgModule({
-  declarations: [HostsComponent,NodesComponent,ActivityComponent,HostSearchPipe,ActivitySearchPipe,FilterAlertsWithHostnameComponent],
+  declarations: [HostsComponent,NodesComponent,ActivityComponent,HostSearchPipe,ActivitySearchPipe],
   imports: [
     CommonModule,
     GlobalModule,
@@ -42,13 +43,17 @@ import { SharedModule } from '../../shared/shared.module';
     Ng2SearchPipeModule,
     NgJsonEditorModule,
     NgxPaginationModule,
-    NgDatepickerModule,
+    DatepickerModule,
     NgxMaterialTimepickerModule,
     ToastrModule.forRoot(),
     AngularMultiSelectModule,
     AceEditorModule,
-    SharedModule
-
+    SharedModule,
+    NgbDatepickerModule,
+    NgbModule,
+  ],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
   ],
   exports:[HostsComponent,NodesComponent,ActivityComponent],
 })

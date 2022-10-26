@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { DataPurgeComponent } from './data-purge.component';
 
@@ -6,7 +6,7 @@ describe('DataPurgeComponent', () => {
   let component: DataPurgeComponent;
   let fixture: ComponentFixture<DataPurgeComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ DataPurgeComponent ]
     })

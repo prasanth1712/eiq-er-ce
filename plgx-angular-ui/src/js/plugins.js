@@ -78,7 +78,6 @@ $(function() {
 
 
 function  init_querybuilder(exist_query) {
-    // console.log(typeof(exist_query));
 
    var $queryBuilder = $('#query-builder');
 
@@ -225,15 +224,16 @@ function  init_querybuilder(exist_query) {
             if (!$builder) {
                 return true;
             }
-            debugger
             if (!$builder.queryBuilder('validate')) {
                 e.preventDefault();
                 $('#rules-hidden').val('');
+                $('#rules-error-message').html('Please add rule conditions')
                 return false;
             }
             else{
                 var rules = JSON.stringify($builder.queryBuilder('getRules'));
                 console.log(rules);
+                $('#rules-error-message').contents().filter((_, el) => el.nodeType === 3).remove();
                 $('#rules-hidden').val(rules);
                 return true;
             }

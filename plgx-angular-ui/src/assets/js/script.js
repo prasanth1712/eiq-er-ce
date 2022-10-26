@@ -781,13 +781,13 @@ export default function create_timeline(jsonFilteredArray, arg,alasql_) {
       name = jsonObjectOfActions[jsonObject];
     }
   }
-  for (let jsonMapping in jsonOfActionMapping) {
-    if (name === jsonMapping) {
-      alerted_event.actionKey = jsonOfActionMapping[jsonMapping];
-      alerted_event.actionValue = alerted_event[name];
-      break;
-    }
-  }
+  // for (let jsonMapping in jsonOfActionMapping) {
+  //   if (name === jsonMapping) {
+  //     alerted_event.actionKey = jsonOfActionMapping[jsonMapping];
+  //     alerted_event.actionValue = alerted_event[name];
+  //     break;
+  //   }
+  // }
   // document.getElementById("actionKey").innerHTML = alerted_event.actionKey + ':';
   // document.getElementById("actionValue").innerHTML = alerted_event.actionValue;
 
@@ -798,7 +798,14 @@ export default function create_timeline(jsonFilteredArray, arg,alasql_) {
   var PageNumber = 1;
   var timeline_event_table = $('#pf-timeline-data').DataTable({
     "pagingType": "full_numbers",
-    drawCallback: function () {
+    "order":[],
+    drawCallback: function (action) {
+      if(action.aLastSort.length  != 0 && eventsdata.events != undefined) {
+        var dir = action.aLastSort[0].dir
+        if(dir == 'asc'){eventsdata.events.sort(function(a, b){return a.eid.localeCompare(b.eid);});}
+        else{eventsdata.events.sort(function(a, b){return a.eid.localeCompare(b.eid)}).reverse();}
+      }
+      redraw_event_timeline_table(timeline_event_table, eventsdata,1);
       $('.paginate_button').on('click', (e) =>  {
           var info = timeline_event_table.page.info();
           if(e.currentTarget.className == 'paginate_button page-item ' || e.currentTarget.className == 'paginate_button page-item active'){
@@ -825,7 +832,7 @@ export default function create_timeline(jsonFilteredArray, arg,alasql_) {
       }
 
   });
-
+  d3.select("#pf-timeline").select("svg").remove();
   timeline = d3.chart.timeline()
     .end(today)
     .start(start)
@@ -835,9 +842,9 @@ export default function create_timeline(jsonFilteredArray, arg,alasql_) {
       Initialize_Event_Pagination(timeline_event_table, el);
       redraw_event_timeline_table(timeline_event_table, el,1);
     });
-
+    element = [];
   element = d3.select('#pf-timeline').append('div');
-
+  $('#timeline-selectpicker').find('option').remove();
   for (var x in jsonFilteredArray) { //json lives in external file for testing
     timeline_data[x] = {};
     timeline_data[x].name = jsonFilteredArray[x].name;
@@ -850,7 +857,6 @@ export default function create_timeline(jsonFilteredArray, arg,alasql_) {
       }
       timeline_data[x].data[y].date = new Date(jsonFilteredArray[x].data[y].date);  //set the date
     }
-
     $('#timeline-selectpicker').append('<option>' + timeline_data[x].name + '</option>');
     if (timeline_data[x].jsonObjectOfEvents.show_by_default) {
       timeline_data[x].display = true;
@@ -866,11 +872,27 @@ export default function create_timeline(jsonFilteredArray, arg,alasql_) {
 
 
 
+  $('#timeline-selectpicker').selectpicker('val', default_selected_events)
 
-  $('#timeline-selectpicker').selectpicker('val', default_selected_events);
+  //On first load
+  $('.btn > .filter-option > .filter-option-inner> .filter-option-inner-inner').contents().filter((_, el) => el.nodeType === 3).remove();
+  $('.btn > .filter-option > .filter-option-inner> .filter-option-inner-inner').append($('#timeline-selectpicker').find('option:selected')[0].innerHTML,' + ',$("#timeline-selectpicker :selected").length-1)
+
   $('#timeline-selectpicker').on('changed.bs.select', function (event, clickedIndex, newValue, oldValue) {
+    var count = $("#timeline-selectpicker :selected").length;
+
+    //On Change
+    if(count>1){
+      var selectedOptions = $('#timeline-selectpicker').find('option:selected');
+      var selectedOptionFirst = selectedOptions[0].innerHTML
+      $('.btn > .filter-option > .filter-option-inner> .filter-option-inner-inner').contents().filter((_, el) => el.nodeType === 3).remove();
+      $('.btn > .filter-option > .filter-option-inner> .filter-option-inner-inner').append($('#timeline-selectpicker').find('option:selected')[0].innerHTML,' + ',count-1)
+    }
+
+   if(clickedIndex != null){
     timeline_data[clickedIndex].display = !timeline_data[clickedIndex].display;
     redraw_timeline();
+   }
 
   });
 

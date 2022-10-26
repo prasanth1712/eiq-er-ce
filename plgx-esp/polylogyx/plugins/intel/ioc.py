@@ -5,7 +5,7 @@ import sqlalchemy
 from flask import current_app
 
 from polylogyx.db.database import db
-from polylogyx.db.models import IOCIntel, PhishTank, ResultLogScan
+from polylogyx.db.models import IOCIntel, ResultLogScan
 
 from .base import AbstractIntelPlugin
 
@@ -44,19 +44,9 @@ class IOC(AbstractIntelPlugin):
         for result_log_scan_elem in result_log_scans:
 
             try:
-                response = (
-                    db.session.query(PhishTank)
-                    .filter(PhishTank.url.ilike("%" + result_log_scan_elem.scan_value + "%"))
-                    .first()
-                )
                 newReputations = dict(result_log_scan_elem.reputations)
-                if response:
-                    newReputations[self.name + "_detected"] = True
-                    newReputations[self.name] = {}
-
-                else:
-                    newReputations[self.name + "_detected"] = False
-                    newReputations[self.name] = {}
+                newReputations[self.name + "_detected"] = False
+                newReputations[self.name] = {}
 
                 result_log_scan_elem.reputations = newReputations
                 db.session.add(result_log_scan_elem)

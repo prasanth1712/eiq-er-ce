@@ -50,7 +50,6 @@ def upgrade():
     op.create_foreign_key(
         None, "distributed_query_task", "node", ["node_id"], ["id"], ondelete="CASCADE"
     )
-
     # ### end Alembic commands ###
 
 
@@ -89,5 +88,4 @@ def downgrade():
     op.alter_column(
         "alert_email", "alert_id", existing_type=sa.INTEGER(), nullable=False
     )
-
     # ### end Alembic commands ###

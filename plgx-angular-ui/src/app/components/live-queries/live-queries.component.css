@@ -31,7 +31,7 @@
 }
 
 p {
-  font-family: Lato;
+  font-family: Roboto;
 }
 .kt-portlet .kt-portlet__head .kt-portlet__head-label .kt-portlet__head-title {
    margin: 0;
@@ -54,7 +54,7 @@ p {
   color: #646c9a;
 }
 .ace_editor, .ace_editor div{
-    font-family:monospace
+    font-family:Roboto
 }
 table {
   border-collapse: collapse;
@@ -92,3 +92,76 @@ tr:nth-child(even) {
 :host ::ng-deep .dropdown-list ul li:first-child{
   padding-top: 0px;
 }
+::ng-deep .Kt-livequerylist .cuppa-dropdown .selected-list .c-btn .c-label {
+  width: 90px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ace_editor, .ace_editor div{
+    font-family:monospace
+}
+.live-query-parent-row{
+  max-width: 100%;height: 100%;
+}
+.tables-container{
+  border:1px solid #f2f5f7;
+  height: 100%;
+  overflow: hidden;
+}
+.tables-data{
+  max-width:100%;
+  background-color: white;
+  overflow-y: scroll;
+  height:95%
+}
+.right-content-conf{
+  background-color: white;
+  padding-top: 2%;
+  height:100vh;
+  overflow: hidden;
+  padding-bottom: 2%;
+  display: flex;
+  flex-direction: column;
+}
+.kt-portlet{
+  margin-bottom: 0px;
+}
+.kt-portlet__body-lq{
+  max-height:100vh;
+  overflow-y: scroll;
+}
+.ace-editor-lq{
+  height: 25vh;
+  font-size:18px
+}
+#accordion_search_bar_container{
+  height: 5%;
+}
+
+::ng-deep.dropdown-overflow .list-filter{
+  padding-right: 30px !important;
+}
+.no-record-found{
+  font-size: larger;
+  text-align: center;
+  padding-top: 10px
+}
+::ng-deep.dropdown-overflow-y .list-area>div:last-child{
+  height: 300px !important;
+  overflow: hidden;
+}
+::ng-deep.dropdown-overflow-y .list-area>div:last-child>ul.lazyContainer{
+  height: 100%;
+  overflow-y: scroll !important;
+  overflow-x: hidden;
+}
+::ng-deep.dropdown-overflow-y .list-area>div:last-child>ul.lazyContainer>li{
+  overflow: hidden !important;
+  word-break: break-all !important;
+}
+::ng-deep.dropdown-overflow-y .dropdown-list{
+  overflow: hidden;
+}
+::ng-deep #results table.dataTable tr td {
+  padding: 10px 15px;}

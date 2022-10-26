@@ -1,0 +1,330 @@
+<div class="kt-grid kt-grid--hor kt-grid--root">
+  <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
+    <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
+    <!-- begin:: Content -->
+    <div class="kt-portlet kt-portlet--mobile kt-portlet--responsive-mobile">
+      <div class="kt-portlet__head kt-portlet__head--lg">
+
+
+        <div class="d-flex">
+        <a class="d-flex kt-portlet__head-anchor" [routerLink]="['/rules/yara']">
+          <div class="kt-portlet__head-label" >
+            <span class="kt-portlet__head-icon d-flex">
+              <i class="kt-font-brand fa fa-user-cog fnt-dark-black"></i>
+            </span>
+            <h3 class="kt-portlet__head-title custom-header-title d-flex align-items-center">
+              YARA
+              <i class="badge-pill badge-light fa fa-info custom-badge" title="It could take about 60-90 seconds for the agent to pick the yara signatures, based on your network."></i>
+            </h3>
+          </div>
+        </a>
+
+      </div>
+
+        <div class="kt-portlet__head-toolbar">
+          <div class="kt-portlet__head-wrapper">
+            <div class="kt-portlet__head-actions">
+              <ng-container *AppHasRole="role.adminAccess">
+              <button  type="button" class="btn btn-small btn-long" data-toggle="modal" data-target="#add_yara" aria-haspopup="true" aria-expanded="false">
+  							<i class="fa fa-plus back_icon_align"></i>
+  							<span>Add YARA File</span>
+  						</button>
+              </ng-container>
+              <!--Begin:: Modal-->
+              <div class="modal fade" id="add_yara" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true"  *AppHasRole="role.adminAccess">
+	             <form class="kt-form" id="kt_form" [formGroup]="yarafile" >
+	              <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+	                <div class="modal-content">
+	                  <div class="modal-header">
+                      <h4 class="" style="color: #646c9a;">Add YARA File</h4>
+											<button type="button" class="close" (click)="clearInput()" data-dismiss="modal" aria-label="Close"></button>
+	                  </div>
+	                   <div class="modal-body kt-scroll" data-scroll="true" data-height="" data-scrollbar-shown="true">
+										 <!--begin:: Widgets/Tasks -->
+                      <div class="row">
+                        <div class="col-xl-2"></div>
+                          <div class="col-xl-8">
+                            <div class="kt-section kt-section--first">
+                              <div class="kt-section__body" style="font-size: 11px;">
+                                <div class="form-group row">
+                                  <label class="col-3 col-form-label" style="color: #646c9a;">Upload File</label>
+                                  <div class="custom-file col-9">
+                                    <input type="file" [(ngModel)]="clearValue"  name="yara"  formControlName="yara" (change)="onFileSelect($event)" class="custom-input-file" id="customFile" [ngClass]="{ 'is-invalid': FileSizeError }">
+                                    <div *ngIf="FileSizeError" class="invalid-feedback">
+                                      Max file size is {{maxFileSize/1048576 | number: '1.0-2'}}MB
+                                    </div>
+                                  
+
+                                  </div>
+                                </div>
+                                <div class="form-group row required">
+                                  <label class="col-sm-2 col-form-label form--label" style="color: #646c9a;">Platforms</label>
+                                  <div class="col-10">
+                                    <div class="kt-checkbox-inline">
+                                      <label class="kt-checkbox">
+                                        <input type="checkbox" #checkboxes (change)="onItemChange($event)"   name="platforms" value="windows">
+                                        <label style="color: #646c9a;">windows</label>
+                                        <span></span>
+                                      </label>
+                                      <label class="kt-checkbox">
+                                        <input type="checkbox" #checkboxes (change)="onItemChange($event)"  name="platforms" value="linux" >
+                                        <label style="color: #646c9a;">linux</label>
+                                        <span></span>
+                                      </label>
+                                      <label class="kt-checkbox">
+                                        <input type="checkbox" #checkboxes  (change)="onItemChange($event)" name="platforms" value="darwin">
+                                        <label style="color: #646c9a;">darwin</label>
+                                        <span></span>
+                                      </label>
+                                   </div>
+                                  </div>
+                              </div>
+                              </div>
+                            </div>
+                          </div>
+                        <div class="col-xl-2"></div>
+                      </div>
+
+					            <!--end:: Widgets/Tasks -->
+	                    </div>
+                      <div class="modal-footer align-center">
+                        <appbutton btnType="button" (click)="clearInput()" text="Cancel" btnClass="btn-small-opaque d-inline-block" (click)="closeModal('add_yara')" ></appbutton>
+                        <appbutton btnType="submit" (click)="onSubmit()" text="Upload" btnClass="btn-small d-inline-block"></appbutton>
+                      </div>
+	                  </div>
+	                </div>
+                </form>
+	            </div>
+              <div class="modal fade" id="edit_yara" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                <form class="kt-form" id="kt_form" [formGroup]="edityarafile" >
+                 <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                   <div class="modal-content">
+                     <div class="modal-header">
+                       <h4 class="" style="color: #646c9a;">Assign additional platform to YARA File</h4>
+                       <button type="button" class="close" (click)="clearInput()" data-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                      <div class="modal-body kt-scroll" data-scroll="true" data-height="" data-scrollbar-shown="true">
+                      <!--begin:: Widgets/Tasks -->
+                       <div class="row">
+                         <div class="col-xl-2"></div>
+                           <div class="col-xl-8">
+                             <div class="kt-section kt-section--first">
+                               <div class="kt-section__body" style="font-size: 11px;">
+                                 <div class="form-group row">
+                                   <label class="col-3 col-form-label" style="color: #646c9a;">File Name: </label>
+                                   <div class="custom-file col-9">
+                                    <label class="col-form-label" style="color: #646c9a;">{{editingYara?.name}}</label>
+                                   </div>
+                                 </div>
+                                 <div class="form-group row required">
+                                   <label class="col-sm-2 col-form-label form--label" style="color: #646c9a;">Platforms</label>
+                                   <div class="col-10">
+                                     <div class="kt-checkbox-inline">
+                                       <label class="kt-checkbox">
+                                         <input type="checkbox" (change)="onItemChange($event)" [checked]="checkPlatformExists('windows',this.editingYara?.platform)" [disabled]="checkPlatformExists('windows',this.editingYara?.platform)" name="platforms" value="windows">
+                                         <label style="color: #646c9a;">windows</label>
+                                         <span></span>
+                                       </label>
+                                       <label class="kt-checkbox">
+                                         <input type="checkbox" (change)="onItemChange($event)" [checked]="checkPlatformExists('linux',this.editingYara?.platform)" [disabled]="checkPlatformExists('linux',this.editingYara?.platform)"  name="platforms" value="linux" >
+                                         <label style="color: #646c9a;">linux</label>
+                                         <span></span>
+                                       </label>
+                                       <label class="kt-checkbox">
+                                         <input type="checkbox" (change)="onItemChange($event)" [checked]="checkPlatformExists('darwin',this.editingYara?.platform)" [disabled]="checkPlatformExists('darwin',this.editingYara?.platform)" name="platforms" value="darwin">
+                                         <label style="color: #646c9a;">darwin</label>
+                                         <span></span>
+                                       </label>
+                                    </div>
+                                   </div>
+                               </div>
+                               </div>
+                             </div>
+                           </div>
+                         <div class="col-xl-2"></div>
+                       </div>
+ 
+                       <!--end:: Widgets/Tasks -->
+                       </div>
+                       <div class="modal-footer align-center">
+                         <appbutton btnType="button" (click)="clearInput()" text="Cancel" btnClass="btn-small-opaque" (click)="closeModal('edit_yara')" ></appbutton>
+                         <appbutton btnType="submit" (click)="onSubmitEdit(editingYara?.name)" text="Update" btnClass="btn-small"></appbutton>
+                       </div>
+                     </div>
+                   </div>
+                 </form>
+               </div>
+              <!--End:: Modal-->
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="kt-portlet__body kt-portlet__body--fit">
+        <div class="kt-portlet__body tbl-bg custom-margin-body-inner pb-0 " >
+          <div class="row">
+            <div class="col-md-6 row-filter-search">
+              <single-select label="Platform: "
+                    [options]="platformOptions" [formControl]="platformSelectControl"
+                    (valueChange)="getByFilter($event)" [(ngModel)]="selectedPlatform" [defaultPlaceholder]="'any'" ngDefaultControl>
+              </single-select>
+            </div>
+          </div>
+        <!--begin: Datatable -->
+        <table  datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable dataTable hove no-footer row-border table-checkable mt-18">
+          <thead>
+            <tr>
+              <th title="" class="th-width-45 th-min-width-45">Filename</th>
+              <th title="" class="th-width-45">Platform</th>
+              <th  class="th-width-5" *AppHasRole="role.adminAccess"></th>
+              <!-- <th title="">Type</th> -->
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor='let yara of yara_value'>
+              <tr (click)="viewFile(yara,$event)">
+                <td class="d-flex align-items-center"><a>{{ yara }}</a></td>
+                <td class="vertical-middle" *ngIf="platform_value != 'any' ">
+									<span *ngIf="platform_value == 'windows'" class='logo-color menu-icon'
+										style='font-weight: 400;'>
+										<img alt='' src='./assets/media/logo/windows_icon.svg' height='19px'
+											width='16px' />
+										<span>&ensp;Windows</span>
+									</span>
+									<span *ngIf="platform_value == 'darwin'" class='logo-color menu-icon'
+										style='font-weight: 400;'>
+										<i class='fab fa-apple' style='font-size: 18px; color: #999999;'></i>
+										<span>&ensp;Darwin</span>
+									</span>
+									<span *ngIf="platform_value == 'linux'"
+										class='logo-color menu-icon' style='font-weight: 400;'>
+										<img alt='' src='./assets/media/logo/linux_icon.svg' height='19px'
+											width='16px' />
+										<span>&ensp;Linux</span>
+									</span>
+								</td>
+                <td class="vertical-middle" *ngIf="platform_value == 'any' ">
+                  <span *ngIf="getAllPlatforms(yara,'windows')" class='logo-color menu-icon' style='font-weight: 400;'>
+                    <img alt='' src='./assets/media/logo/windows_icon.svg' height='19px' width='16px' />
+                    <span>&ensp;Windows</span>
+                  </span>
+                  <span *ngIf="getAllPlatforms(yara,'darwin')" class='logo-color menu-icon' style='font-weight: 400;'>
+                    <i class='fab fa-apple' style='font-size: 18px; color: #999999;'></i>
+                    <span>&ensp;Darwin</span>
+                  </span>
+                  <span *ngIf="getAllPlatforms(yara,'linux')" class='logo-color menu-icon' style='font-weight: 400;'>
+                    <img alt='' src='./assets/media/logo/linux_icon.svg' height='19px' width='16px' />
+                    <span>&ensp;Linux</span>
+                  </span>
+                </td>
+                <ng-container *AppHasRole="role.adminAccess">
+                  <td class="td-middle no-click-event">
+                    <div ngbDropdown class="div-center no-click-event" container="body">
+                      <a class="status no-click-event" ngbDropdownToggle id="dropdownMenuButton" style='padding-top:4px;padding-bottom:4px'>
+                        <i class="fas fa-ellipsis-v resolve-circle-check no-click-event" aria-hidden="true"></i>
+                      </a>
+                      <div id="dropdown" class="dropdown-menu" ngbDropdownMenu aria-labelledby="dropdownMenuButton">
+                        <ng-container>
+                          <a class="dropdown-item" ngbDropdownItem (click)="viewFile(yara)" data-toggle="modal"
+                            data-target="#yara_view">View File</a>
+                          <a class="dropdown-item" ngbDropdownItem (click)="editYara(yara)">Assign additional platform</a>
+                          <a class="dropdown-item" ngbDropdownItem (click)="deleteFile(yara)">Delete</a>
+                        </ng-container>
+                      </div>
+                    </div>
+  
+                  </td>
+                </ng-container>
+                
+             </tr>
+            </ng-container>
+            
+          </tbody>
+          <tr role="row" class="text-center" *ngIf="yara_value?.length == 0">
+            <td colspan="3" class="no-data" style="">
+              No YARA files
+            </td>
+          </tr>
+        </table>
+        
+        <!--end: Datatable -->
+        </div>
+        <div class="modal left fade" id="yara_view" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="display: none; position: fixed; background-color: hsla(0, 0%, 0%, 0.45)">
+			<div class="modal-dialog modal-lg" role="document">
+			  <div class="modal-content">
+				<div class="modal-header">
+				  <h3 class="" id="yara_head">{{yaraTitle}}</h3>
+				  <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body kt-scroll" data-scroll="true" data-height="200" data-scrollbar-shown="true">
+				  <!--begin:: Widgets/Tasks -->
+			  	<form class="kt-form" id="kt_form">
+						<div class="row">
+          		<pre id ="view_data" style="word-wrap: break-word; white-space: pre-wrap;">{{yara_view?.data}}</pre>
+							<!-- <div id="view_data"></div> -->
+						</div>
+				  </form>
+				  <!--end:: Widgets/Tasks -->
+				</div>
+				<div class="modal-footer align-center">
+				  <button type="button" class="btn btn-small-opaque" data-dismiss="modal">Close</button>
+				</div>
+			  </div>
+			</div>
+			  </div>
+      </div>
+    </div>
+    <!-- end:: Content -->
+    </div>
+  </div>
+
+</div>
+<div class="create" id="slideAlertDetail" [@flyInOutRTL]="isVisible ? true : false" [hidden]="!isVisible">
+	<div class="kt-portlet kt-portlet--last kt-portlet--responsive-mobile" id="kt_page_portlet">
+		<div class="kt-portlet__head pane-header kt-portlet__head--lg kt-portlet__head-responsive"
+			style="padding-right: 0px;background-color: #051E39;">
+			<div class="row col-12 kt-portlet__head-label " style="padding-right: 0px;">
+				<div class="row col-12" style="padding: 0px;">
+					<div class="col-12" style="padding: 0px;">
+						<span class="kt-portlet__head-icon" (click)="toggleHideDiv();" title='Close Detail Pane'>
+							<img src='./assets/media/icons/icon_close.svg' class="icon-close myicon" />
+						</span>
+						<span class="kt-portlet__head-icon" style="padding-left: 10px;">
+						</span>
+						<div style="float: right;"  ngbDropdown class="dropdown show">
+							<div *AppHasRole="role.adminAccess">
+                <a class="status" ngbDropdownToggle id="dropdownMenuButton"
+                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                style='width: 90px;padding-top:4px;padding-bottom:4px'>
+                <img src='./assets/media/icons/icon_more.svg' class="icon-more myicon" />
+                </a>
+                <div class="dropdown-menu custom-pane-dropdown" ngbDropdownMenu aria-labelledby="dropdownMenuButton">
+									<a class="dropdown-item" ngbDropdownItem (click)="editYara(selectedYara)">Assign Platform</a>
+							  </div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="">
+      <div class="kt-portlet__head kt-portlet__head--lg">
+        <div class="kt-portlet__head-toolbar">
+          <div class="kt-portlet__head-wrapper">
+            <label class="kt-portlet__head-title">
+              {{yaraTitle}}
+            </label>
+          </div>
+      </div>
+      </div>
+
+          <div class="pane-body kt-scroll" data-scroll="true" data-height="200" data-scrollbar-shown="true">
+            <form class="kt-form" id="kt_form">
+              <div class="">
+                <pre id ="view_data" style="word-wrap: break-word; white-space: pre-wrap;">{{yara_view?.data}}</pre>
+              </div>
+            </form>
+          </div>
+		</div>
+	</div>
+</div>

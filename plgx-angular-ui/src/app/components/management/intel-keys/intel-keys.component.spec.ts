@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { IntelKeysComponent } from './intel-keys.component';
 
@@ -6,7 +6,7 @@ describe('IntelKeysComponent', () => {
   let component: IntelKeysComponent;
   let fixture: ComponentFixture<IntelKeysComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ IntelKeysComponent ]
     })

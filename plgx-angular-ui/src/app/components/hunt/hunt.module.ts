@@ -7,8 +7,11 @@ import { GlobalModule } from '../../global/global.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DataTablesModule } from 'angular-datatables';
 import { AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
-import { NgDatepickerModule } from 'ng2-datepicker';
+import { DatepickerModule } from 'ng2-datepicker';
 import {NgbDatepickerModule} from '@ng-bootstrap/ng-bootstrap';
+import { SharedModule } from 'src/app/shared/shared.module';
+import { HttpClientModule,HTTP_INTERCEPTORS } from '@angular/common/http';
+import { AuthInterceptor } from 'src/app/_helpers/auth.interceptor';
 @NgModule({
   declarations: [HuntComponent],
   imports: [
@@ -19,8 +22,12 @@ import {NgbDatepickerModule} from '@ng-bootstrap/ng-bootstrap';
     ReactiveFormsModule,
     DataTablesModule,
     AngularMultiSelectModule,
-    NgDatepickerModule,
-    NgbDatepickerModule
-  ]
+    DatepickerModule,
+    NgbDatepickerModule,
+    SharedModule
+  ],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
+  ],
 })
 export class HuntModule { }

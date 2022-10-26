@@ -8,17 +8,49 @@ import { Location } from '@angular/common';
 import { Messagehandler } from '../../../dashboard/_helpers/messagehandler';
 import {Router, ActivatedRoute} from '@angular/router';
 import {Title} from '@angular/platform-browser';
+import { FormControl } from '@angular/forms';
 @Component({
   selector: 'app-troubleshooting',
   templateUrl: './troubleshooting.component.html',
   styleUrls: ['./troubleshooting.component.css']
 })
 export class TroubleshootingComponent implements OnInit {
-   serverName:string="ER";
-   logFile:string="";
-   logFileList=[];
-   erLog:string = 'WARNING';
-   erUILog:string = 'WARNING';
+  serverName:string="ER";
+  logFile:string="";
+  logFileList=[];
+  erLog:string = 'WARNING';
+  erUILog:string = 'WARNING';
+
+  //Dropdowns
+
+  //ER Log Levels
+  ERLogLevelOptions = [
+    { value: 'WARNING', description: 'WARNING' },
+    { value: 'INFO', description: 'INFO' },
+    { value: 'DEBUG', description: 'DEBUG' },
+  ];
+  ERLogLevelSelectControl = new FormControl('true');
+
+  //ER-UI Log Levels
+  ERUILogLevelOptions = [
+    { value: 'WARNING', description: 'WARNING' },
+    { value: 'INFO', description: 'INFO' },
+    { value: 'DEBUG', description: 'DEBUG' },
+  ];
+  ERUILogLevelSelectControl = new FormControl('true');
+
+  //Container Log Levels
+  ContainerNameOptions = [
+    { value: 'ER', description: 'ER' },
+    { value: 'ER-UI', description: 'ER-UI' },
+  ];
+  ContainerNameSelectControl = new FormControl('true');
+  public containerName: any = 'ER'
+
+  //Log File Options
+  logFileOptions: { value: string, description: string }[] = [];
+  LogFileSelectControl = new FormControl('true');
+
   constructor(
     private commonapi:CommonapiService,
     private commonvariable: CommonVariableService,
@@ -77,6 +109,11 @@ export class TroubleshootingComponent implements OnInit {
       if (res['status'] == 'success') {
         this.logFileList = res['data'];
         this.logFile =this.logFileList[0]
+        //Emptying previously stored options in array
+        this.logFileOptions = []
+        this.logFileList.forEach(element => {
+          this.logFileOptions.push( {'value': element, 'description': element} )
+        });
       }
       else{
         this.toastr.warning(res['message']);
@@ -111,6 +148,10 @@ export class TroubleshootingComponent implements OnInit {
   }
 
   submitDownloadLogs(){
+    if(this.logFile == undefined){
+      this.toastr.warning('No Logfile Found');
+      return;
+    }
     var payload = {server_name:this.serverName,filename:this.logFile}
     this.commonapi.downloadLog(payload).subscribe(res => {
       console.log(this.serverName);

@@ -50,7 +50,7 @@ class VTIntel(AbstractIntelPlugin):
         current_app.logger.log(self.level, " TODO(andrew-d): better message")
 
     def analyse_pending_hashes(self):
-
+        from polylogyx.utils.cache import get_all_cached_settings
         if self.vt:
             result_log_scans = (
                 db.session.query(ResultLogScan)
@@ -59,7 +59,7 @@ class VTIntel(AbstractIntelPlugin):
                 .limit(4)
                 .all()
             )
-            min_match_count = db.session.query(Settings).filter(Settings.name == "virustotal_min_match_count").first()
+            min_match_count = int(get_all_cached_settings().get('virustotal_min_match_count', 3))
             av_engines = [
                 item[0]
                 for item in db.session.query(VirusTotalAvEngines.name).filter(VirusTotalAvEngines.status == True).all()
@@ -76,12 +76,12 @@ class VTIntel(AbstractIntelPlugin):
                                 if scan_reports["positives"] > 0:
                                     for avengine in scan_reports["scans"]:
                                         if (
-                                            scan_reports["scans"][avengine]["detected"] == True
+                                            scan_reports["scans"][avengine]["detected"] is True
                                             and avengine in av_engines
                                         ):
                                             detected = True
                                             break
-                                    if detected == False and scan_reports["positives"] >= int(min_match_count.setting):
+                                    if detected is False and scan_reports["positives"] >= min_match_count:
                                         detected = True
                             else:
                                 detected = False
@@ -106,15 +106,13 @@ class VTIntel(AbstractIntelPlugin):
                                         if "positives" in scan_report and scan_report["positives"] > 0:
                                             for avengine in scan_report["scans"]:
                                                 if (
-                                                    scan_report["scans"][avengine]["detected"] == True
+                                                    scan_report["scans"][avengine]["detected"] is True
                                                     and avengine in av_engines
                                                 ):
                                                     newReputations[self.name + "_detected"] = True
                                                     detected = True
                                                     break
-                                            if detected == False and scan_report["positives"] >= int(
-                                                min_match_count.setting
-                                            ):
+                                            if detected is False and scan_report["positives"] >= min_match_count:
                                                 newReputations[self.name + "_detected"] = True
                                         else:
                                             newReputations[self.name + "_detected"] = False

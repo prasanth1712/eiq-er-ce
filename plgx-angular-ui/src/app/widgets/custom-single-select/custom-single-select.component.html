@@ -1,0 +1,5 @@
+<div class="single-select-filter" [ngClass]="{'row-selected':selectedIndex != undefined}">
+    <label class="single-select-filter-label">{{label}}</label>
+    <ng-multiselect-dropdown class="single-select-filter-dropdown no-checkbox" placeholder="{{defaultPlaceholder}}"  [settings]="ngFilterSettings" [data]="options" [ngModel]="ngSelected" (onSelect)="valueChanged($event)" (onDeSelect)="deSelect()" [ngModelOptions]="{standalone: true}">
+    </ng-multiselect-dropdown>
+</div>

@@ -1,0 +1,16 @@
+<div class="table-responsive">
+    <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable row-border hover">
+        <thead style="background-color: #fff;">
+            <tr role="row">
+                <th *ngFor="let key of ColData">{{ key.header }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let record of GridData">
+                <td *ngFor="let key of ColData">
+                    <span>{{ record[key.field] }}</span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

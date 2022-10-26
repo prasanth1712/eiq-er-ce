@@ -5,7 +5,7 @@ import threading
 import sys
 import traceback
 
-#
+ #
 # Server socket
 #
 #   bind - The socket to bind.

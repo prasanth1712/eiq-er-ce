@@ -1,8 +1,8 @@
 import base64
 import json
 
-from flask_restplus import Namespace, Resource, inputs
-
+from flask_restful import  Resource, inputs
+from  polylogyx.blueprints.v1.external_api import api
 from polylogyx.blueprints.v1.utils import *
 from polylogyx.utils import send_test_mail
 from polylogyx.dao.v1 import settings_dao
@@ -10,10 +10,10 @@ from polylogyx.wrappers.v1 import parent_wrappers
 from polylogyx.constants import PolyLogyxServerDefaults
 from polylogyx.authorize import admin_required
 
-ns = Namespace('email', description='email related operations')
 
 
-@ns.route('/configure', endpoint='configure_email')
+
+@api.resource('/email/configure', endpoint='configure_email')
 class ConfigureEmailSettings(Resource):
     """
         Configures the email recipient and the sender based on the details given
@@ -29,47 +29,50 @@ class ConfigureEmailSettings(Resource):
         existing_setting = settings_dao.get_settings_by_name(PolyLogyxServerDefaults.plgx_config_all_settings)
         if existing_setting:
             setting = json.loads(existing_setting.setting)
-            setting['password'] = base64.decodestring(setting['password'].encode('utf-8')).decode('utf-8')
+            setting['password'] = base64.b64decode(setting['password'].encode('utf-8')).decode('utf-8')
         else:
             setting = {}
         message = "Successfully fetched the email configuration"
         status = "success"
-        return marshal(prepare_response(message, status, setting), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status, setting), parent_wrappers.common_response_wrapper)
 
     @admin_required
-    @ns.expect(parser)
     def post(self):
         args = self.parser.parse_args()  # need to exists for input payload validation
-        args['smtpPort'] = int(args['smtpPort'])
-        if args['emailRecipients']:
-            args['emailRecipients'] = args['emailRecipients'].split(',')
-        else:
-            args['emailRecipients'] = []
-
-        if send_test_mail(args):
-            args['password'] = base64.encodestring(str.encode(args['password'])).decode('utf-8')
-            del args['x-access-token']
-            existing_setting = settings_dao.get_settings_by_name(PolyLogyxServerDefaults.plgx_config_all_settings)
-            current_app.logger.debug("Requested email settings are:\n{0}".format(args))
-            if existing_setting:
-                settings = existing_setting.update(setting=json.dumps(args), synchronize_session=False)
+        try:
+            args['smtpPort'] = int(args['smtpPort'])  # Fails and goes to exception clause if its not a valid integer
+            if args['emailRecipients']:
+                args['emailRecipients'] = args['emailRecipients'].split(',')
             else:
-                settings = settings_dao.create_settings(name=PolyLogyxServerDefaults.plgx_config_all_settings,
-                                               setting=json.dumps(args))
-            data = json.loads(settings.setting)
-            message = "Successfully updated the email settings!"
-            status = "success"
-            current_app.logger.info("Email configuration is updated")
-        else:
-            message = "Please check the smtp settings and credentials provided and also \
-            provider's additional security verifications needed"
+                args['emailRecipients'] = []
+            if send_test_mail(args):
+                args['password'] = base64.b64encode(str.encode(args['password'])).decode('utf-8')
+                del args['x-access-token']
+                existing_setting = settings_dao.get_settings_by_name(PolyLogyxServerDefaults.plgx_config_all_settings)
+                current_app.logger.debug("Requested email settings are:\n{0}".format(args))
+                if existing_setting:
+                    settings = existing_setting.update(setting=json.dumps(args))
+                else:
+                    settings = settings_dao.create_settings(name=PolyLogyxServerDefaults.plgx_config_all_settings,
+                                                setting=json.dumps(args))
+                data = json.loads(settings.setting)
+                message = "Successfully updated the email settings!"
+                status = "success"
+                current_app.logger.info("Email configuration is updated")
+            else:
+                message = "Please check the smtp settings and credentials provided and also \
+                provider's additional security verifications needed"
+                status = "failure"
+                data = None
+                current_app.logger.info(message)
+        except ValueError:
+            message = "Please pass a valid integer to SMTP Port!"
             status = "failure"
             data = None
-            current_app.logger.error(message)
         return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/test', endpoint='test_mail_for_existing_settings')
+@api.resource('/email/test', endpoint='test_mail_for_existing_settings')
 class TestEmailRecipientAndSender(Resource):
     """
         Tests the email recipient and the sender based on the details given
@@ -83,21 +86,24 @@ class TestEmailRecipientAndSender(Resource):
                           [None, None, None, None, None, False, False])
 
     @admin_required
-    @ns.expect(parser)
     def post(self):
         args = self.parser.parse_args()
-        args['smtpPort'] = int(args['smtpPort'])
-        current_app.logger.debug("Requested email settings are:\n{0}".format(args))
-        if args['emailRecipients']:
-            args['emailRecipients'] = args['emailRecipients'].split(',')
-        else:
-            args['emailRecipients'] = []
-        if send_test_mail(args):
-            message = "Successfully sent the email to recipients for the existing configuration!"
-            status = "success"
-        else:
-            message = "Please check the smtp settings and credentials provided and also \
-            complete the provider's additional security verifications needed"
+        try:
+            args['smtpPort'] = int(args['smtpPort'])
+            current_app.logger.debug("Requested email settings are:\n{0}".format(args))
+            if args['emailRecipients']:
+                args['emailRecipients'] = args['emailRecipients'].split(',')
+            else:
+                args['emailRecipients'] = []
+            if send_test_mail(args):
+                message = "Successfully sent the email to recipients for the existing configuration!"
+                status = "success"
+            else:
+                message = "Please check the smtp settings and credentials provided and also \
+                complete the provider's additional security verifications needed"
+                status = "failure"
+                current_app.logger.info(message)
+        except ValueError:
+            message = "Please pass a valid integer to SMTP Port!"
             status = "failure"
-            current_app.logger.error(message)
-        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)

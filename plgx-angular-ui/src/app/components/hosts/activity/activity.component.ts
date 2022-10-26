@@ -10,14 +10,13 @@ import { environment } from '../../../../environments/environment';
 import { Location } from '@angular/common';
 import { saveAs } from 'file-saver';
 import { Title } from '@angular/platform-browser';
-import '../../../../assets/js/patternfly/d3.min.js';
-import '../../../../assets/js/patternfly/patternfly.min.js';
 declare let d3: any;
 declare var alerted_entry: any;
 declare var $: any;
 var PaginationIndex
 var TempIndex
 var NextDataId
+var SelectedNodeID
 
 class activitydatanode {
   columns: string;
@@ -70,7 +69,7 @@ export class ActivityComponent implements AfterViewInit, OnDestroy, OnInit {
   export_csv_data: any = {}
   query_name: any;
   click_queryname:any;
-  @ViewChild(DataTableDirective, { static: false })
+  @ViewChild(DataTableDirective)
   dtElement: DataTableDirective;
   dtOptions: any = {};
   dtTrigger: Subject<any> = new Subject();
@@ -162,7 +161,8 @@ export class ActivityComponent implements AfterViewInit, OnDestroy, OnInit {
       {"id":15,"itemName":"Logger"},
       {"id":16,"itemName":"File Timestamp"},
       {"id":17,"itemName":"PeFile"},
-      {"id":18,"itemName":"Defender Events"}
+      {"id":18,"itemName":"Defender Events"},
+      {"id":19,"itemName":"Pipe Events"}
     ];
     // this.initialise_val()
 
@@ -186,6 +186,7 @@ export class ActivityComponent implements AfterViewInit, OnDestroy, OnInit {
       buttons: [
         {
           text: 'CSV',
+          buttonClass: 'btn-csv btn',
           attr:  {id: 'IdExport'},
           action: function ( e, dt, node, config ) {
             that.get_csv_data();
@@ -198,6 +199,7 @@ export class ActivityComponent implements AfterViewInit, OnDestroy, OnInit {
           "previous": '<i class="fas fa-angle-double-left"></i> Previous',
           "next": 'Next <i class="fas fa-angle-double-right"></i>',
         },
+        "lengthMenu": "<ng-container class=custom-pagination-length>Results per page: _MENU_</ng-container>",
       },
       ajax: (dataTablesParameters: any, callback) => {
         $('.recentActivityLoader').show();
@@ -212,6 +214,10 @@ export class ActivityComponent implements AfterViewInit, OnDestroy, OnInit {
         {
           body['start']=this.PreviousDataIds[PaginationIndex]
         }
+        else if(PaginationIndex == TempIndex){
+          body['start']= SelectedNodeID
+        }
+        SelectedNodeID = body['start'];
         TempIndex=PaginationIndex;
         body['limit'] = body['length'];
         body['node_id'] = node_id;
@@ -924,14 +930,14 @@ export class ActivityComponent implements AfterViewInit, OnDestroy, OnInit {
           cell1.appendChild(firstCellText);
           cell1.style.fontSize = "11px";
           cell1.style.fontWeight = '600';
-          // cell1.style.fontFamily = "Poppins";
+          // cell1.style.fontFamily = "Roboto";
           // cell1.style.color = '#212529';
           cell1.style.wordBreak = "break-all";
           cell1.style.minWidth = "75px"
           cell1.appendChild(secondCellText);
           cell2.style.fontSize = "10px";
           cell2.style.fontWeight = '500';
-          // cell2.style.fontFamily = "Poppins";
+          // cell2.style.fontFamily = "Roboto";
           // cell2.style.color = '#212529';
           cell2.style.wordBreak = "break-all";
           var data = el[child];

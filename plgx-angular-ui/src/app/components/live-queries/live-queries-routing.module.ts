@@ -10,7 +10,7 @@ const routes: Routes = [ {
 {
   path: '',
   children: [{
-    path:'live-queries/:id',component: LiveQueriesComponent,
+    path:'live-query/:id',component: LiveQueriesComponent,
   },
   {
     path:':id', component:LiveQueriesComponent

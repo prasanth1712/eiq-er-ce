@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonapiService } from '../../dashboard/_services/commonapi.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import Swal from 'sweetalert2';
+import swal from 'sweetalert';
 import { ToastrService } from 'ngx-toastr';
 import { Location } from '@angular/common';
 import {Title} from '@angular/platform-browser';
@@ -17,6 +18,7 @@ export class UserProfileComponent implements OnInit {
   email:string;
   role:string;
   submitted = false;
+  viewChangePassword: boolean = false;
   constructor(private commonapi: CommonapiService,private formBuilder: FormBuilder,private toaster: ToastrService, private _location: Location,private titleService: Title,
     private commonvariable: CommonVariableService,) { }
 
@@ -26,6 +28,9 @@ export class UserProfileComponent implements OnInit {
       firstName: ['',Validators.required],
       lastName: [''],
     })
+    this.getUserDetail();
+  }
+  getUserDetail(){
     this.commonapi.getUserDetails().subscribe(response=>{
       this.role=response['data'].roles[0];
       this.userName = response['data'].username;
@@ -35,7 +40,10 @@ export class UserProfileComponent implements OnInit {
         lastName: response['data'].last_name,
       });
     })
-
+  }
+  toggleViewChangePassword(){
+    console.log('some')
+    this.viewChangePassword = !this.viewChangePassword
   }
   get k() { return this.editUserInformationForm.controls; }
   editUserInformation(){
@@ -49,10 +57,18 @@ export class UserProfileComponent implements OnInit {
           Swal.showLoading()
         }
       })
-      this.commonapi.changeUserDetails({first_name:this.k.firstName.value,last_name:this.k.lastName.value}).subscribe(response=>{
+      this.commonapi.changeUserDetails({first_name:this.k.firstName.value.trim(),last_name:this.k.lastName.value.trim()}).subscribe(response=>{
         Swal.close()
         if(response['status']=='success'){
-          this.toaster.success(response['message']);
+          swal({
+            icon: 'success',
+            title: 'success',
+            text: response['message'],
+            buttons: [false],
+            timer: 2000
+
+          })
+
         }else{
           this.toaster.error(response['message']);
         }
@@ -60,11 +76,13 @@ export class UserProfileComponent implements OnInit {
       })
   }
   resetData(){
-    this.editUserInformationForm.controls['userName'].reset()
-    this.editUserInformationForm.controls['firstName'].reset()
-    this.editUserInformationForm.controls['lastName'].reset()
+    this.getUserDetail();
   }
   goBack(){
     this._location.back()
+  }
+  onChange(event){
+   if(event.which ===32 && this.k.firstName.value.trim() == ''){event.preventDefault();}
+   if(event.which ===32 && this.k.lastName.value.trim() == ''){event.preventDefault();}
   }
 }

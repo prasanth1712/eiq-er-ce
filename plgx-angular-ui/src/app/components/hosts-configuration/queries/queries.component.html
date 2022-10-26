@@ -1,0 +1,297 @@
+<div class="kt-grid kt-grid--hor kt-grid--root">
+  <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
+    <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
+<div class="kt-portlet kt-portlet--mobile kt-portlet--responsive-mobile no-mar-botom">
+<div class="kt-portlet__head kt-portlet__head--lg">
+  <div class="d-flex">
+    <a class="d-flex kt-portlet__head-anchor" [routerLink]="['/hostconfiguration/queries']">
+      <div class="kt-portlet__head-label">
+        <span class="kt-portlet__head-icon d-flex">
+          <i class="kt-font-brand fnt-dark-black fa fa-layer-group"></i>
+        </span>
+        <h3 class="kt-portlet__head-title fnt-dark-black custom-header-title">
+          Queries
+        </h3>
+      </div>
+    </a>
+    <div class="kt-portlet__head-toolbar">
+
+      <div class="kt-portlet__head-wrapper">
+        <div class="kt-portlet__head-tabs">
+          <ul class="nav nav-tabs nav-tabs-line nav-tabs-line-success" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active" style="cursor: pointer;" data-toggle="tab"
+                (click)="typeQuery('associatedPacksId')" role="tab">Associated with Packs</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" style="cursor: pointer;" data-toggle="tab" (click)="typeQuery('allQueriesId')"
+                role="tab">All Queries</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="kt-portlet__head-toolbar">
+    <div *AppHasRole="role.adminAccess" class="kt-portlet__head-wrapper">
+      <div class="">
+
+        <appbutton text="Add Query" btnClass="btn-small btn-long" btnType="Button" icon="fa-plus-square"
+          btnLink="./add-query"></appbutton>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="my-3 emptyMsgDiv" style="text-align: center;"> {{emptyMsg}}</div>
+<div class="kt-portlet__body queriesDataListDiv tbl-bg">
+<!--Begin:: Content -->
+<div class="kt-content">
+  <div class="row">
+    <div class="col-md-4">
+      <!--begin::Portlet-->
+      <div class="kt-portlet no-mar-botom portlet-body_align">
+        <div class="queries_body2">
+          <div class="ph-item" style="height: 565px; margin-bottom:25px;">
+          <div class="ph-col-12">
+          <div class="ph-row">
+            <div class="ph-col-4 big"></div>
+            <div class="ph-col-8 empty big"></div>
+            <div class="ph-col-6 big"></div>
+            <div class="ph-col-6 empty big"></div>
+            <div class="ph-col-2 big"></div>
+            <div class="ph-col-10 empty big"></div>
+            <div class="ph-col-6 big"></div>
+            <div class="ph-col-6 empty big"></div>
+            </div>
+            <div class="ph-row">
+              <div class="ph-col-4 big"></div>
+              <div class="ph-col-8 empty big"></div>
+              <div class="ph-col-6 big"></div>
+              <div class="ph-col-6 empty big"></div>
+              <div class="ph-col-2 big"></div>
+              <div class="ph-col-10 empty big"></div>
+              <div class="ph-col-6 big"></div>
+              <div class="ph-col-6 empty big"></div>
+              </div>
+              <div class="ph-row">
+                <div class="ph-col-4 big"></div>
+                <div class="ph-col-8 empty big"></div>
+                <div class="ph-col-6 big"></div>
+                <div class="ph-col-6 empty big"></div>
+                <div class="ph-col-2 big"></div>
+                <div class="ph-col-10 empty big"></div>
+                <div class="ph-col-6 big"></div>
+                <div class="ph-col-6 empty big"></div>
+                </div>
+                <div class="ph-row">
+                  <div class="ph-col-4 big"></div>
+                  <div class="ph-col-8 empty big"></div>
+                  </div>
+              </div>
+            </div>
+        </div>
+          <div class="kt-portlet__body" style="padding: 0px;">
+            <div class="queries_body"  style="height: 675px;margin-bottom:15px;">
+                <table id="associatedPacksId" datatable [dtOptions]="dtOptions"  [dtTrigger]="dtTrigger" class="table table-hover table-checkable row-border hover" id="query_table" style="border:none !important;border-bottom: 1px solid #B8B8B8 !important">
+                <thead class="d-none"></thead>
+                 <tbody>
+                   <div *ngFor="let query of sortedPackDataNameId" class="kt-notification conf-div" id="search_query-name-list" style="cursor:pointer; " data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="{{query[0]}}">
+                    <div class="kt-notification__item-title list-group"  [ngClass]="{'active': selectedItem == query[1]}"   (click)='getByIdQueries($event, query[1],query[1])' >
+                     <a data-target="{{query[1]}}"  class="kt-notification__item conf-link-query">
+                      <div class="kt-notification__item-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
+                          <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                            <rect id="bound" x="0" y="0" width="24" height="24" />
+                            <path
+                              d="M10.5,5 L20.5,5 C21.3284271,5 22,5.67157288 22,6.5 L22,9.5 C22,10.3284271 21.3284271,11 20.5,11 L10.5,11 C9.67157288,11 9,10.3284271 9,9.5 L9,6.5 C9,5.67157288 9.67157288,5 10.5,5 Z M10.5,13 L20.5,13 C21.3284271,13 22,13.6715729 22,14.5 L22,17.5 C22,18.3284271 21.3284271,19 20.5,19 L10.5,19 C9.67157288,19 9,18.3284271 9,17.5 L9,14.5 C9,13.6715729 9.67157288,13 10.5,13 Z"
+                              id="Combined-Shape" fill="#000000" />
+                            <rect id="Rectangle-7-Copy-2" fill="#000000" opacity="0.3" x="2" y="5" width="5" height="14" rx="1" />
+                          </g>
+                        </svg>
+                      </div>
+                      <div class="kt-notification__item-details fnt-size break-word-all">
+                        {{ (query[0]?.length>50)? (query[0] | slice:0:50)+'..':(query[0]) }}
+                      </div>
+                     </a>
+                     </div>
+                  </div>
+                 </tbody>
+                 </table>
+                 <div  *ngIf="queriesDataList?.length === 0">
+                   <span style=" text-align: center;font-weight: 600;">
+                    {{errorMessage}}
+                   </span>
+                 </div>
+              </div>
+            </div>
+        </div>
+      </div>
+      <!--end::Portlet-->
+    <div class="col-md-8">
+      <!--begin::Portlet-->
+        <div  class="right-conf-query kt-portlet no-mar-botom portlet-body_align__table" id="{{queryData?.id}}">
+          <div class="queries_body2" >
+            <div class="kt-portlet__head ph-item" style="padding: 14px 15px 3px 13px;margin-bottom: 1px;">
+              <div class="ph-col-12">
+                <div class="ph-row">
+                  <div class="ph-col-6 big"></div>
+                 </div>
+                </div>
+            </div>
+          </div>
+          <div class="kt-portlet__head queries_body">
+            <div class="kt-portlet__head-label">
+              <span class="kt-portlet__head-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
+                  <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                    <rect id="bound" x="0" y="0" width="24" height="24" />
+                    <path
+                      d="M10.5,5 L20.5,5 C21.3284271,5 22,5.67157288 22,6.5 L22,9.5 C22,10.3284271 21.3284271,11 20.5,11 L10.5,11 C9.67157288,11 9,10.3284271 9,9.5 L9,6.5 C9,5.67157288 9.67157288,5 10.5,5 Z M10.5,13 L20.5,13 C21.3284271,13 22,13.6715729 22,14.5 L22,17.5 C22,18.3284271 21.3284271,19 20.5,19 L10.5,19 C9.67157288,19 9,18.3284271 9,17.5 L9,14.5 C9,13.6715729 9.67157288,13 10.5,13 Z"
+                      id="Combined-Shape" fill="#000000" />
+                    <rect id="Rectangle-7-Copy-2" fill="#000000" opacity="0.3" x="2" y="5" width="5" height="14" rx="1" />
+                  </g>
+                </svg>
+              </span>
+              <h3 class="kt-portlet__head-title break-word-all">
+                <!-- App_ExecuteOptions -->
+                {{queryData?.name}}
+              </h3>
+            </div>
+            <div class="kt-portlet__head-toolbar">
+              <div  *AppHasRole="role.adminAccess"   class="kt-portlet__head-actions">
+                <a [routerLink] = "['./',queryId,'edit']" class="btn kt-edit-icon btn-clean btn-sm btn-icon btn-icon-md" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Edit Query">
+                  <i class="far fa-edit"></i>
+                </a>
+              </div>
+              <div *AppHasRole="role.adminAccess"   class="kt-portlet__head-actions delete_query_backGround_colour" style="margin-top: 5px;">
+                <i style="color: #fa0303;cursor: pointer;" (click) ="deleteQueries(queryData.id, queryData.name)" title="Delete Query " class="fa fa fa-trash-alt"></i>
+              </div>
+             </div>
+          </div>
+          <div class="right-conf-card kt-portlet__body queries_body2 queries-data">
+            <div class="ph-item">
+            <div class="ph-col-12">
+            <div class="ph-row">
+              <div class="ph-col-4 big"></div>
+              <div class="ph-col-8 empty big"></div>
+              <div class="ph-col-6 big"></div>
+              <div class="ph-col-6 empty big"></div>
+              <div class="ph-col-2 big"></div>
+              <div class="ph-col-10 empty big"></div>
+              <div class="ph-col-6 big"></div>
+              <div class="ph-col-6 empty big"></div>
+            </div>
+            <div class="ph-row">
+                <div class="ph-col-4 big"></div>
+                <div class="ph-col-8 empty big"></div>
+                <div class="ph-col-6 big"></div>
+                <div class="ph-col-6 empty big"></div>
+                <div class="ph-col-2 big"></div>
+                <div class="ph-col-10 empty big"></div>
+                <div class="ph-col-6 big"></div>
+                <div class="ph-col-6 empty big"></div>
+              </div>
+              <div class="ph-row">
+                  <div class="ph-col-4 big"></div>
+                  <div class="ph-col-8 empty big"></div>
+                  <div class="ph-col-6 big"></div>
+                  <div class="ph-col-6 empty big"></div>
+                  <div class="ph-col-2 big"></div>
+                  <div class="ph-col-10 empty big"></div>
+                  <div class="ph-col-6 big"></div>
+                  <div class="ph-col-6 empty big"></div>
+              </div>
+            </div>
+          </div>
+          </div>
+          <div class="right-conf-card kt-portlet__body queries_body queries-data">
+              <div class="">
+                <table class="table table-striped- table-bordered table-hover table-checkable">
+                  <tbody>
+                    <tr>
+                      <td class="head-table-query">Query</td>
+                      <td class="conf-table-val">
+                        <div class="sql hljs desc-background-query">
+                            <span class="hljs-keyword">{{queryData?.sql}}</span>
+                        </div>
+                        <appbutton text="Run Live" (click)="runAdHoc(queryData?.id)" btnClass="btn-small" btnType="Button"  ></appbutton>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="head-table-query" style="width:125px">Interval <span class="intrvl-fnt-md">(in secs)</span></td>
+                      <td class="conf-table-val">
+                        <div class="desc-background-query">{{queryData?.interval}}</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="head-table-query">Platform</td>
+                      <td class="conf-table-val">
+                        <div class="desc-background-query">{{queryData?.platform}}
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="head-table-query">Description</td>
+                      <td class="conf-table-val">
+                        <span class="desc-background-query truncate_query">{{queryData?.description}}</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="head-table-query">Version</td>
+                      <td>
+                      {{queryData?.version}}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="head-table-query">Value</td>
+                      <td>
+                      {{queryData?.value}}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="head-table-query">Packs</td>
+                      <td>
+                        <span class="label_pack"style="color:#6371df;font-size: 12px;font-weight: 700;cursor: pointer;word-break: break-word;" *ngFor="let pack_name of queryData?.packs">
+                          <a (click)="navigatePacks(pack_name)" class="fnt-green">{{pack_name}}</a>
+                          </span>
+                      </td>
+                    </tr>
+                    <tr >
+                      <td class="head-table-query">Tags</td>
+                      <td *AppHasRole="role.adminAccess"  >
+                        <tag-input *ngIf ="queryData" (keypress)="omitSpecialChar($event)" (paste)="validatePastedData($event);" [theme]="'foundation-theme'"
+                        [validators]="validators" [errorMessages]="errorMessages" [clearOnBlur]="true"  [placeholder]="'Add tags here...'" [(ngModel)]='queryData.tags' (onAdd)="queriesAddTag(queryData.tags,queryData.id)" (onRemove)="queriesRemoveTag($event,queryData.id)" [modelAsStrings]="true"></tag-input>
+                        <div *ngIf = "errorMessageTag != '' " class="error-msg text-danger">
+                          {{errorMessageTag}}
+                        </div>
+                      </td>
+                      <td *AppHasRole="role.userAccess"> {{queryData?.tags}}</td>
+                    </tr>
+                    <tr>
+                      <td class="head-table-query">Snapshot</td>
+                      <td>
+                      {{queryData?.snapshot}}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      <!--end::Portlet-->
+    </div>
+  </div>
+</div>
+  <div class="kt-content">
+    <div class="container">
+      <div class="row">
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+</div>

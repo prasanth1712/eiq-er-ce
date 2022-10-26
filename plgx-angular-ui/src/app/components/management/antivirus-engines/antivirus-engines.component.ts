@@ -32,7 +32,7 @@ export class AntivirusEnginesComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"VT-configuration");
+    this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"VT Settings");
     this.commonapi.getAntiVirusEngines().subscribe((res: any) => {
         $('.hide_av_engines_data').hide();
         if( res.data.min_match_count && res.data.av_engines){

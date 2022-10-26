@@ -1,7 +1,6 @@
 from polylogyx.utils import node as n
 from ..factories import NodeFactory
 import datetime as dt
-from polylogyx.db.models import ReleasedAgentVersions
 
 class TestUtilsNode:
     def test_get_node_health(self,node):
@@ -38,13 +37,6 @@ class TestUtilsNode:
         columns =[{"name":"Test","type":"Type"}]
         n.update_osquery_or_agent_version(node,columns)
         assert True
-
-    def test_update_osquery_version_md5(self,node):
-        columns = {"md5":"test"}
-        rva = ReleasedAgentVersions(extension_hash_md5="test",extension_version=10,platform="linux")
-        rva.save()
-        n.update_osquery_or_agent_version(node,columns)
-        assert node.host_details["extension_version"] == "10"
     
     def test_update_osquery_version_other(self,node):
         columns = {"version":5.07,"type":"other"}

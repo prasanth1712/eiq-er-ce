@@ -2,7 +2,7 @@
 echo "Starting data migration script..."
 
 echo "Waiting for PostgreSQL to start..."
-
+export FLASK_APP=manage.py:app
 until PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_ADDRESS -U $POSTGRES_USER -d $POSTGRES_DB_NAME -c "select 1" > /dev/null 2>&1 ; do
   sleep 5
 done
@@ -14,7 +14,7 @@ until PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_ADDRESS -U $POSTGRES_USER 
   sleep 5
 done
 echo "Migrating data to Partitions and inserting ids int result_log_maps"
-exec `tmux send -t data_migration 'python manage.py add_partitions_existing_data' ENTER`
+exec `tmux send -t data_migration 'flask add_partitions_existing_data' ENTER`
 
 
 

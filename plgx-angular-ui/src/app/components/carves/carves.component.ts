@@ -11,6 +11,7 @@ import { HttpClient,HttpEventType,HttpResponse,HttpHeaderResponse } from '@angul
 import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../../environments/environment'
 import { AuthorizationService } from '../../dashboard/_services/Authorization.service';
+import { FormGroup, FormBuilder, Validators, FormControl } from '@angular/forms';
 class DataTablesResponse {
   data: any[];
   draw: number;
@@ -37,7 +38,7 @@ class carves_data {
   styleUrls: ['./carves.component.css']
 })
 export class CarvesComponent implements AfterViewInit, OnInit {
-  @ViewChild(DataTableDirective, {static: false})
+  @ViewChild(DataTableDirective)
   dtElement: DataTableDirective;
   dtTrigger: Subject<any> = new Subject();
   carves_val:any;
@@ -50,6 +51,11 @@ export class CarvesComponent implements AfterViewInit, OnInit {
   Progress_value:number = 0;
   dtOptions: DataTables.Settings = {};
   ShowProgress: boolean = false;
+  checklist:any=[];
+  multipleSelect:boolean=false;
+  multiSelectedID: string;
+    masterSelected:any;
+    searchTerm:any;
   role={'adminAccess':this.authorizationService.adminLevelAccess,'userAccess':this.authorizationService.userLevelAccess};
    constructor(
     private commonapi:CommonapiService,
@@ -57,6 +63,7 @@ export class CarvesComponent implements AfterViewInit, OnInit {
     private http: HttpClient,
     private toastr: ToastrService,
     private authorizationService: AuthorizationService,
+    private fb: FormBuilder,
   ) { }
 
   ngOnInit() {
@@ -73,26 +80,44 @@ export class CarvesComponent implements AfterViewInit, OnInit {
       serverSide: true,
       processing: true,
       searching: false,
+      ordering:true,
+      dom: "<'row'<'col-sm-12'f>>" +
+      "<'row table-scroll-hidden'<'col-sm-12 mt-18 table-scroll full-height'tr>>" +
+      "<'row table-controls custom-pagination-margin'<'col-sm-6 d-flex justify-content-start pl-0'li><'col-sm-6 pr-0'p>>",
+      "language": {
+        "info" : "Showing _START_ to _END_ of <b>_TOTAL_</b> entries",
+        "lengthMenu": "<ng-container class=custom-pagination-length>Results per page: _MENU_</ng-container>",
+      },
       ajax: (dataTablesParameters: any,callback) => {
       var body = dataTablesParameters;
       body['limit']=body['length'];
-      if(body.search.value!= ""  &&  body.search.value.length>=1)
-    {
-
-      body['searchterm']=body.search.value;
-
-    }
-
-      console.log(body,"bodymm",body['searchterm'])
-
-
-      if(body['searchterm']==undefined){
-        body['searchterm']="";
+      if(this.searchTerm){
+        body['searchterm'] = this.searchTerm
       }
+      if(this.searchTerm!= ""  &&  this.searchTerm?.length>=1){
+         body['searchterm']=this.searchTerm;
+      }
+      if(body['searchterm']==undefined){
+          body['searchterm']="";
+      }
+      if (body.order != "" && body.order.length >= 1) {
+        body["column"] = body.columns[body.order[0].column-1].data;
+        body["order_by"] = body["order"][0].dir;
+      }
+      this.removeSelectedHost();
         this.http.post<DataTablesResponse>(environment.api_url+"/carves", body, { headers: { 'Content-Type': 'application/json','x-access-token': localStorage.getItem('token')}}).subscribe(res =>{
 
           this.carves_val = res ;
             this.carves_data = this.carves_val.data.results;
+
+            this.checklist = [];
+            for (const i in this.carves_data) {
+              let checkboxdata = {}
+              checkboxdata['id'] = this.carves_data[i].id;
+              checkboxdata['session_id'] = this.carves_data[i].session_id;
+              checkboxdata['isSelected'] = false
+              this.checklist.push(checkboxdata);
+            }
         if(this.carves_data.length >0 &&  this.carves_data!=undefined)
         {
         this.carves_data = this.carves_val.data['results'];
@@ -122,7 +147,11 @@ export class CarvesComponent implements AfterViewInit, OnInit {
           });
         });
       },
-      ordering: false,
+      order: [],
+      columnDefs: [{
+        targets: [0,2,3,4,5,6], /* column index */
+        orderable: false
+      }],
       columns: [{ data: 'hostname' },{ data: 'session' },{ data: 'carves_size' },{ data: 'files' },{ data: 'blocks_aquire' },{ data: 'status' },{ data: 'created_at' }],
     }
 
@@ -186,7 +215,7 @@ export class CarvesComponent implements AfterViewInit, OnInit {
 
      if(event['body'])
      {
-        saveAs(event['body'], carve_file_name+".tar");
+        saveAs(event['body'], carve_file_name);
         if(this.InprogessInfo == this.ProgressInfos.length){
           swal("File Download Completed", {
             icon: "success",
@@ -218,7 +247,11 @@ export class CarvesComponent implements AfterViewInit, OnInit {
         return Math.round(bytes / Math.pow(1024, this.byte_value)) + ' ' + sizes[this.byte_value];
 
 }
-  deleteCarve(event){
+deleteCarve(event){
+  var idAttr = event;
+  this.deleteCarveAPI(idAttr);
+}
+  deleteCarveAPI(idAttr){
         swal({
         icon: 'warning',
         title: "Are you sure?",
@@ -227,7 +260,6 @@ export class CarvesComponent implements AfterViewInit, OnInit {
         dangerMode: true,
       }).then((willDelete) => {
         if (willDelete) {
-        var idAttr = event.target.id;
         this.commonapi.carves_delete_api(idAttr).subscribe(res => {
           this.carves_delete = res;
           swal("Carve file has been deleted successfully!", {
@@ -265,6 +297,58 @@ export class CarvesComponent implements AfterViewInit, OnInit {
       this.ShowProgress = true;
     }
 }
-
-
+multideleteCarve(selectOption) {
+  this.multipleSelect = selectOption;
+  console.log(this.selectList);
+  this.multiSelectedID = this.selectList.toString();
+  this.deleteCarveAPI(this.multiSelectedID);
+}
+selectList = [];
+    filterArr:any;
+    selectedCount:any=0;
+    selectHost(id,session_id) {
+      this.filterArr = this.selectList.filter( h => h==session_id);
+      if(this.filterArr.length == 0){
+        this.selectList.push(session_id);
+      }else{
+        this.selectList = this.selectList.filter(item => item !== session_id);
+      }
+      this.selectedCount = this.selectList.length;
+    }
+    removeSelectedHost(){
+      this.selectList = [];
+      this.selectedCount = this.selectList.length;
+      this.masterSelected = false;
+      for (var i = 0; i < this.checklist.length; i++) {
+        this.checklist[i].isSelected = false;
+      }
+    }
+    checkUncheckAll() {
+      for (var i = 0; i < this.checklist.length; i++) {
+        this.checklist[i].isSelected = this.masterSelected;
+        if(this.checklist[i].isSelected == true){
+          this.filterArr = this.selectList.filter( h => h==this.checklist[i].session_id);
+          if(this.filterArr.length == 0){
+            this.selectList.push(this.checklist[i].session_id);
+          }
+        }
+        else{
+          this.selectList = this.selectList.filter(item => item !== this.checklist[i].session_id);
+        }
+      }
+      this.selectedCount = this.selectList.length;
+    }
+    isAllSelected(id,session_id) {
+      this.selectHost(id,session_id);
+      this.masterSelected = this.checklist.every(function (item: any) {
+        return item.isSelected == true;
+      })
+    }
+    tableSearch(){
+      this.searchTerm = (<HTMLInputElement>document.getElementById('customsearch')).value;
+      this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
+        dtInstance.destroy();
+        this.dtTrigger.next();
+      });
+    }
 }

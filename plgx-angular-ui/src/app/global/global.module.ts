@@ -14,9 +14,10 @@ import { DateAgoPipe } from '../dashboard/pipes/date-ago.pipe';
 import { SearchPipe } from '../dashboard/pipes/search.pipe';
 
 import { AppHasRoleDirective } from '../dashboard/_services/app-has-role.directive';
+import { MultiselectSearchFixDirective } from '../dashboard/_services/app-multiselect-search-fix.directive';
 
 @NgModule({
-  declarations: [DateAgoPipe,SearchPipe,AppHasRoleDirective],
+  declarations: [DateAgoPipe,SearchPipe,AppHasRoleDirective,MultiselectSearchFixDirective],
   imports: [
     CommonModule,
     FormsModule,
@@ -31,6 +32,6 @@ import { AppHasRoleDirective } from '../dashboard/_services/app-has-role.directi
     RouterModule,
 
   ],
-  exports:[DateAgoPipe,SearchPipe,AppHasRoleDirective]
+  exports:[DateAgoPipe,SearchPipe,AppHasRoleDirective,MultiselectSearchFixDirective]
 })
 export class GlobalModule { }

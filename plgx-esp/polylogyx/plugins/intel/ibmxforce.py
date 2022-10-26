@@ -117,7 +117,7 @@ class IBMxForceIntel(AbstractIntelPlugin):
                 if result_log_scan.reputations[source]["malware"]["risk"] == "high":
                     severity = Alerts.CRITICAL
                 elif result_log_scan.reputations[source]["malware"]["risk"] == "medium":
-                    severity = Alerts.WARNING
+                    severity = Alerts.MEDIUM
 
                 check_and_save_intel_alert(
                     scan_id=result_log_scan.id,

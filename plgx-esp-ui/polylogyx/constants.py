@@ -2,6 +2,8 @@ from flask import json
 from sqlalchemy import or_, and_
 
 DEFAULT_PLATFORMS = ['windows', 'linux', 'darwin', 'freebsd']
+TO_CAPTURE_COLUMNS = ["md5"]
+IOC_COLUMNS = ["md5","sha256","domain_name","remote_address","sha1"]
 
 
 class SystemInfoQueries:
@@ -186,6 +188,23 @@ class PlugInQueries:
 class ModelStatusFilters:
     from polylogyx.models import Node, Alerts
     HOSTS_ENABLED = and_(Node.state != Node.REMOVED, Node.state != Node.DELETED)
+    HOSTS_NON_DELETED = Node.state != Node.DELETED
     HOSTS_DELETED = Node.state == Node.DELETED
     HOSTS_REMOVED = Node.state == Node.REMOVED
+    ALERTS_RESOLVED = Alerts.status == Alerts.RESOLVED
     ALERTS_NON_RESOLVED = or_(Alerts.status == None, Alerts.status != Alerts.RESOLVED)
+
+
+class CacheVariables:
+    """
+    These can be changes anytime as function refreshes its data when a new name is passed as cache name
+    """
+    hosts = 'cached_hosts'
+    rules = 'cached_rules'
+    iocs = 'cached_iocs'
+    settings = 'cached_settings'
+    user_roles = 'cached_user_roles'
+    configs = 'cached_configs'
+    avg_task_wait_time = 'avg_task_wait_time'
+    rule_network = 'cached_network'
+    default_cache_refresh_interval = 3600

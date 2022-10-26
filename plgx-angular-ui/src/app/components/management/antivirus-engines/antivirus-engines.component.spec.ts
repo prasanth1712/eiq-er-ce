@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { AntivirusEnginesComponent } from './antivirus-engines.component';
 
@@ -6,7 +6,7 @@ describe('AntivirusEnginesComponent', () => {
   let component: AntivirusEnginesComponent;
   let fixture: ComponentFixture<AntivirusEnginesComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ AntivirusEnginesComponent ]
     })

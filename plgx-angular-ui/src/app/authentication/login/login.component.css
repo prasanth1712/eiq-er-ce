@@ -32,7 +32,7 @@
   margin-top: 5%;
   }
   body {
-  font-family: "Poppins";
+  font-family: "Roboto";
   }
   #formContent {
   -webkit-border-radius: 10px 10px 10px 10px;
@@ -320,3 +320,15 @@
      font-weight: 500;
      letter-spacing: 1px;
    }
+   .ky-login-sso-disabled{
+     color:grey;
+   }
+   .toast-grey {
+    background-color: grey !important;
+}
+::ng-deep .toast-bottom-left{
+  left:30px !important;
+  bottom: 30px !important;
+  background-color: grey !important;
+  color: grey !important;
+}

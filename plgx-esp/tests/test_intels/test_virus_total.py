@@ -219,8 +219,9 @@ class TestVirusTotalIntel:
        alert=Alerts.query.all()[0]
        assert pmock.called
        assert alert.source == 'virustotal'
-       assert alert.source_data == result_log_scan.reputations['virustotal']
        assert alert.node_id == node.id
+       assert alert.source_data == result_log_scan.reputations['virustotal']
+
 
 
 

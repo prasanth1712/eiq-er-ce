@@ -13,14 +13,17 @@ services:
     env_file:
       - .env
     environment:
-      - POLYLOGYX_ENV=prod
+      - ENV=prod
+      - FLASK_APP=manage.py:app
     volumes:
-         - carves:/src/plgx-esp/carves
-         - container_logs:/var/log
+      - carves:/src/plgx-esp/resources/carves
+      - container_logs:/var/log
+      - ./resources:/src/plgx-esp/resources
     restart: always
     external_links:
       - rabbit1:rabbit1
       - postgres:postgres
+      - redis:redis
   celery:
     build:
       context: ./
@@ -31,14 +34,22 @@ services:
     env_file:
       - .env
     environment:
-      - POLYLOGYX_ENV=prod
+      - ENV=prod
+      - FLASK_APP=manage.py:app
+      - RUN_TASKS=true # Consumes messages from other queues also
+      - SAVE_LOG=true # Saves result log from this worker by consuming the queue specified
+      - MATCH_RULE=true # Matches rules from this worker by consuming the queue specified
+      - MATCH_IOC=true # Matches IOCS from this worker by consuming the queue specified
     shm_size: ${SHARED_MEMORY}
     volumes:
-      - carves:/src/plgx-esp/carves
+      - carves:/src/plgx-esp/resources/carves
+      - container_logs:/var/log
+      - ./resources:/src/plgx-esp/resources
     restart: always
     external_links:
       - rabbit1:rabbit1
       - postgres:postgres
+      - redis:redis
   plgx-esp-ui:
     build:
       context: ./
@@ -50,25 +61,29 @@ services:
     env_file:
       - .env
     environment:
-      - POLYLOGYX_ENV=prod
+      - ENV=prod
+      - FLASK_APP=manage.py:app
     restart: always
     external_links:
       - rabbit1:rabbit1
       - postgres:postgres
+      - redis:redis
     volumes:
-         - carves:/src/plgx-esp-ui/resources/carves
-         - yara:/src/plgx-esp-ui/resources/yara
-         - status_log:/src/plgx-esp-ui/resources/status_log
-         - container_logs:/var/log/
+      - carves:/src/plgx-esp-ui/resources/carves
+      - yara:/src/plgx-esp-ui/resources/yara
+      - status_log:/src/plgx-esp-ui/resources/status_log
+      - container_logs:/var/log/
+      - ./resources:/src/plgx-esp-ui/resources
   rabbit1:
-    image: rabbitmq:3.9.11-management-alpine
+    image: rabbitmq:3.9.20-management-alpine
+    hostname: er-rabbitmq
     ports:
       - "15672:15672"
       - "5673:5673"
       - "5672:5672"
     shm_size: ${SHARED_MEMORY}
     volumes:
-      #- rabbitmq:/var/lib/rabbitmq:rw
+      - rabbitmq_data:/var/lib/rabbitmq:rw
       - ./definitions.json:/opt/definitions.json:ro
       - ./rabbitmq.config:/etc/rabbitmq/rabbitmq.config:ro
     restart: always
@@ -83,21 +98,21 @@ services:
     external_links:
       - plgx-esp:plgx-esp
     volumes:
-         - carves:/carves
-         - ./nginx:/etc/nginx:ro
-         - ./resources:/resources
-         - ./dist:/dist
-         - yara:/resources/yara
-         - status_log:/resources/status_log
-         - container_logs:/var/log/
+      - carves:/carves
+      - ./nginx:/etc/nginx:ro
+      - ./resources:/resources
+      - ./dist:/dist
+      - yara:/resources/yara
+      - status_log:/resources/status_log
+      - container_logs:/var/log/
     restart: always
     ports:
-     - "443:443"
-     - "9000:9000"
-     - "5000:5000"
-     # 5000 and 9000 ports are required for backward support prior to 3.0.1
+      - "443:443"
+      - "9000:9000"
+      - "5000:5000"
+      # 5000 and 9000 ports are required for backward support prior to 3.0.1
   postgres:
-    image: "postgres:11.14"
+    image: "postgres:14.3-alpine3.16"
     command: postgres -c 'max_connections=1000'
     env_file:
       - .env
@@ -113,12 +128,25 @@ services:
     build:
       context: ./rSysLogF
       dockerfile: Dockerfile
+    env_file:
+      - .env
     ports:
       - "514:514"
     restart: always
+  redis:
+    image: 'redis:7.0.0-alpine3.16'
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    ports:
+      - "6379:6379"
+    restart: always
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - redis_data:/data
 volumes:
   postgres-data:
   carves:
   yara:
   status_log:
   container_logs:
+  redis_data:
+  rabbitmq_data:

@@ -9,65 +9,41 @@ from io import BytesIO
 import gzip
 import psutil
 import os
-import sys
 from os.path import abspath, dirname, join
+import click
 
 from flask import json, current_app, jsonify, request
-from flask_migrate import MigrateCommand
-from flask_script import Command, Manager, Server, Shell
-from flask_script.commands import Clean, ShowUrls
 from sqlalchemy import or_
-from werkzeug.contrib.fixers import ProxyFix
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from polylogyx import create_app, db
-from polylogyx.constants import (DefaultInfoQueries, PolyLogyxConstants,
-                                 PolyLogyxServerDefaults, UtilQueries)
+from polylogyx.celery.tasks import create_daily_partition, create_index_for_result_log
+from polylogyx.constants import (DefaultInfoQueries, SettingsVariables)
+from polylogyx.db.models import Query, Rule, Settings, DefaultFilters, DefaultQuery, Config, \
+    VirusTotalAvEngines, Role, User, ThreatIntelCredentials
 from polylogyx.extensions import bcrypt
-from polylogyx.db.models import Query, Rule, Options, Settings, DefaultFilters, DefaultQuery, Config, \
-    VirusTotalAvEngines, ResultLog, ResultLogScan
-from polylogyx.settings import CurrentConfig
-from polylogyx.constants import PolyLogyxServerDefaults, UtilQueries, PolyLogyxConstants, DefaultInfoQueries
-from werkzeug.contrib.fixers import ProxyFix
-import sys
-
-from polylogyx.celery.tasks import create_daily_partition ,create_index_and_trigger
-from polylogyx.db.models import Query, Rule, Options, Settings, DefaultFilters, DefaultQuery, Config, \
-    VirusTotalAvEngines, ResultLog, ResultLogScan, Role, User, Pack, ReleasedAgentVersions, OsquerySchema
-from polylogyx.settings import CurrentConfig
-from polylogyx.constants import PolyLogyxServerDefaults, UtilQueries, PolyLogyxConstants, DefaultInfoQueries
-from polylogyx.celery.tasks import create_daily_partition
+from polylogyx.settings import CurrentConfig, DevConfig, TestConfig
+from distutils.util import strtobool
 
 
 app = create_app(config=CurrentConfig)
 app.wsgi_app = ProxyFix(app.wsgi_app)
 
-
-def _make_context(): # pragma: no cover
-    return {"app": app, "db": db}
+override_default_data = strtobool(str(os.environ.get('OVERRIDE_DEFAULT_DATA', 'True')))
 
 
-class SSLServer(Command): # pragma: no cover
-    def run(self, *args, **kwargs):
-        ssl_context = ('../nginx/certificate.crt', '../nginx/private.key')
-        app.run(debug=True, use_debugger=True, use_reloader=False, passthrough_errors=True,
-                host='0.0.0.0', port=9001,
-                ssl_context=ssl_context,
-                *args, **kwargs)
-
-
-manager = Manager(app)
-manager.add_command("server", Server())
-
-manager.add_command("shell", Shell(make_context=_make_context))
-manager.add_command("db", MigrateCommand)
-manager.add_command("clean", Clean())
-manager.add_command("urls", ShowUrls())
-manager.add_command("ssl", SSLServer())
+@click.argument('remaining', required=False)
+@app.cli.command("test", help="Runs unit testcases")
+def test(remaining=[]):
+    test_cls = Test()
+    if remaining:
+        remaining = [remaining]
+    test_cls.run(remaining)
 
 
 @app.before_request
-def before_request_method(): # pragma: no cover
-    from polylogyx.utils.cache import get_average_celery_task_wait_time,get_log_level
+def before_request_method():
+    from polylogyx.utils.cache import get_average_celery_task_wait_time, get_a_setting
     from polylogyx.utils.log_setting import set_app_log_level
     # Gzip processing
     if 'Content-Encoding' in request.headers and \
@@ -79,7 +55,11 @@ def before_request_method(): # pragma: no cover
     request_json = request.get_json()
     pool = db.engine.pool
     try:
-        set_app_log_level(get_log_level())
+        log_level = "WARNING"
+        log_level_setting = get_a_setting('er_log_level')
+        if log_level_setting:
+            log_level = log_level_setting
+        set_app_log_level(log_level)
         if request.url_rule.endpoint == 'api.logger' and request_json['log_type'] == 'result':
             if os.environ.get('MAX_CPU_LIMIT') and psutil.cpu_percent() > int(os.environ.get('MAX_CPU_LIMIT')):
                 current_app.logger.critical("CPU usage({}%) reached bottle neck, So dropping the result log payload!"
@@ -122,8 +102,7 @@ def before_request_method(): # pragma: no cover
         current_app.logger.error(str(e))
 
 
-@manager.add_command
-class test(Command):
+class Test:
     name = "test"
     capture_all_args = True
 
@@ -133,21 +112,17 @@ class test(Command):
         test_path = join(abspath(dirname(__file__)), "tests")
 
         if remaining:
-            test_args = remaining + ["--verbose"]
+            test_args = remaining + ["--verbose", "--junitxml=./junit.xml"]
         else:
-            test_args = [test_path, "--verbose"]
+            test_args = [test_path, "--verbose", "--junitxml=./junit.xml"]
 
         exit_code = pytest.main(test_args)
         return exit_code
 
 
-@manager.option("--filepath")
-@manager.option("--platform")
-@manager.option("--name")
-@manager.option("--is_default", default=False, type=bool)
 def add_default_filters(filepath, platform, name, is_default):
+    from polylogyx.utils.cache import refresh_cached_config
     current_app.logger.info("Adding default filters for config with name '{0}' and with platform '{1}'...".format(name, platform))
-    current_app.logger.debug("Received filters json file path is:\n '{0}'".format(filepath))
     if is_default:
         description = (
             "Lightweight configuration for {0} hosts, also used as default".format(
@@ -168,30 +143,41 @@ def add_default_filters(filepath, platform, name, is_default):
         )
         config.save()
         current_app.logger.info(
-            "Created a new config '{0}' to add the filters provided...".format(config))
+            "Created a new config '{0}' and adding the filters provided...".format(config))
     else:
-        config.update(is_default=is_default, description=description)
         current_app.logger.info(
-            "Updating the existing config '{0}' to add/update the filters provided...".format(config))
-    existing_filter = DefaultFilters.query.filter_by(platform=platform, config_id=config.id).first()
+            "Updating the existing config '{0}'...".format(config))
+    existing_filter = DefaultFilters.query.filter_by(config_id=config.id).first()
     try:
         json_str = open(filepath, 'r').read()
         filter = json.loads(json_str)
-        current_app.logger.debug("Received filters json payload is:\n '{0}'".format(filter))
-        if existing_filter:
+        if existing_filter and override_default_data:
+            current_app.logger.info("Filter already exists, Updating...")
+            config.update(is_default=is_default, description=description)
             existing_filter.filters = filter
             existing_filter.update(existing_filter)
-            current_app.logger.info("Filter already exists updating...")
+        elif existing_filter:
+            current_app.logger.info("Filter already exists, Skipping...")
         else:
-            current_app.logger.info("Filter does not exist, adding new...")
-            DefaultFilters.create(filters=filter, platform=platform, created_at=dt.datetime.utcnow(),
+            current_app.logger.info("Filter does not exist, Creating...")
+            DefaultFilters.create(filters=filter, created_at=dt.datetime.utcnow(),
                                   config_id=config.id)
         config.update(updated_at=dt.datetime.utcnow())
+        refresh_cached_config()
     except Exception as error:
         current_app.logger.error(str(error))
 
 
-@manager.command
+@click.option("--filepath", help='Path of the json file', type=str)
+@click.option("--platform", help='Platform of config', type=str)
+@click.option("--name", help='Name of config', type=str)
+@click.option("--is_default", default=False, type=bool,
+              help='True if the config is the default/primary config of the platform')
+@app.cli.command("add_default_filters", help="Adds/updates filters to the default configs of the platform")
+def add_default_filters_command(filepath, platform, name, is_default):
+    add_default_filters(filepath, platform, name, is_default)
+
+
 def delete_existing_unmapped_queries_filters():
     current_app.logger.info("Deleting the existing unmapped Queries and Filters...")
     db.session.query(DefaultQuery).filter(DefaultQuery.config_id == None).delete()
@@ -199,12 +185,15 @@ def delete_existing_unmapped_queries_filters():
     db.session.commit()
 
 
-@manager.option("--filepath")
-@manager.option("--platform")
-@manager.option("--name")
-@manager.option("--is_default", default=False, type=bool)
+@app.cli.command("remove_unmapped_queries_filters",
+                 help="Removes all the default queries that aren't mapped to any config")
+def delete_existing_unmapped_queries_filters_command():
+    delete_existing_unmapped_queries_filters()
+
+
 def add_default_queries(filepath, platform, name, is_default):
-    current_app.logger.debug("Received queries json file path is:\n '{0}'".format(filepath))
+    from polylogyx.utils.cache import refresh_cached_config
+
     try:
         if is_default:
             description = "Default configuration of {0} hosts".format(platform)
@@ -214,25 +203,23 @@ def add_default_queries(filepath, platform, name, is_default):
                                 .format(name, platform))
         json_str = open(filepath, 'r').read()
         query = json.loads(json_str)
-        current_app.logger.debug("Received queries json payload is:\n '{0}'".format(query))
         queries = query['schedule']
         config = db.session.query(Config).filter(Config.name == name).filter(Config.platform == platform).first()
         if config:
             DefaultQuery.query.filter(DefaultQuery.config_id == config.id).filter(
                 ~DefaultQuery.name.in_(queries.keys())
             ).delete(synchronize_session=False)
-            config.update(is_default=is_default, description=description)
+            if override_default_data:
+                config.update(is_default=is_default, description=description)
         else:
             config = Config.create(platform=platform, name=name, is_default=is_default, description=description)
         for query_key in queries.keys():
             if query_key not in DefaultInfoQueries.DEFAULT_VERSION_INFO_QUERIES.keys():
-                query_filter = DefaultQuery.query.filter_by(platform=platform).filter_by(name=query_key)\
+                query_filter = DefaultQuery.query.filter_by(name=query_key)\
                     .filter_by(config_id=config.id)
                 config_id = config.id
             else:
-                query_filter = DefaultQuery.query.filter_by(
-                    platform=platform
-                ).filter_by(name=query_key)
+                query_filter = DefaultQuery.query.filter_by(name=query_key)
                 config_id = None
             query = query_filter.first()
             try:
@@ -241,20 +228,18 @@ def add_default_queries(filepath, platform, name, is_default):
                 else:
                     snapshot = False
 
-                if query:
-                    sys.stderr.write(
-                        "Query name " + query_key + " already exists, updating..!"
-                    )
+                if query and override_default_data:
+                    current_app.logger.info(f"Default query with name '{query_key}' already exists, Updating...")
                     query.sql = queries[query_key]["query"]
                     query.interval = queries[query_key]["interval"]
-                    query.status = queries[query_key]["status"]
+                    query.status = queries[query_key].get("status", True)
                     query.snapshot = snapshot
                     query.update(query)
+                elif query:
+                    current_app.logger.info(f"Default query with name '{query_key}' already exists, Skipping...")
                 else:
-                    sys.stderr.write(query_key + " does not exist, adding new...")
-                    status = True
-                    if "status" in queries[query_key]:
-                        status = queries[query_key]["status"]
+                    current_app.logger.info(f"Default query with name '{query_key}' doesn't exists, Creating...")
+                    status = queries[query_key].get("status", True)
 
                     DefaultQuery.create(
                         name=query_key,
@@ -262,17 +247,27 @@ def add_default_queries(filepath, platform, name, is_default):
                         config_id=config_id,
                         interval=queries[query_key]["interval"],
                         status=status,
-                        platform=platform,
                         description=queries[query_key].get("description"),
                         snapshot=snapshot,
                     )
             except Exception as error:
-                sys.stderr.write(str(error))
+                current_app.logger.error(str(error))
         config.update(updated_at=dt.datetime.utcnow())
+        refresh_cached_config()
     except Exception as error:
-        raise (str(error))
+        current_app.logger.error(str(error))
 
-@manager.command
+
+@click.option("--filepath", help='Path of the json file', type=str)
+@click.option("--platform", help='Platform of config')
+@click.option("--name", help='Name of config')
+@click.option("--is_default", default=False, type=bool,
+              help='True if the config is the default/primary config of the platform')
+@app.cli.command("add_default_queries", help="Adds/updates queries to the default configs of the platform")
+def add_default_queries_command(filepath, platform, name, is_default):
+    add_default_queries(filepath, platform, name, is_default)
+
+
 def update_query_name_for_custom_config():
     configs = db.session.query(Config).filter(Config.platform == 'windows').all()
     for config in configs:
@@ -283,40 +278,45 @@ def update_query_name_for_custom_config():
     db.session.commit()
 
 
-@manager.option("packname")
-@manager.option("--filepath")
-def addpack(packname, filepath): # pragma: no cover
+@app.cli.command("update_wrte_query_name",
+                 help="Renames the query windows_events to windows_real_time_events if present")
+def update_query_name_for_custom_config_command():
+    update_query_name_for_custom_config()
+
+
+def add_pack(packname, filepath):
     from polylogyx.db.models import Pack
 
-    current_app.logger.debug("Received pack file from the path '{0}' and pack name '{1}'".format(filepath, packname))
     existing_pack = Pack.query.filter_by(name=packname).first()
     try:
         json_str = open(filepath, 'r').read()
         data = json.loads(json_str)
-        current_app.logger.debug("Received pack json is \n'{0}'".format(data))
-        if not existing_pack:
-            pack = Pack.create(name=packname)
-        else:
+        if existing_pack and override_default_data:
             pack = existing_pack
-            current_app.logger.info(
-                "Pack with name '{0}' already exists!".format(packname))
-        current_app.logger.info("Created a new pack '{0}'".format(packname))
+            current_app.logger.info(f"Pack with name '{packname}' already exists, Updating...")
+        elif existing_pack:
+            current_app.logger.info(f"Pack with name '{packname}' already exists, Skipping...")
+            exit(0)
+        else:
+            current_app.logger.info(f"Pack with name '{packname}' doesn't exists, Creating...")
+            pack = Pack.create(name=packname)
         for query_name, query in data['queries'].items():
-            q = Query.query.filter(Query.name == query_name).first()
-
-            if not q:
+            is_query_exist=False
+            queries = Query.query.filter(Query.name == query_name).all()
+            if not queries:
                 q = Query.create(name=query_name, **query)
                 pack.queries.append(q)
-                current_app.logger.info("Adding new query {0} to pack {1}".format(q.name, pack.name))
-                continue
+                is_query_exist = True
+                current_app.logger.info(f"Adding new query {q.name} to pack {pack.name}")
+            for q in queries:
+                if q.sql == query['query']:
+                    is_query_exist=True
+                    current_app.logger.info(f"Adding existing query {q.name} to pack {pack.name}")
+                    pack.queries.append(q)
+                else:
+                    pass
 
-            if q in pack.queries:
-                continue
-
-            if q.sql == query['query']:
-                current_app.logger.info("Adding existing query {0} to pack {1}".format(q.name, pack.name))
-                pack.queries.append(q)
-            else:
+            if is_query_exist is False:
                 q2 = Query.create(name=query_name, **query)
                 current_app.logger.info("Created another query named {0}, but different sql: {1} vs {2}"
                                         .format(query_name, q2.sql.encode('utf-8'), q.sql.encode('utf-8')))
@@ -325,94 +325,85 @@ def addpack(packname, filepath): # pragma: no cover
     except Exception as error:
         current_app.logger.error("Failed to create pack {0} - {1}".format(packname, error))
         exit(1)
-    else:
-        current_app.logger.info("Created pack {0}".format(pack.name))
-        exit(0)
 
 
-@manager.command
+@click.option("--packname", help="Name of the pack")
+@click.option("--filepath", help="Path of the query pack json file")
+@app.cli.command("add_pack", help="Adds a query pack into the database")
+def add_pack_command(packname, filepath):
+    add_pack(packname, filepath)
+
+
 def add_partition():
-    for i in range(7):
+    for i in range(SettingsVariables.pre_create_partitions_count):
         create_daily_partition(day_delay=i)
 
 
-@manager.option('--filepath')
+@app.cli.command("add_partition", help="Adds a new partition to ResultLog table")
+def add_partition_command():
+    add_partition()
+
+
 def add_rules(filepath):
+    from polylogyx.utils.cache import refresh_cached_rules
     with open(filepath) as f:
         rules = json.load(f)
 
-    current_app.logger.debug("Adding default rules from the path '{0}' ...".format(filepath))
-
     for name, data in rules.items():
         rule = Rule.query.filter_by(name=data["name"]).first()
-        if rule:
-            current_app.logger.debug("Updating rule '{0}' from the json: \n'{1}' ...".format(rule, data))
-            sys.stderr.write('Updating rule.. ' + rule.name)
+        if rule and override_default_data:
+            current_app.logger.info(f"Rule with name '{rule.name}' already exists, Updating...")
             rule.platform = data.get('platform')
-            rule.description = data['description']
-            rule.conditions = data['conditions'],
-            rule.conditions = rule.conditions[0]
+            rule.description = data.get('description')
+            rule.conditions = data.get('conditions')
             rule.status = data.get('status', Rule.ACTIVE)
             rule.alert_description = data.get('alert_description', False)
-
-            if "technique_id" in data:
-                if data["technique_id"]:
-                    rule.tactics = data["tactics"]
-                    rule.technique_id = data["technique_id"]
-                    if "type" not in data:
-                        rule.type = Rule.MITRE
-                    else:
-                        rule.type = data["type"]
-                    rule.save(rule)
+            rule.tactics = data.get("tactics")
+            rule.technique_id = data.get("technique_id")
+            rule.type = data.get("type", Rule.MITRE)
+            rule.save(rule)
+        elif rule:
+            current_app.logger.info(f"Rule with name '{rule.name}' already exists, Skipping...")
         else:
-            sys.stderr.write('Creating rule.. ' + data['name'])
-            current_app.logger.debug("Creating a new rule '{0}' from the json: \n'{1}' ...".format(data['name'], data))
-            severity = Rule.WARNING
-            try:
-                if data['severity']:
-                    severity = data['severity']
-            except Exception as e:
-                current_app.logger.error("Unable to find the severity from json - {0}".format(str(e)))
-            if 'technique_id' in data:
-                if data['technique_id']:
-                    rule = Rule(name=data['name'],
-                                platform=data.get('platform', 'windows'),
-                                alert_description=data.get('alert_description', False),
-                                alerters=data['alerters'],
-                                description=data['description'],
-                                conditions=data['conditions'],
-                                status=data.get('status', Rule.ACTIVE),
-                                technique_id=data['technique_id'],
-                                tactics=data['tactics'],
-                                severity=severity,
-                                type=Rule.MITRE,
-                                recon_queries=json.dumps(UtilQueries.ALERT_RECON_QUERIES_JSON))
-            else:
-                rule = Rule(name=data['name'],
-                            platform=data.get('platform', 'windows'),
-                            alert_description=data.get('alert_description', False),
-                            alerters=data['alerters'],
-                            description=data['description'],
-                            conditions=data['conditions'],
-                            status=data.get('status', Rule.ACTIVE),
-                            severity=severity,
-                            recon_queries=json.dumps(UtilQueries.ALERT_RECON_QUERIES_JSON))
+            current_app.logger.info(f"Rule with name '{data['name']}' doesn't exists, Creating...")
+            severity = str(data.get('severity', 'MEDIUM')).upper()
+            if severity == 'WARNING':
+                severity = Rule.MEDIUM
+            rule = Rule(name=data['name'],
+                        platform=data.get('platform', 'windows'),
+                        alert_description=data.get('alert_description', False),
+                        alerters=data.get('alerters'),
+                        description=data.get('description'),
+                        conditions=data.get('conditions'),
+                        status=data.get('status', Rule.ACTIVE),
+                        technique_id=data.get('technique_id'),
+                        tactics=data.get('tactics'),
+                        severity=severity,
+                        type=data.get('type', Rule.MITRE))
             rule.save()
+    refresh_cached_rules()
 
 
-@manager.option('--filepath')
+@click.option('--filepath', help="Path of the rule json file")
+@app.cli.command("add_rule", help="Adds a rule")
+def add_rules_command(filepath):
+    add_rules(filepath)
+
+
 def add_default_vt_av_engines(filepath):
     try:
-        sys.stderr.write('Adding Virus total AntiVirus engines')
+        current_app.logger.info('Adding/Updating Virus total AntiVirus engines config...')
         json_str = open(filepath, 'r').read()
         av_engine = json.loads(json_str)
-        current_app.logger.debug(
-            "Adding/Updating VirusTotal AV Engines info from the json data:\n {0}".format(av_engine))
+
         av_engines = av_engine['av_engines']
         for key in av_engines.keys():
             av_engine_obj = VirusTotalAvEngines.query.filter(VirusTotalAvEngines.name == key).first()
-            if av_engine_obj:
-                current_app.logger.info(" Virus total AntiVirus engine {0} is already present ".format(av_engine_obj))
+            if av_engine_obj and override_default_data:
+                av_engine_obj.status = av_engines[key]["status"]
+                av_engine_obj.save()
+            elif av_engine_obj:
+                pass
             else:
                 VirusTotalAvEngines.create(name=key, status=av_engines[key]["status"])
     except Exception as error:
@@ -420,33 +411,61 @@ def add_default_vt_av_engines(filepath):
     db.session.commit()
 
 
-@manager.option("--vt_min_match_count")
+@click.option('--filepath', help="Path of the file")
+@app.cli.command("update_vt_av_engines_config",
+                 help="Updates the Virus Total AV engines config that's being used in the platform")
+def add_default_vt_av_engines_command(filepath):
+    add_default_vt_av_engines(filepath)
+
+
 def update_vt_match_count(vt_min_match_count):
+    from polylogyx.utils.cache import add_or_update_cached_setting
     existing_setting_obj = Settings.query.filter(Settings.name == 'virustotal_min_match_count').first()
-    if existing_setting_obj:
-        current_app.logger.info(
-            "VT min match count is already set from existing Settings Object '{0}'".format(existing_setting_obj))
+    if existing_setting_obj and override_default_data:
+        current_app.logger.info(f"Virus Total minimum match count setting already exists and is set to {existing_setting_obj.setting}, Updating to {vt_min_match_count}...")
+        existing_setting_obj.setting = vt_min_match_count
+        existing_setting_obj.save()
+    elif existing_setting_obj:
+        current_app.logger.info(f"Virus Total minimum match count setting already exists and is set to {existing_setting_obj.setting}, Skipping...")
     else:
         settings_obj = Settings.create(name='virustotal_min_match_count', setting=vt_min_match_count)
-        current_app.logger.info(
-            "VT min match count was not set, so creating a new Settings Object '{0}'".format(settings_obj))
+        current_app.logger.info(f"Virus Total minimum match count setting doesn't exists, Creating it to {vt_min_match_count}...")
+        add_or_update_cached_setting(setting_obj=settings_obj)
 
 
-@manager.option("--vt_scan_retention_period")
+@click.option("--vt_min_match_count", help="Virus total minimum av engines match count")
+@app.cli.command("update_vt_match_count",
+                 help="Updates the Virus Total AV engines minimum match count value that's being used in the platform")
+def update_vt_match_count_command(vt_min_match_count):
+    update_vt_match_count(vt_min_match_count)
+
+
 def update_vt_scan_retention_period(vt_scan_retention_period):
+    from polylogyx.utils.cache import add_or_update_cached_setting
     existing_setting_obj = Settings.query.filter(Settings.name == 'vt_scan_retention_period').first()
-    if existing_setting_obj:
-        current_app.logger.info(
-            "vt scan retention period is already set from existing Settings Object '{0}'".format(existing_setting_obj))
+    if existing_setting_obj and override_default_data:
+        current_app.logger.info(f"Virus Total scan retention period already exists and is set to {existing_setting_obj.setting}, Updating to {vt_scan_retention_period} days...")
+        existing_setting_obj.setting = vt_scan_retention_period
+        existing_setting_obj.save()
+    elif existing_setting_obj:
+        current_app.logger.info(f"Virus Total scan retention period already exists and is set to {existing_setting_obj.setting} days, Skipping...")
     else:
         settings_obj = Settings.create(name='vt_scan_retention_period', setting=vt_scan_retention_period)
-        current_app.logger.info(
-            "vt scan retention period  was not set, so creating a new Settings Object '{0}'".format(settings_obj))
+        current_app.logger.info(f"Virus Total scan retention period doesn't exists, Creating it to {vt_scan_retention_period} days...")
+        add_or_update_cached_setting(setting_obj=settings_obj)
 
 
-@manager.option("--data_retention_days", default=7)
-@manager.option("--alert_aggregation_duration", default=60)
+@click.option("--vt_scan_retention_period", help="Virus total scan retention period")
+@app.cli.command("update_vt_scan_retention_period", help="Updates the Virus Total scan retention period")
+def update_vt_scan_retention_period_command(vt_scan_retention_period):
+    update_vt_scan_retention_period(vt_scan_retention_period)
+
+
 def update_settings(data_retention_days, alert_aggregation_duration):
+    from polylogyx.utils.cache import refresh_cached_settings
+    if not (0 < int(data_retention_days) < int(current_app.config.get('INI_CONFIG', {}).get('max_data_retention_days'))):
+        current_app.logger.info(f"Data retention days should be greater than 0 and less than {current_app.config.get('INI_CONFIG', {}).get('max_data_retention_days')}...")
+        data_retention_days = current_app.config.get('INI_CONFIG', {}).get('max_data_retention_days')
     data_retention_setting = Settings.query.filter(
         Settings.name == "data_retention_days"
     ).first()
@@ -454,28 +473,36 @@ def update_settings(data_retention_days, alert_aggregation_duration):
         Settings.name == "alert_aggregation_duration"
     ).first()
 
-    if data_retention_setting:
-        current_app.logger.info("Purge duration is already set to {0} days, Updating it..."
-                                .format(data_retention_setting.setting))
+    if data_retention_setting and override_default_data:
+        current_app.logger.info(f"Data retention period already exists and is set to {data_retention_setting.setting}, Updating to {data_retention_days} days...")
+        data_retention_setting.setting = data_retention_days
+        data_retention_setting.save()
+    elif data_retention_setting:
+        current_app.logger.info(f"Data retention period already exists and is set to {data_retention_setting.setting}, Skipping...")
     else:
-        current_app.logger.info("Setting up Purge duration to {0} days...".format(data_retention_days))
+        current_app.logger.info(f"Data retention period doesn't exists, Creating it to {data_retention_days} days...")
         Settings.create(name='data_retention_days', setting=data_retention_days)
 
-    if alert_aggr_dur_setting:
-        current_app.logger.info("Alert aggregation duration is already set to {0} seconds, Updating it..."
-                                .format(alert_aggr_dur_setting.setting))
-        alert_aggr_dur_setting.update(setting=alert_aggregation_duration)
+    if alert_aggr_dur_setting and override_default_data:
+        current_app.logger.info(f"Alert aggregation duration already exists and is set to {alert_aggr_dur_setting.setting}, Updating to {alert_aggregation_duration} secs...")
+        alert_aggr_dur_setting.setting = alert_aggregation_duration
+        alert_aggr_dur_setting.save()
+    elif alert_aggr_dur_setting:
+        current_app.logger.info(f"Alert aggregation duration already exists and is set to {alert_aggr_dur_setting.setting}, Skipping...")
     else:
-        current_app.logger.info("Setting up Alert aggregation duration to {0} seconds..."
-                                .format(alert_aggregation_duration))
+        current_app.logger.info(f"Alert aggregation duration doesn't exists, Creating it to {alert_aggregation_duration} secs...")
         Settings.create(name='alert_aggregation_duration', setting=alert_aggregation_duration)
+    refresh_cached_settings()
 
-    
+
+@click.option("--data_retention_days", default=7, help="Duration to retain platform data and drop the older data")
+@click.option("--alert_aggregation_duration", default=60,
+              help="Interval to aggregate the event to an alert if it's matching with the same rule & from same host")
+@app.cli.command("update_settings", help="Updates settings that are being used in the platform")
+def update_settings_command(data_retention_days, alert_aggregation_duration):
+    update_settings(data_retention_days, alert_aggregation_duration)
 
 
-@manager.option('--name')
-@manager.option('--description', default=None)
-@manager.option('--access_level', default=None, type=int)
 def add_role(name, description, access_level):
     if Role.query.filter(or_(Role.name == name, Role.access_level == access_level)).first():
         current_app.logger.error("Role with this name or access level already exists!")
@@ -490,12 +517,14 @@ def add_role(name, description, access_level):
         exit(0)
 
 
-@manager.option('username')
-@manager.option('--password', default=None)
-@manager.option('--email', default=None)
-@manager.option('--role')
-@manager.option('--first_name', default=None)
-@manager.option('--last_name', default=None)
+@click.argument('name')
+@click.option("--description", default=None, help="Description of the role")
+@click.option('--access_level', help="Access level of the role")
+@app.cli.command("add_role", help="Adds a platform user role")
+def add_role_command(name, description, access_level):
+    add_role(name, description, access_level)
+
+
 def add_user(username, password, email=None, role=None, first_name=None, last_name=None):
     existing_user = User.query.filter(User.username == username).first()
     if role:
@@ -508,7 +537,7 @@ def add_user(username, password, email=None, role=None, first_name=None, last_na
         role_object = None
 
     if existing_user:
-        current_app.logger.error("User with this username already exists!")
+        current_app.logger.info("User with this username already exists!")
         if role_object and not existing_user.roles:
             existing_user.update(roles=[role_object], reset_password=True, status=True, enable_sso=True,
                                  reset_email=True)
@@ -526,21 +555,17 @@ def add_user(username, password, email=None, role=None, first_name=None, last_na
             exit(0)
 
 
-@manager.command
-def add_admin_user():
-    default_roles = current_app.config.get('DEFAULT_ROLES', {})
-    if isinstance(default_roles, dict):
-        admin_role = default_roles[min(default_roles.keys())]
-        username = os.environ.get('POLYLOGYX_USER', 'admin')
-        password = os.environ.get('POLYLOGYX_PASSWORD', 'admin')
-        email = os.environ.get('POLYLOGYX_USER_EMAIL')
-        first_name = os.environ.get('POLYLOGYX_USER_FIRST_NAME')
-        last_name = os.environ.get('POLYLOGYX_USER_LAST_NAME')
-        add_user(username=username, password=password, role=admin_role, email=email, first_name=first_name,
-                 last_name=last_name)
+@click.argument('username')
+@click.option('--password', help="Password of the user")
+@click.option("--email", default=None, help="Email of the user")
+@click.option('--role', help="Role to apply to the user")
+@click.option("--first_name", default=None, help="First name of the user")
+@click.option("--last_name", default=None, help="Last name of the user")
+@app.cli.command("add_user", help="Adds a new user")
+def add_user_command(username, password, email=None, role=None, first_name=None, last_name=None):
+    add_user(username, password, email, role, first_name, last_name)
 
 
-@manager.command
 def update_role_for_existing_users():
     default_roles = current_app.config.get('DEFAULT_ROLES', {})
     if isinstance(default_roles, dict):
@@ -562,7 +587,12 @@ def update_role_for_existing_users():
     exit(0)
 
 
-@manager.command
+@app.cli.command('update_role_for_existing_users',
+                 help="Updates role to all the users prior to the platform version 3.5.0")
+def update_role_for_existing_users_command():
+    update_role_for_existing_users()
+
+
 def create_all_roles():
     default_roles = current_app.config.get('DEFAULT_ROLES', {})
     if isinstance(default_roles, dict):
@@ -582,12 +612,11 @@ def create_all_roles():
         exit(1)
 
 
-@manager.option('--username')
-@manager.option('--password', default=None)
-@manager.option('--email', default=None)
-@manager.option('--role', default=None)
-@manager.option('--first_name', default=None)
-@manager.option('--last_name', default=None)
+@app.cli.command('create_all_roles', help="Creates all the roles of the platform users")
+def create_all_roles_command():
+    create_all_roles()
+
+
 def update_user(username, password, email=None, role=None, first_name=None, last_name=None):
     user = User.query.filter(or_(User.username == username, User.email == username)).first()
     if not user:
@@ -619,57 +648,24 @@ def update_user(username, password, email=None, role=None, first_name=None, last
     exit(0)
 
 
-@manager.option("--filepath")
-def add_release_versions(filepath):
-    from polylogyx.db.models import ReleasedAgentVersions
-
-    current_app.logger.info("Adding/Updating Platform release history")
-    json_str = open(filepath, 'r').read()
-    data = json.loads(json_str)
-    current_app.logger.debug("Received platform release history data:\n{0}".format(data))
-    for release_version, rel_dict in data.items():
-        for platform, platform_dict in rel_dict.items():
-            for arch, arch_dict in platform_dict.items():
-                agent_version_history = (
-                    ReleasedAgentVersions.query.filter(
-                        ReleasedAgentVersions.platform == platform
-                    )
-                    .filter(ReleasedAgentVersions.arch == arch)
-                    .filter(ReleasedAgentVersions.platform_release == release_version)
-                    .first()
-                )
-                extension_version = arch_dict.get("extension", {}).get("version", None)
-                extension_hash_md5 = arch_dict.get("extension", {}).get("md5", None)
-                cpt_version = arch_dict.get("cpt", {}).get("version", None)
-                cpt_hash_md5 = arch_dict.get("cpt", {}).get("md5", None)
-                osquery_version = arch_dict.get("osquery", {}).get("version", None)
-                osquery_hash_md5 = arch_dict.get("osquery", {}).get("md5", None)
-                if agent_version_history:
-                    agent_version_history.extension_version = extension_version
-                    agent_version_history.extension_hash_md5 = extension_hash_md5
-                    agent_version_history.cpt_version = cpt_version
-                    agent_version_history.cpt_hash_md5 = cpt_hash_md5
-                    agent_version_history.osquery_version = osquery_version
-                    agent_version_history.osquery_hash_md5 = osquery_hash_md5
-                    agent_version_history.update(agent_version_history)
-                else:
-                    ReleasedAgentVersions.create(platform=platform, arch=arch, platform_release=release_version,
-                                                 extension_version=extension_version,
-                                                 extension_hash_md5=extension_hash_md5,
-                                                 osquery_version=osquery_version, osquery_hash_md5=osquery_hash_md5,
-                                                 cpt_version=cpt_version, cpt_hash_md5=cpt_hash_md5)
+@click.argument('username')
+@click.option('--password', default=None, help="Password of the user")
+@click.option("--email", default=None, help="Email of the user")
+@click.option('--role', help="Role to apply to the user")
+@click.option("--first_name", default=None, help="First name of the user")
+@click.option("--last_name", default=None, help="Last name of the user")
+@app.cli.command('update_user', help="Updates a platform user")
+def update_user_command(username, password=None, email=None, role=None, first_name=None, last_name=None):
+    update_user(username, password, email, role, first_name, last_name)
 
 
-@manager.option('--specs_dir')
-@manager.option('--export_type', default='sql', choices=['sql', 'json'])
-@manager.option('--target_file', default='osquery_schema.sql')
 def extract_ddl(specs_dir, export_type, target_file):
     """
     Extracts CREATE TABLE statements or JSON Array of schema from osquery's table specifications
 
-    python manage.py extract_ddl --specs_dir /Users/polylogyx/osquery/specs --export_type sql
+    flask extract_ddl --specs_dir /Users/polylogyx/osquery/specs --export_type sql
             ----> to export to osquery_schema.sql file
-    python manage.py extract_ddl --specs_dir /Users/polylogyx/osquery/specs --export_type json
+    flask extract_ddl --specs_dir /Users/polylogyx/osquery/specs --export_type json
             ----> to export to osquery_schema.json file
     """
     from polylogyx.db.extract_ddl import extract_schema, extract_schema_json
@@ -680,7 +676,7 @@ def extract_ddl(specs_dir, export_type, target_file):
     spec_files.extend(glob.glob(join(specs_dir, '**', '*.table')))
     if export_type == 'sql':
         ddl = sorted([extract_schema(f) for f in spec_files], key=lambda x: x.split()[2])
-        opath = join(dirname(__file__), 'polylogyx', 'resources', target_file)
+        opath = join(current_app.config.get('COMMON_FILES_URL', ''), target_file)
         content = '\n'.join(ddl)
     elif export_type == 'json':
         full_schema = []
@@ -688,7 +684,7 @@ def extract_ddl(specs_dir, export_type, target_file):
             table_dict = extract_schema_json(f)
             if table_dict["platform"]:
                 full_schema.append(table_dict)
-        opath = join(dirname(__file__), 'polylogyx', 'resources', target_file)
+        opath = join(current_app.config.get('COMMON_FILES_URL', ''), target_file)
         content = json.dumps(full_schema)
     else:
         print("Export type given is invalid!")
@@ -698,14 +694,21 @@ def extract_ddl(specs_dir, export_type, target_file):
     with open(opath, "w") as f:
         if export_type == "sql":
             f.write(
-                '-- This file is generated using "python manage.py extract_ddl"'
+                '-- This file is generated using "flask extract_ddl"'
                 "- do not edit manually\n"
             )
         f.write(content)
     current_app.logger.info('OSQuery Schema is exported to the file {} successfully'.format(opath))
 
 
-@manager.option("--file_path", default="polylogyx/resources/osquery_schema.json")
+@click.option('--specs_dir', help="Osquery specs directory path")
+@click.option("--export_type", default='sql', help="sql to export as sql file, json to export to json file")
+@click.option("--target_file", default='osquery_schema.sql', help="Target file path to write the schema")
+@app.cli.command('extract_ddl', help="Extracts the osquery schema to a json/sql file")
+def extract_ddl_command(specs_dir, export_type, target_file):
+    extract_ddl(specs_dir, export_type, target_file)
+
+
 def update_osquery_schema(file_path):
     from polylogyx.db.models import OsquerySchema
 
@@ -744,6 +747,13 @@ def update_osquery_schema(file_path):
     exit(0)
 
 
+@click.option("--file_path", default="/src/plgx-esp/common/osquery_schema.json",
+              help="Absolute/Relative file path of os query schema json file")
+@app.cli.command('update_osquery_schema', help="Updates the osquery schema into database for live query page use")
+def update_osquery_schema_command(file_path):
+    update_osquery_schema(file_path)
+
+
 def add_result_log_map_data(partition):
     # mapping result_scan_id and result_log ids for existing data
     db.session.execute('''
@@ -768,7 +778,6 @@ def add_result_log_map_data(partition):
     db.session.commit()
 
 
-@manager.command
 def add_partitions_existing_data():
     import datetime
     partition_dates = db.session.execute('select timestamp::date from result_log_old group by timestamp::date order by timestamp DESC;')
@@ -782,30 +791,35 @@ def add_partitions_existing_data():
          if partition_date != today and partition_date >= drop_date:
             create_partition_from_old_data(partition_date)
     end_time = datetime.datetime.utcnow()
-    print('Time took to complete',end_time-start_time)
+    print('Time took to complete', end_time-start_time)
     db.session.commit()
-    current_app.logger.debug('Updating result log scans and result log data to result map')
+    current_app.logger.info('Updating result log scans and result log data to result map')
+
+
+@app.cli.command('add_partitions_existing_data', help="Creates partitions for the existing data, prior to 3.5.0")
+def add_partitions_existing_data_command():
+    add_partitions_existing_data()
 
 
 def check_table_exists(tbl_name):
     check_if_trigger_exists = "select count(*) from pg_tables where lower(tablename)='{}'".format(tbl_name.lower())
     res = db.session.execute(check_if_trigger_exists).first()[0]
     db.session.rollback()
-    if res==0:
+    if res == 0:
         return False
     else:
         return True
 
-@manager.command
+
 def create_partition_from_old_data(partition_date=dt.date.today()):
-    start_date=partition_date.strftime("%b-%d-%Y").split("-")
+    start_date = partition_date.strftime("%b-%d-%Y").split("-")
     end_date = (partition_date + dt.timedelta(days=1))
     month = start_date[0]
     date = start_date[1]
     year = start_date[2]
-    result_log_partition_table=('result_log_'+str(month) + "_" + str(date) + "_" + str(year))
+    result_log_partition_table = ('result_log_' + str(month) + "_" + str(date) + "_" + str(year))
     node_query_count_partition_table = ("node_query_count_" + str(month) + "_" + str(date) + "_" + str(year))
-    
+
     if not check_table_exists("result_log_old"):
         print("Backup table does not exists")
         return
@@ -817,47 +831,140 @@ def create_partition_from_old_data(partition_date=dt.date.today()):
     try:
         start_time = dt.datetime.utcnow()
         print('Creating partition - {}'.format(result_log_partition_table))
-        sql = "CREATE TABLE {0} AS SELECT * FROM result_log_old WHERE timestamp::date >= '{1}' AND timestamp::date < '{2}';".format(result_log_partition_table, partition_date,end_date)
+        sql = "CREATE TABLE {0} AS SELECT * FROM result_log_old WHERE timestamp::date >= '{1}' AND timestamp::date < '{2}';".format(
+            result_log_partition_table, partition_date, end_date)
         db.session.execute(sql)
-        constraint_sql="alter table {0} alter column id set not null," \
-                        "alter column name set not null,alter column node_id set not null;".format(result_log_partition_table)
+        constraint_sql = "alter table {0} alter column id set not null," \
+                         "alter column name set not null,alter column node_id set not null;".format(
+            result_log_partition_table)
         db.session.execute(constraint_sql)
-        set_created_at="update {0} set created_at=timestamp;".format(result_log_partition_table)
+        set_created_at = "update {0} set created_at=timestamp;".format(result_log_partition_table)
         db.session.execute(set_created_at)
-        set_query_name= "update {0} set name='windows_real_time_events' where name='windows_events';".format(result_log_partition_table)
+        set_query_name = "update {0} set name='windows_real_time_events' where name='windows_events';".format(
+            result_log_partition_table)
         db.session.execute(set_query_name)
-        attach_sql="alter table result_log attach partition {0} for values from ('{1}') to ('{2}');".format(result_log_partition_table, partition_date, end_date)
+        attach_sql = "alter table result_log attach partition {0} for values from ('{1}') to ('{2}');".format(
+            result_log_partition_table, partition_date, end_date)
         db.session.execute(attach_sql)
         update_node_query_count = "INSERT INTO node_query_count(total_results,node_id,query_name,event_id,date)" \
-                                    " SELECT count(*),node_id,name,columns->>'eventid',created_at::date " \
-                                    "FROM {0} group by name,node_id,columns->>'eventid',created_at::date;".format(result_log_partition_table)
+                                  " SELECT count(*),node_id,name,columns->>'eventid',created_at::date " \
+                                  "FROM {0} group by name,node_id,columns->>'eventid',created_at::date;".format(
+            result_log_partition_table)
 
         db.session.execute(update_node_query_count)
         db.session.commit()
-        create_index_and_trigger(result_log_partition_table,node_query_count_partition_table)
+        create_index_for_result_log(result_log_partition_table)
         add_result_log_map_data(result_log_partition_table)
         end_time = dt.datetime.utcnow()
-        print('Added parttion - {} in {}'.format(result_log_partition_table,end_time-start_time))
-        current_app.logger.debug('Added partition for {}'.format(result_log_partition_table))
+        current_app.logger.info('Added partition for {}'.format(result_log_partition_table))
     except Exception as e:
         db.session.rollback()
-        current_app.logger.debug(e)
-        print(e)
+        current_app.logger.info(e)
 
 
+@app.cli.command('create_partition_from_old_data', help="Creates partitions from old data")
+def create_partition_from_old_data_command(partition_date=dt.date.today()):
+    create_partition_from_old_data(partition_date)
 
-@manager.command
+
 def drop_old_data():
     db.session.execute('drop table result_log_old;')
     db.session.execute('drop table node_query_count_old;')
     db.session.commit()
 
 
-from polylogyx.utils.log_setting import _set_log_level_to_db,_check_log_level_exists
-@manager.option("--log_level", default="WARNING")
+@app.cli.command('drop_old_data', help="Drops the back up tables created for partitions creation")
+def drop_old_data_command():
+    drop_old_data()
+
+
 def set_log_level(log_level):
     if not _check_log_level_exists():
         _set_log_level_to_db(log_level)
 
+
+from polylogyx.utils.log_setting import _set_log_level_to_db, _check_log_level_exists
+@click.option("--log_level", default="WARNING", help="Log level that application server uses to log")
+@app.cli.command('set_log_level', help="Updates the er server log level")
+def set_log_level_command(log_level):
+    set_log_level(log_level)
+
+
+def add_api_key(IBMxForceKey, IBMxForcePass, VT_API_KEY, OTX_API_KEY):
+    virus_total = ibm_x_force = alien_vault = None
+    virus_total_creds = alien_vault_creds = ibm_x_force_creds = None
+    intels = ThreatIntelCredentials.query.filter(ThreatIntelCredentials.intel_name.in_(('ibmxforce', 'virustotal', 'alienvault'))).all()
+    for intel in intels:
+        if intel.intel_name == 'ibmxforce':
+            ibm_x_force = intel
+        elif intel.intel_name == 'virustotal':
+            virus_total = intel
+        else:
+            alien_vault = intel
+            
+    if VT_API_KEY:
+        virus_total_creds = {'key': VT_API_KEY}
+    if IBMxForceKey and IBMxForcePass:
+        ibm_x_force_creds = {'key': IBMxForceKey, 'pass': IBMxForcePass}
+    if OTX_API_KEY:
+        alien_vault_creds = {'key': OTX_API_KEY}
+
+    if virus_total_creds:
+        if virus_total and override_default_data:
+            current_app.logger.info('Virus Total Key already exists, Updating...')
+            virus_total.credentials = virus_total_creds
+            virus_total.save()
+        elif virus_total:
+            current_app.logger.info('Virus Total Key already exists, Skipping...')
+        else:
+            current_app.logger.info("Virus Total Key doesn't exists, Creating...")
+            ThreatIntelCredentials.create(intel_name='virustotal', credentials=virus_total_creds)
+
+    if alien_vault_creds:
+        if alien_vault and override_default_data:
+            current_app.logger.info('Alien Vault OTX Key already exists, Updating...')
+            alien_vault.credentials = alien_vault_creds
+            alien_vault.save()
+        elif alien_vault:
+            current_app.logger.info('Alien Vault OTX Key already exists, Skipping...')
+        else:
+            current_app.logger.info("Alien Vault OTX Key doesn't exists, Creating...")
+            ThreatIntelCredentials.create(intel_name='alienvault', credentials=alien_vault_creds)
+    
+    if ibm_x_force_creds:
+        if ibm_x_force and override_default_data:
+            current_app.logger.info('IBM X Force Key already exists, Updating...')
+            ibm_x_force.credentials = ibm_x_force_creds
+            ibm_x_force.save()
+        elif ibm_x_force:
+            current_app.logger.info('IBM X Force Key already exists, Skipping...')
+        else:
+            current_app.logger.info("IBM X Force Key doesn't exists, Creating...")
+            ThreatIntelCredentials.create(intel_name='ibmxforce', credentials=ibm_x_force_creds)
+
+
+@click.option("--ibm_x_force_key", default=None, help="IBMxForce Key for Threat Intel Matching")
+@click.option("--ibm_x_force_pass", default=None, help="IBMxForce Pass for Threat Intel Matching")
+@click.option("--vt_key", default=None, help="Virus Total API KEY for Threat Intel Matching")
+@click.option("--otx_key", default=None, help="Alient Vault OTX API KEY for Threat Intel Matching")
+@app.cli.command('add_api_key', help="Updating Threat Intel keys")
+def add_api_key_command(ibm_x_force_key, ibm_x_force_pass, vt_key, otx_key):
+    add_api_key(ibm_x_force_key, ibm_x_force_pass, vt_key, otx_key)
+
+
 if __name__ == '__main__':
-    manager.run()
+    if CurrentConfig == DevConfig:
+        ssl_context = ('../nginx/certificate.crt', '../nginx/private.key')
+        app.run(debug=True, use_debugger=True, use_reloader=False, passthrough_errors=True,
+                host='0.0.0.0', port=9000,
+                ssl_context=ssl_context,
+                )
+    elif CurrentConfig == TestConfig:
+        test(['tests/'])
+    else:
+        print("""
+        Please set ENV env variable correctly!
+        for production env -- 'export ENV=prod'
+        for test env -- 'export ENV=test'
+        """)
+        exit(1)

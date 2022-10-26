@@ -93,14 +93,15 @@ class RsyslogPlugin(AbstractLogsPlugin):
                                 kwargs.get("node"),
                                 flatten_json(
                                     {
-                                        "@version": 1,
-                                        "@host_identifier": host_identifier,
-                                        "@timestamp": item["timestamp"].isoformat(),
-                                        "log_type": "result",
-                                        "action": item["action"],
-                                        "columns": item["columns"],
-                                        "query_name": item["name"],
-                                        "created": created,
+                                        '_version': 2,
+                                        '_host_identifier': host_identifier,
+                                        '_timestamp': item['timestamp'].isoformat(),
+                                        '_event_type': 'log',
+                                        '_log_type': 'result',
+                                        '_action': item['action'],
+                                        'columns': item['columns'],
+                                        '_query_name': item['name'],
+                                        '_created': created,
                                     }
                                 ),
                             ),

@@ -18,6 +18,7 @@ export class DataPurgeComponent implements OnInit {
   dataRetentionSettings: FormGroup;
   manualDataPurge:FormGroup;
   submitted = false;
+  dataPurgSubmitted = false;
   role={'adminAccess':this.authorizationService.adminLevelAccess,'userAccess':this.authorizationService.userLevelAccess};
   constructor(
     private fb: FormBuilder,
@@ -58,13 +59,16 @@ export class DataPurgeComponent implements OnInit {
       return;
     }
     else {
-      Swal.fire({
-        title: 'Are you sure want to update?',
+      Swal.fire({        
         icon: 'warning',
+        html:
+           '<h2 class="swal2-title">Do you want to configure the EclecticIQ Endpoint ' +
+           'Response server to run an automatic purge task (daily) ' +
+           'and delete all data older than <b>'+this.f.purgeDataDuration.value+'</b>  days?</h2>',
         showCancelButton: true,
         confirmButtonColor: '#518c24',
         cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, Update!'
+        confirmButtonText: 'Yes, Update!',
       }).then((result) => {
         if (result.value) {
           let payload={"purge_data_duration":this.f.purgeDataDuration.value}
@@ -82,14 +86,16 @@ export class DataPurgeComponent implements OnInit {
   }
 
   onSubmitDataPurge(){
+    this.dataPurgSubmitted = true;
     if (this.manualDataPurge.invalid) {
-      this.toastr.warning('Retention days should not be empty');
       return;
     }
     else {
      Swal.fire({
-      title: 'Are you sure want to purge?',
       icon: 'warning',
+      html:
+         '<h2 class="swal2-title">Do you want to purge all data now and retain data ' +
+         'only for the last <b>'+ this.g.manualDataPurgeval.value +'</b> days?</h2>',
       showCancelButton: true,
       confirmButtonColor: '#518c24',
       cancelButtonColor: '#d33',
@@ -117,4 +123,10 @@ export class DataPurgeComponent implements OnInit {
     this.location.back();
   }
 
+  isNumberKey(evt){
+    var charCode = (evt.which) ? evt.which : evt.keyCode
+    if (charCode > 31 && (charCode < 48 || charCode > 57 || charCode==46))
+        return false;
+    return true;
+}
 }

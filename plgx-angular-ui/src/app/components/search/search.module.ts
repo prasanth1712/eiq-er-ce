@@ -6,7 +6,10 @@ import { SearchComponent } from './search.component';
 import { GlobalModule } from '../../global/global.module';
 import { QueryBuilderModule } from "angular2-query-builder";
 import { DataTablesModule } from 'angular-datatables';
-import { NgDatepickerModule } from 'ng2-datepicker';
+import { DatepickerModule } from 'ng2-datepicker';
+import { SharedModule } from 'src/app/shared/shared.module';
+import { HttpClientModule,HTTP_INTERCEPTORS } from '@angular/common/http';
+import { AuthInterceptor } from 'src/app/_helpers/auth.interceptor';
 @NgModule({
   declarations: [SearchComponent],
   imports: [
@@ -15,8 +18,12 @@ import { NgDatepickerModule } from 'ng2-datepicker';
     GlobalModule,
     QueryBuilderModule,
     DataTablesModule,
-    NgDatepickerModule,
-    NgbDatepickerModule
-  ]
+    DatepickerModule,
+    NgbDatepickerModule,
+    SharedModule
+  ],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
+  ],
 })
 export class SearchModule { }

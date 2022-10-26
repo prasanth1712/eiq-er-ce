@@ -33,6 +33,7 @@ export class IntelKeysComponent implements OnInit {
   ibmxforcepassError: any;
   project_name=this.commonvariable.APP_NAME
   ProductName=this.commonvariable.ProductName
+  isLoading:Boolean = false;
   role={'adminAccess':this.authorizationService.adminLevelAccess,'userAccess':this.authorizationService.userLevelAccess}
   constructor(
     private fb: FormBuilder,
@@ -51,6 +52,12 @@ export class IntelKeysComponent implements OnInit {
       virustotalkey:'',
       alienvaultkey: ''
     });
+   this.getData();
+  }
+  get f() { return this.intelKeys.controls; }
+
+  getData(){
+  if (['admin'].includes(localStorage.getItem('roles'))) {
     this.commonapi.Apikey_data().subscribe(res => {
       this.apikey_data = res;
       if(this.apikey_data.data){
@@ -66,9 +73,9 @@ export class IntelKeysComponent implements OnInit {
       }
     }
     })
-
   }
-  get f() { return this.intelKeys.controls; }
+  }
+
   onSubmit() {
     this.submitted = true;
    if(this.f.ibmkey.value=='' && this.f.ibmpass.value =='' && this.f.virustotalkey.value=='' && this.f.alienvaultkey.value==''){
@@ -91,6 +98,7 @@ export class IntelKeysComponent implements OnInit {
       confirmButtonText: 'Yes, Update!'
     }).then((result) => {
       if (result.value) {
+        this.isLoading = true;
         this.commonapi.Apikey_postdata(this.f.ibmkey.value, this.f.ibmpass.value,
           this.f.virustotalkey.value, this.f.alienvaultkey.value).subscribe(res => {
           this.Apikeypost_data = res;
@@ -102,14 +110,16 @@ export class IntelKeysComponent implements OnInit {
               title: this.Apikeypost_data.status,
               text: this.Apikeypost_data.message,
             })
+            this.isLoading = false;
           } else {
             Swal.fire({
               icon: 'success',
               title: this.Apikeypost_data.status,
               text: this.Apikeypost_data.message,
-              showConfirmButton: true,
+              showConfirmButton: false,
+              timer: 2500
            })
-
+           this.isLoading = false;
           }
           if(this.Apikeypost_data.errors){
               this.Apikeypost_data.errors.ibmxforce ? this.ibmxforcekeyError = this.Apikeypost_data.errors.ibmxforce : null;
@@ -127,7 +137,7 @@ export class IntelKeysComponent implements OnInit {
     this._location.back();
   }
   clearForm(){
-    this._location.back();
+    this.getData();
   }
   removeError(value){
     if((value === 'ibmxforcekeyError' || value === 'ibmxforcepassError') && (this.ibmxforcekeyError !== null || this.ibmxforcepassError !== null)){

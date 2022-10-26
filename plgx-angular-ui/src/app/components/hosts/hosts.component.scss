@@ -6,6 +6,38 @@
     cursor: text;
     padding-top: 5px;
 }
+.theader-download{
+  text-align: end;
+}
+.theader-download > .fa-download{
+  font-size: 14px;
+  cursor: pointer;
+}
+.modal{
+    display: none;
+    z-index: 10000; 
+    position: fixed; 
+    background-color: hsla(0, 0%, 0%, 0.45);
+    padding-top: 100px;
+}
+.kt-portlet__head-anchor{
+    display: flex;
+    align-items: center;
+}
+.div-center{
+    align-items: center;
+    justify-content: center;
+    display: flex;
+}
+.assignedConfig{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-direction: row;
+}
+::ng-deep .assignedConfig .config_list_dropdown .cuppa-dropdown .selected-list .c-btn {
+    width: 160px !important;
+}
 .datatable__search input {
     margin-left: .5em;
     display: inline-block;
@@ -26,7 +58,7 @@
     padding: 0rem;
     font-size: 12px;
 }
-.table th {
+.table th:not(.left-pad) {
     font-weight: 500;
     // padding: 0rem;
     padding-left: 0px;
@@ -34,13 +66,38 @@
 .ng2-tag-input {
     border-bottom: none;
     padding-bottom: 0rem;
-
   }
-
+.row-filter-search{
+    display: flex;
+    align-items: center;
+    margin-bottom: 0px;
+}
+.filter{
+    height: 36px;
+    width: 164px;
+    left: 0px;
+    top: 0px;
+    border-radius: 4px;
+    padding: 9px;
+    font-family: Roboto;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 14px;
+    letter-spacing: 0px;
+    text-align: left;
+}
+dropdown:nth-child(2){
+    margin-left: 14px;
+}
+.dropdown-menu{
+    z-index: 9999;
+}
 @import "~node_modules/ngx-chips/core/styles/core/_core.scss";
+$foundation-eiqcloud:#D5ECEA;
+$foundation-default: #666666;
 $foundation-primary: #52B2A8;
 $foundation-primary-dark: darken($foundation-primary, 10%);
-$font-family: "Poppins", sans-serif !important;
+$font-family: "Roboto", sans-serif !important;
 
 // this is the container's theme
 $foundation-theme: (
@@ -51,17 +108,18 @@ $foundation-theme: (
 // this is the tag's theme
 $foundation-tag-theme: (
     font-family: $font-family,
-    background: $foundation-primary,
+    background: $foundation-default,
     background-focused: $foundation-primary-dark,
     background-active: $foundation-primary-dark,
     background-hover: $foundation-primary-dark,
     color: #fff,
-    color-hover: #fff,
-    border-radius: 3px,
-    height: auto,
-    line-height: 1.5,
-    font-size: 11px,
-   font-weight: 900
+    color-hover: #cdcdcd,
+    border-radius: 12px,
+    height: 24px,
+    line-height: 2.1,
+    font-size: 10px,
+    font-weight: 900,
+    padding-left:10px,
 );
 
 // this is the delete icon's theme
@@ -81,19 +139,30 @@ $foundation-icon-theme: (
 // apply theme to the tags
 ::ng-deep tag-input .ng2-tag-input.foundation-theme tag {
     @include tag-theme($foundation-tag-theme);
+    padding-left: 12px;
+    // margin-top:8px;
+}
+::ng-deep tag-input{
+    margin-left:8px;
 }
 ::ng-deep tag-input .ng2-tag-input__text-input{
-    height: auto !important;
+  height: 10px;
+  vertical-align: middle;
+  border: 1px solid #D1D1D1 !important;
 }
 // apply theme to the delete icon
 ::ng-deep tag-input .ng2-tag-input.foundation-theme tag delete-icon {
     @include icon-theme($foundation-icon-theme);
 }
-::ng-deep tag-input .ng2-tag-input.foundation-theme tag delete-icon svg {
-    height: 13px;
+::ng-deep tag-input .ng2-tag-input.foundation-theme tag delete-icon svg, ::ng-deep tag-input .ng2-tag-input.foundation-theme tag delete-icon svg:hover{
+    height: 11px;
+    vertical-align: middle !important;
 }
 ::ng-deep tag-input .ng2-tag-input.foundation-theme{
     border-bottom: 2px solid  #fff;
+}
+::ng-deep tag-input .ng2-tag-input.foundation-theme tag:hover{
+    color:#fff !important;
 }
 table.dataTable {
     background-color:#fff;
@@ -112,15 +181,151 @@ table.dataTable {
    color: red;
    padding-left: 2px;
  }
+ .removedhost{
+    color: red;
+  }
  .onlinehost{
    color: green;
-   margin-left: 15px;
  }
+ .row-selected {
+  background-color:#EDF7F6;
+ }
+ .row-opened {
+    background: #D5ECEA;
+ }
+
 table.dataTable thead th, table.dataTable thead td {
 
-    border-bottom: 1px solid #ebedf2;}
+    border-bottom: 1px solid #B8B8B8;}
  ::ng-deep .dataTables_wrapper.no-footer .dataTables_scrollBody {
     border-bottom: 1px solid white;
+}
+.cust-btn{
+    border-radius: 10px
+}
+::ng-deep.ng2-tags-container{
+    align-items: center;
+    display: flex;
+    padding: 4px 0px;
+}
+::ng-deep.ng2-tag-input__text-input{
+    height: 25px !important;
+}
+.kt-portlet__head-tabs{
+    // margin-left: 10px;
+    color: #22776E;
+    display: flex;
+    align-items: center;
+}
+  .kt-portlet__head-tabs > .nav-tabs{
+    margin: 0 0 0 0;
+    border-bottom: 0px;
+    height: 100%;
+  }
+  .kt-portlet__head-tabs > .nav-tabs > .nav-item{
+    margin: 0 0 0 0;
+    
+  }
+  .kt-portlet__head-tabs > .nav-tabs > .nav-item:first-child > .nav-link {
+    border-left: 3px solid #f9f9f9;
+    border-right: 3px solid #f9f9f9;
+  }
+  .kt-portlet__head-tabs > .nav-tabs > .nav-item > .nav-link {
+    color: #22776E;
+    border-right: 3px solid #f9f9f9;
+    padding: 12px;
+    align-items: center;
+    height: 100%;
+    display: flex;
+  }
+  .kt-portlet__head-tabs > .nav-tabs > .nav-item > .active {
+    box-shadow: inset 0px -4px 0px #22776E;
+    border-bottom: none !important;
+  }
+  
+  
+  .kt-portlet__head-wrapper{
+    height: 100%;
+  }
+  
+  
+  .kt-portlet__head-tabs {
+    display: flex;
+    align-items: center;
+    height: 100%;
+  }
+  .nav-header-tabs{
+    height: 100%;
+  }
+  
+  .kt-portlet__head-tabs>.nav-tabs {
+    margin: 0 0 0 0;
+    border-bottom: 0px;
+    height: 100%;
+  }
+  
+  .kt-portlet__head-tabs>.nav-tabs>.nav-item {
+    margin: 0 0 0 0;
+  }
+  
+  div > .nav-link:first-child {
+    border-left: 1px solid #e8e8e8;
+    border-right: 1px solid #e8e8e8;
+  }
+  
+  div >.nav-link {
+    border-right: 1px solid #e8e8e8;
+    padding: 12px;
+    align-items: center;
+    height: 100%;
+    display: flex;
+  }
+  //Normal
+  .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link, .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link, .nav-tabs.nav-tabs-line.nav-tabs-line-success a.nav-link, .nav-tabs.nav-tabs-line.nav-tabs-line-success a.nav-link{
+    border-bottom: none !important;
+    // box-shadow: inset 0px -4px 0px #22776E;
+    color: #4D4D4D;
+  }
+  //Hover
+  .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link:hover{
+    border-bottom: none !important;
+    box-shadow: inset 0px -4px 0px #d1d1d1;
+    color: #4D4D4D;
+  }
+  //Active
+  .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link.active,.nav-tabs.nav-tabs-line.nav-tabs-line-success a.nav-link.active{
+    border-bottom: none !important;
+    box-shadow: inset 0px -4px 0px #22776E;
+    color: #22776e !important;
+  }
+  .kt-portlet__head-title{
+    font-weight:500;
+    padding-right:15px;
+    padding-top:7px;
+    padding-left:10px;
+    font-size:1.2rem
+  }
+.kt-portlet .kt-portlet__head{
+    justify-content: flex-start
+}
+.create{
+    z-index: 100;
+}
+.download-icon{
+  cursor: pointer;
+}
+.download-header{
+  text-align: center;
+}
+
+::ng-deep.hosts-c-btn>.cuppa-dropdown>.selected-list>::ng-deep.c-btn{
+  width: 212px !important;
+}
+.host-link{
+  cursor: pointer;
+}
+:host ::ng-deep json-editor .jsoneditor{
+  height: 500px;
 }
 @import "~node_modules/placeholder-loading/src/scss/placeholder-loading.scss";
 $ph-bg:                   #fff !default;
@@ -133,3 +338,126 @@ $ph-spacer:               15px !default;
 $ph-avatar-border-radius: 50% !default;
 
 $ph-animation-duration:   .8s !default;
+
+
+@media screen and (max-width: 1024px) {
+
+  .kt-portlet .kt-portlet__head.kt-portlet__head--lg.kt-portlet__head-responsive {
+      min-height: 51px;
+  }
+  .modal-width{
+    margin-top: -95px;
+    width: 600px;
+  }
+  .modal-dialog {
+    max-width: 600px;
+    margin: 1.75rem auto;
+  }
+}
+@media screen and (min-width: 1024px) {
+  .modal-width{
+    margin-top: -95px;
+    width: 800px;
+  }
+}
+
+.kt-portlet__body{
+  height: 100%;
+}
+:host ::ng-deep.dataTables_wrapper{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+::ng-deep.table-controls{
+  margin: auto 0px 0px 0px;
+  width: 100%;
+}
+.dropdown-item{
+  cursor:pointer;
+  padding-top:5px !important;
+  padding-bottom:5px !important;
+  color: black;
+}
+.myicon {
+    display: inline-block;
+    filter:  brightness(0) invert(1);
+    cursor: pointer;
+}
+::ng-deep.dataTables_info{
+  color: #171717;
+}
+.kt-portlet__head-anchor{
+  margin-right: 60px;
+}
+.kt-portlet__head-tabs li>a{
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+.kt-portlet__head-title{
+  font-size: 20px !important;
+  font-weight: 500 !important
+}
+.kt-portlet__head-icon > i{
+  font-size: 19px;
+}
+::ng-deep.display-none{
+  display: none !important;
+}
+::ng-deep tag-input.no-border-bottom .ng2-tag-input.foundation-theme{
+  border-bottom: none !important;
+}
+.dataTable td{
+  padding: 10px 8px!important;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+.text-center{
+  text-align: center;
+}
+.pr-18{
+  padding-right: 18px !important;
+}
+::ng-deep .zero-margin{
+  margin: 0px !important;
+}
+::ng-deep .zero-padding{
+  padding: 0px !important;
+}
+::ng-deep .zero-margin > *{
+  margin: 0px !important;
+}
+::ng-deep .zero-padding > *{
+  padding: 0px !important;
+}
+::ng-deep .zero-margin > * > *{
+  margin: 0px !important;
+}
+::ng-deep .zero-padding > * > *{
+  padding: 0px !important;
+}
+.font-roboto{
+  font-family: 'Roboto', Roboto !important;
+}
+
+.custom-margin-body-inner.pb-0{
+  padding-bottom: 0px !important;
+}
+.img-bg-right{
+  background-position: center right !important;
+}
+.img-bg-75{
+  background-position: 75% center !important;
+}
+.color-green{
+  color: green;
+}
+.width-fit-content{
+  width: fit-content;
+}
+::ng-deep .width-fit-content > div{
+  width: fit-content;
+}
+::ng-deep tag-input.width-fit-content .ng2-tag-input.foundation-theme tag{
+  padding-right: 12px;
+}

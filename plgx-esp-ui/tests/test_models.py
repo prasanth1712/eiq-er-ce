@@ -2,7 +2,7 @@
 import datetime as dt
 import pytest
 
-from polylogyx.models import Node, Pack, Query, Tag, FilePath
+from polylogyx.models import Node, Pack, Query, Tag
 
 from .factories import NodeFactory, PackFactory, QueryFactory, TagFactory
 
@@ -39,15 +39,8 @@ class TestNode:
         pack.tags.append(tag)
         pack.save()
 
-        file_path = FilePath.create(category='foobar', target_paths=[
-            '/home/foobar/%%',
-        ])
-        file_path.tags.append(tag)
-        file_path.save()
-
         assert tag in pack.tags
         assert tag in query2.tags
-        assert tag in file_path.tags
         assert tag not in query1.tags
         assert query1 in pack.queries
         assert query2 not in pack.queries
@@ -79,28 +72,3 @@ class TestQuery:
         assert query.name == 'foobar'
         assert query.sql == 'select * from foobar;'
 
-
-@pytest.mark.usefixtures('db')
-class TestFilePath:
-    def test_create(self):
-        target_paths = [
-            '/root/.ssh/%%',
-            '/home/.ssh/%%',
-        ]
-
-        file_path = FilePath.create(category='foobar', target_paths=target_paths)
-        assert file_path.to_dict() == {'foobar': target_paths}
-
-    def test_update(self):
-        target_paths = [
-            '/root/.ssh/%%',
-            '/home/.ssh/%%',
-        ]
-
-        file_path = FilePath.create(category='foobar', target_paths=target_paths)
-        assert file_path.to_dict() == {'foobar': target_paths}
-
-        target_paths.append('/etc/%%')
-        file_path.set_paths(*target_paths)
-        file_path.save()
-        assert file_path.to_dict() == {'foobar': target_paths}

@@ -10,7 +10,7 @@ from flask import current_app
 
 from polylogyx.constants import DefaultInfoQueries
 from polylogyx.db.models import Node
-from polylogyx.utils.node import update_osquery_or_agent_version
+from polylogyx.utils.node import get_agent_version_from_columns
 
 Field = namedtuple("Field", ["name", "action", "columns", "timestamp", "uuid"])
 
@@ -57,16 +57,20 @@ def learn_from_result(result, node):
     return
 
 
-def process_result(result, node):
+def process_result(result, node_dict):
     if not result["data"]:
-        current_app.logger.error("No results to process from %s", node)
+        current_app.logger.error("No results to process from %s", node_dict['hostname'])
         return
     data = []
+    query_count_dict = {}
+    node_host_details_to_update = {}
     for name, action, columns, timestamp, uuid in extract_results(result):
         try:
             if name not in DefaultInfoQueries.DEFAULT_VERSION_INFO_QUERIES.keys():
+                event_id = None
                 if name == "windows_real_time_events":
                     message = json.loads(columns["data"])
+                    event_id = message.get('eventid')
                     del columns["data"]
                     columns.update(message)
                 if "script_text" in columns:
@@ -78,14 +82,30 @@ def process_result(result, node):
                         "action": action,
                         "columns": columns,
                         "timestamp": timestamp,
-                        "node_id": node.id,
+                        "node_id": node_dict['id'],
                     }
                 )
+
+                # to count the results of queries
+                if name in query_count_dict:
+                    if event_id:
+                        if event_id in query_count_dict[name]:
+                            query_count_dict[name][event_id] = query_count_dict[name][event_id] + 1
+                        else:
+                            query_count_dict[name][event_id] = 1
+                        query_count_dict[name][event_id] = query_count_dict[name][event_id]
+                    else:
+                        query_count_dict[name] = query_count_dict[name] + 1
+                else:
+                    if event_id:
+                        query_count_dict[name] = {event_id: 1}
+                    else:
+                        query_count_dict[name] = 1
             else:
-                update_osquery_or_agent_version(node, columns)
+                node_host_details_to_update.update(get_agent_version_from_columns(columns))
         except Exception as e:
-            current_app.logger.error("Unable to update the agent version details %s and the error is %s", node, str(e))
-    return data
+            current_app.logger.error(str(e))
+    return data, query_count_dict, node_host_details_to_update
 
 
 def extract_results(result):

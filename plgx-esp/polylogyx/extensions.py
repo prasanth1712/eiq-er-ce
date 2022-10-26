@@ -2,17 +2,16 @@
 import datetime as dt
 import os
 import re
+import redis
 
-from flask import current_app
+from flask import current_app, _app_ctx_stack
 from flask_bcrypt import Bcrypt
-from flask_caching import Cache
+
 from flask_mail import Mail
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from flask_wtf.csrf import CsrfProtect
-from raven import Client
-from raven.contrib.celery import register_logger_signal, register_signal
-
+import asyncio
+from polylogyx.ioc_engine import IOCEngine
 
 
 class LogTee(object):
@@ -64,6 +63,7 @@ class LogTee(object):
 
 
 class RuleManager(object):
+    
     def __init__(self, app=None):
         self.network = None
         self.last_update = None
@@ -76,7 +76,8 @@ class RuleManager(object):
         self.load_alerters()
         # Save this instance on the app, so we have a way to get at it.
         app.rule_manager = self
-        
+        self.rule_matching = app.config.get("RULE_MATCHING",False)
+
     def load_alerters(self):
         """Load the alerter plugin(s) specified in the app config."""
         from importlib import import_module
@@ -86,17 +87,20 @@ class RuleManager(object):
         alerters = self.app.config.get("POLYLOGYX_ALERTER_PLUGINS", {})
 
         self.alerters = {}
-        for name, (plugin, config) in alerters.items():
-            package, classname = plugin.rsplit(".", 1)
-            module = import_module(package)
-            klass = getattr(module, classname, None)
+        for name, plugin_config in alerters.items():
+            if isinstance(plugin_config, tuple):
+                # In some cases this followed lines thing has been done from intel.py send_alert method, So ignoring
+                plugin, config = plugin_config
+                package, classname = plugin.rsplit(".", 1)
+                module = import_module(package)
+                klass = getattr(module, classname, None)
 
-            if klass is None:
-                raise ValueError('Could not find a class named "{0}" in package "{1}"'.format(classname, package))
+                if klass is None:
+                    raise ValueError('Could not find a class named "{0}" in package "{1}"'.format(classname, package))
 
-            if not issubclass(klass, AbstractAlerterPlugin):
-                raise ValueError("{0} is not a subclass of AbstractAlerterPlugin".format(name))
-            self.alerters[name] = klass(config)
+                if not issubclass(klass, AbstractAlerterPlugin):
+                    raise ValueError("{0} is not a subclass of AbstractAlerterPlugin".format(name))
+                self.alerters[name] = klass(config)
 
     def should_reload_rules(self):
         """Checks if we need to reload the set of rules."""
@@ -111,244 +115,161 @@ class RuleManager(object):
 
         return False
 
-    def load_ioc_intels(self):
-        from polylogyx.db.models import IOCIntel
-
-        self.all_ioc_intels = list(IOCIntel.query.all())
-        if not self.all_ioc_intels:
-            return
-
     def load_rules(self):
         """Load rules from the database."""
-        from polylogyx.db.models import Rule
         from polylogyx.utils.rules import Network
+        from polylogyx.utils.cache import get_all_cached_rules
 
-        if not self.should_reload_rules():
+        self.all_rules = get_all_cached_rules()
+
+        if not self.all_rules:
+            self.network = Network()
             return
-        print("before getting rules")
-        all_rules = list(Rule.query.filter(Rule.status != "INACTIVE").all())
-        print("after getting rules")
-        print("all rules - ", all_rules)
+        self.create_network(self.all_rules)
+
+    def create_network(self, all_rules):
+        from polylogyx.utils.rules import Network
+        from polylogyx.utils.cache import redis_client
+        from polylogyx.constants import CacheVariables
+
+        # cached_network = redis_client.get(CacheVariables.rule_network)
+
+        # if cached_network:
+        #     self.network = cached_network
+        #     return
+
         self.network = Network()
-
-        if not all_rules:
-            return
-
-        for rule in all_rules:
-            # Verify the alerters
-            for alerter in rule.alerters:
+        for rule_name, rule_dict in all_rules.items():
+            for alerter in rule_dict['alerters']:
                 if alerter not in self.alerters:
                     current_app.logger.error('No such alerter: "{0}"'.format(alerter))
-                    # raise ValueError('No such alerter: "{0}"'.format(alerter))
 
-            # Create the rule.
             try:
                 self.network.parse_query(
-                    rule.conditions, alerters=rule.alerters, rule_id=rule.id, platform=rule.platform
+                    rule_dict['conditions'], alerters=rule_dict['alerters'],
+                    rule_id=rule_dict['id'], platform=rule_dict['platform']
                 )
             except Exception as e:
-                current_app.logger.error(rule.id)
-        # Save the last updated date
-        # Note: we do this here, and not in should_reload_rules, because it's
-        # possible that we've reloaded a rule in between the two functions, and
-        # thus we accidentally don't reload when we should.
-        self.last_update = max(r.updated_at for r in all_rules)
+                current_app.logger.error(rule_dict['id'])
+                
+        # redis_client.set(CacheVariables.rule_network, self.network)
 
-    def check_for_ioc_matching(self, name, columns, node, uuid, capture_column):
-        flag = False
-        for intel in self.all_ioc_intels:
-            if capture_column == intel.type and columns[capture_column].lower() == intel.value.lower():
-                from polylogyx.utils.intel import save_intel_alert
-                flag = True
-                save_intel_alert(
-                    data={},
-                    source="ioc",
-                    query_name=name,
-                    severity=intel.severity,
-                    uuid=uuid,
-                    columns=columns,
-                    node_id=node["id"],
-                )
-                current_app.logger.info(
-                    "Found an event with existing indicator with type '{0}', value '{1}' from the node '{2}'".format(
-                        capture_column, columns[capture_column], node
-                    )
-                )
-                break
-        return flag
+    def get_alert_aggr_duration(self):
+        from polylogyx.utils.cache import get_a_setting
+        aggr_setting = get_a_setting('alert_aggregation_duration')
+        if aggr_setting:
+            alert_aggr_duration = int(aggr_setting)
+        else:
+            alert_aggr_duration = 60
+        return alert_aggr_duration
 
-
-
-    def check_for_ioc_matching_opt(self, name, columns, node, uuid, capture_column):
-        from polylogyx.db.models import IOCIntel
-        from sqlalchemy import func
-        from polylogyx.utils.intel import save_intel_alert
-        
-        intel=IOCIntel.query.with_entities(IOCIntel.severity)\
-            .filter(IOCIntel.type==capture_column)\
-            .filter(func.lower(IOCIntel.value)==columns[capture_column].lower())\
-            .first()
-        
-        if intel:
-            save_intel_alert(
-                    data={},
-                    source="ioc",
-                    query_name=name,
-                    severity=intel[0],
-                    uuid=uuid,
-                    columns=columns,
-                    node_id=node["id"],
-                )
-            current_app.logger.info(
-                "Found an event with existing indicator with type '{0}', value '{1}' from the node '{2}'".format(
-                    capture_column, columns[capture_column], node
-                ))
-            return True
-        return False
-
-    def check_for_iocs(self, name, columns, node, uuid,vt_setting=None):
-        current_app.logger.debug("Scanning for IOCs of Node '{0}' from the results: \n{1}".format(node, columns))
-        try:
-            from polylogyx.constants import IOC_COLUMNS, TO_CAPTURE_COLUMNS
-            from polylogyx.db.models import ResultLog, ResultLogScan,Settings
-            self.ioc_match_opt = current_app.config.get('HIGH_INTEL_VOLUME', False)
-        
-        
-            for capture_column in IOC_COLUMNS:
-                if capture_column in columns and columns[capture_column]:
-                    if self.ioc_match_opt:
-                        ioc_match=self.check_for_ioc_matching_opt(name, columns, node, uuid, capture_column)
-                    else:
-                        ioc_match=self.check_for_ioc_matching(name, columns, node, uuid, capture_column)
-                    current_app.logger.info(
-                        "columns captured".format(
-                            capture_column, node, columns[capture_column]
-                        )
-                    )
-                    if capture_column in TO_CAPTURE_COLUMNS:
-                        result_log_scan = ResultLogScan.query.filter(
-                            ResultLogScan.scan_value == columns[capture_column]
-                        ).first()
-                        if result_log_scan:
-                            if vt_setting:
-                                since = dt.datetime.utcnow() - dt.timedelta(hours=24 * int(vt_setting.setting))
-                                if result_log_scan.vt_updated_at and result_log_scan.vt_updated_at < since:
-                                    newReputations = {}
-                                    result_log_scan.update(reputations=newReputations)
-                        if not result_log_scan:
-                            from polylogyx.db.models import ResultLogScan
-                            current_app.logger.info(
-                                "Found a new '{0}' indicator on Node '{1}' to be scanned with value '{2}'".format(
-                                    capture_column, node, columns[capture_column]
-                                )
-                            )
-                            result_log_scan = ResultLogScan.create(
-                            scan_value=columns[capture_column], scan_type=capture_column, reputations={}
-                        )
-                        #result_log = ResultLog.query.filter(ResultLog.uuid == uuid).first()
-                        #result_log_scan.result_logs.append(result_log)
-                        result_log = db.session.execute("select id from result_log where uuid='{0}'".format(uuid)).first()
-                        r_id = result_log[0]
-                        db.session.execute('insert into result_log_maps (result_log_id,result_log_scan_id) values ({0},{1})'.format(r_id,result_log_scan.id))
-                        db.session.commit()
-                    if ioc_match:
-                        break
-                    
-        except Exception as e:
-            current_app.logger.error("Unable to scan for IOCs - {}".format(e))
-
-    def handle_log_entry(self, entry, node):
+    async def handle_log_entry(self, entry, node_dict):
         """The actual entrypoint for handling input log entries."""
-        from polylogyx.db.models import Rule, Settings
+        if not self.rule_matching:
+            return
         from polylogyx.utils.rules import RuleMatch
+        from polylogyx.utils.cache import get_a_setting
 
-        current_app.logger.debug("Loading Rules and IOCs if not loaded yet...")
         self.load_rules()
-        self.ioc_match_opt = current_app.config.get('HIGH_INTEL_VOLUME', False)
-        
-        if not self.ioc_match_opt:
-            self.load_ioc_intels()
+        vt_setting = get_a_setting('vt_scan_retention_period')
+        all_rules_dict = {}
+        for rule_value in self.all_rules.values():
+            all_rules_dict[rule_value['id']] = rule_value
+        if vt_setting is None:
+            self.vt_setting = 0
+        else:
+            self.vt_setting = int(vt_setting)
 
-        to_trigger = []
-        vt_setting = Settings.query.filter(Settings.name == 'vt_scan_retention_period').first()
+        log_rules = {}
         for result in entry:
-            self.check_for_iocs(result["name"], result["columns"], node, result["uuid"],vt_setting)
-            alerts = self.network.process(result, node)
+            alerts = self.network.process(result, node_dict)
             if len(alerts) == 0:
                 continue
-
             # Alerts is a set of (alerter name, rule id) tuples.  We convert
             # these into RuleMatch instances, which is what our alerters are
             # actually expecting.
+            
             for rule_id, alerters in alerts.items():
-                rule = Rule.get_by_id(rule_id)
-
-                to_trigger.append(
-                    (
-                        alerters,
-                        RuleMatch(rule=rule, result=result, node=node, alert_id=0),
-                    )
-                )
+                rule = all_rules_dict[rule_id]
+                if rule_id in log_rules:
+                    log_rules[rule_id][1].append(RuleMatch(rule=rule, result=result, node=node_dict, alert_id=0))
+                else:
+                    log_rules[rule_id] = (
+                            alerters,
+                            [RuleMatch(rule=rule, result=result, node=node_dict, alert_id=0)],
+                        )
 
         # Now that we've collected all results, start triggering them.
-        alert_aggr_duration_setting = Settings.query.filter(Settings.name == "alert_aggregation_duration").first()
-        if alert_aggr_duration_setting:
-            alert_aggr_duration = int(alert_aggr_duration_setting.setting)
-        else:
-            alert_aggr_duration = 60
-        for alerters, match in to_trigger:
-            alert = self.save_in_db(match.result, match.node, match.rule, alert_aggr_duration)
-            node["alert"] = alert
-            for alerter in alerters:
-                match = match._replace(alert_id=alert.id)
-                self.alerters[alerter].handle_alert(node, match, None)
+        alert_aggr_duration = self.get_alert_aggr_duration()
+        if log_rules:
+            save_alert_task = asyncio.create_task(self.alert_save_in_db(
+                                node_dict,
+                                alert_aggr_duration,
+                                log_rules,
+                                all_rules_dict))
+            await save_alert_task
 
-    def save_in_db(self, result_log_dict, node, rule, alert_aggr_duration):
+    async def alert_save_in_db(self, node, alert_aggr_duration, log_rules, all_rules_dict={}):
         from polylogyx.db.models import AlertLog, Alerts
+        from polylogyx.utils.rules import RuleMatch
+        from polylogyx.utils.cache import get_rule_node_latest_alerts, update_rule_node_latest_alert
+        existing_alerts = get_rule_node_latest_alerts(node["id"])
+        if not existing_alerts:
+            existing_alerts = {}
+        alert_logs = []
+        to_aggregate = []
+        created_alerts = {}
 
-        existing_alert = (
-            Alerts.query.filter(Alerts.node_id == node["id"])
-            .filter(Alerts.rule_id == rule.id)
-            .filter((dt.datetime.utcnow() - Alerts.created_at) <= dt.timedelta(seconds=alert_aggr_duration))
-            .first()
-        )
-        if existing_alert:
-            AlertLog.create(
-                name=result_log_dict["name"],
-                timestamp=result_log_dict["timestamp"],
-                action=result_log_dict["action"],
-                columns=result_log_dict["columns"],
-                alert_id=existing_alert.id,
-                result_log_uuid=result_log_dict["uuid"],
-            )
-            db.session.commit()
-            current_app.logger.debug("Aggregating the Alert with ID {0}..".format(existing_alert.id))
-            return existing_alert
-        else:
-            alerts_obj = Alerts(
-                message=result_log_dict["columns"],
-                query_name=result_log_dict["name"],
-                result_log_uid=result_log_dict["uuid"],
-                node_id=node["id"],
-                rule_id=rule.id,
-                type=Alerts.RULE,
-                source="rule",
-                source_data={},
-                recon_queries=rule.recon_queries,
-                severity=rule.severity,
-            )
-            alerts_obj = alerts_obj.save(alerts_obj)
-            AlertLog.create(
-                name=result_log_dict["name"],
-                timestamp=result_log_dict["timestamp"],
-                action=result_log_dict["action"],
-                columns=result_log_dict["columns"],
-                alert_id=alerts_obj.id,
-                result_log_uuid=result_log_dict["uuid"],
-            )
-            db.session.commit()
-            current_app.logger.debug("Creating a new Alert with ID {0}..".format(alerts_obj.id))
-            return alerts_obj
+        for rule_id, alerter_rule_match in log_rules.items():
+            for match in alerter_rule_match[1]:
+                rl = match.rule
+                res = match.result
+                if (not existing_alerts.get(str(rule_id), {}).get('created_at') or
+                    (existing_alerts.get(str(rule_id), {}).get('created_at') and
+                     (dt.datetime.utcnow() - existing_alerts.get(str(rule_id), {}).get('created_at')) > dt.timedelta(
+                            seconds=alert_aggr_duration))) and rule_id not in created_alerts:
+                    al = Alerts(
+                        message=res["columns"],
+                        query_name=res["name"],
+                        result_log_uid=res["uuid"],
+                        node_id=node["id"],
+                        rule_id=rule_id,
+                        type=Alerts.RULE,
+                        source="rule",
+                        source_data={},
+                        severity=rl['severity'],
+                    )
+                    created_alerts[rule_id] = al
+                else:
+                    to_aggregate.append((rule_id, match))
+        db.session.bulk_save_objects(created_alerts.values(), return_defaults=True)
+
+        for rule_id, alert in created_alerts.items():
+            existing_alerts[str(rule_id)] = {
+                                        'created_at': alert.created_at if alert.created_at else dt.datetime.utcnow(), 
+                                        'alert_id': alert.id
+                                    }
+        for rule_id, rule_match in to_aggregate:
+            result = rule_match.result
+            al = AlertLog(
+                name=result["name"],
+                timestamp=result["timestamp"],
+                action=result["action"],
+                columns=result["columns"],
+                alert_id=existing_alerts.get(str(rule_id)).get('alert_id'),
+                result_log_uuid=result["uuid"])
+            alert_logs.append(al)
+        db.session.bulk_save_objects(alert_logs)
+        db.session.commit()
+        for rule_id, alert in created_alerts.items():
+            alerters = log_rules[rule_id][0]
+            rule = all_rules_dict[rule_id]
+            result = {'columns': alert.message, 'name': alert.query_name, 'action': alert.message.get('action')}
+            rule_match = RuleMatch(rule=rule, result=result, node=node, alert_id=alert.id)
+            for alerter in alerters:
+                self.alerters[alerter].handle_alert(node, rule_match, None)
+
+        update_rule_node_latest_alert(node['id'], existing_alerts)
 
 
 class ThreatIntelManager(object):
@@ -365,6 +286,7 @@ class ThreatIntelManager(object):
 
         # Save this instance on the app, so we have a way to get at it.
         app.threat_intel = self
+        self.threat_intel_matching = app.config.get("THREAT_INTEL_MATCHING", False)
 
     def load_intels(self):
         """Load the alerter plugin(s) specified in the app config."""
@@ -398,7 +320,8 @@ class ThreatIntelManager(object):
 
     def analyse_pending_hashes(self):
         """The actual entrypoint for handling input log entries."""
-
+        if not self.threat_intel_matching:
+            return
         for key, value_elem in self.intels.items():
             try:
                 value_elem.analyse_pending_hashes()
@@ -407,7 +330,8 @@ class ThreatIntelManager(object):
 
     def generate_alerts(self):
         """The actual entrypoint for handling input log entries."""
-
+        if not self.threat_intel_matching:
+            return
         for key, value_elem in self.intels.items():
             try:
                 value_elem.generate_alerts()
@@ -422,14 +346,15 @@ class ThreatIntelManager(object):
 
     def update_credentials(self):
         """The actual entrypoint for handling input log entries."""
-
+        if not self.threat_intel_matching:
+            return
         self.load_intels()
         for key, value_elem in self.intels.items():
             value_elem.update_credentials()
 
 
 def create_distributed_query(node, query_str, alert, query_name, match):
-    from polylogyx.db.models import DistributedQuery, DistributedQueryTask, Node
+    from polylogyx.db.models import DistributedQuery, DistributedQueryTask
 
     try:
         data = match.result["columns"]
@@ -444,8 +369,7 @@ def create_distributed_query(node, query_str, alert, query_name, match):
                 query_str = query_str.replace("#!" + result + "!#", value)
         if query_valid:
             query = DistributedQuery.create(sql=query_str, alert_id=alert.id, description=query_name)
-            node_obj = Node.query.filter_by(id=node["id"]).first_or_404()
-            task = DistributedQueryTask(node=node_obj, save_results_in_db=True, distributed_query=query)
+            task = DistributedQueryTask(node_id=node["id"], save_results_in_db=True, distributed_query=query)
             db.session.add(task)
             db.session.commit()
     except Exception as e:
@@ -486,13 +410,56 @@ def make_celery(app, celery):
     return celery
 
 
+class RedisClient(object):
+    def __init__(self, app=None, **kwargs):
+        self._redis_client = None
+        self.provider_class = redis.Redis
+        self.provider_kwargs = kwargs
+
+        if app is not None:
+            self.init_app(app)
+
+    @classmethod
+    def from_custom_provider(cls, provider, app=None, **kwargs):
+        assert provider is not None, "your custom provider is None, come on"
+
+        # We never pass the app parameter here, so we can call init_app
+        # ourselves later, after the provider class has been set
+        instance = cls(**kwargs)
+
+        instance.provider_class = provider
+        if app is not None:
+            instance.init_app(app)
+        return instance
+
+    def init_app(self, app, **kwargs):
+        self.provider_kwargs.update(kwargs)
+        self._redis_client = self.provider_class(host=app.config.get('REDIS_HOST'), 
+                                                port=app.config.get('REDIS_PORT'), 
+                                                password=app.config.get('REDIS_PASSWORD'), 
+                                                db=0, 
+                                                **self.provider_kwargs
+                                            )
+
+    def __getattr__(self, name):
+        return getattr(self._redis_client, name)
+
+    def __getitem__(self, name):
+        return self._redis_client[name]
+
+    def __setitem__(self, name, value):
+        self._redis_client[name] = value
+
+    def __delitem__(self, name):
+        del self._redis_client[name]
+
+
 bcrypt = Bcrypt()
-csrf = CsrfProtect()
 db = SQLAlchemy()
 mail = Mail()
 migrate = Migrate()
 log_tee = LogTee()
 rule_manager = RuleManager()
 threat_intel = ThreatIntelManager()
-#cache = Cache(config={"CACHE_TYPE": "filesystem",'CACHE_DIR': '/src/cache'})
-cache = Cache()
+ioc_engine = IOCEngine()
+redis_client = RedisClient()

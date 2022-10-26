@@ -3,7 +3,7 @@ import datetime as dt
 
 import pytest
 
-from polylogyx.db.models import Config, FilePath, VirusTotalAvEngines, NodeConfig, Pack, Query, Tag
+from polylogyx.db.models import Config, VirusTotalAvEngines, NodeConfig, Pack, Query, Tag
 
 from ..factories import AlertFactory, NodeFactory, PackFactory, QueryFactory, TagFactory
 
@@ -40,21 +40,10 @@ class TestNode:
         pack.tags.append(tag)
         pack.save()
 
-        file_path = FilePath.create(
-            category="foobar",
-            target_paths=[
-                "/home/foobar/%%",
-            ],
-        )
-        file_path.tags.append(tag)
-        file_path.save()
-
         assert tag.packs_count > 0
         assert tag.queries_count > 0  
-        assert tag.file_paths_count > 0
         assert tag in pack.tags
         assert tag in query2.tags
-        assert tag in file_path.tags
         assert tag not in query1.tags
         assert query1 in pack.queries
         assert query2 not in pack.queries
@@ -73,8 +62,6 @@ class TestNode:
         assert query2.name in config["schedule"]
         assert query2.sql == config["schedule"][query2.name]["query"]
 
-        # assert file_path.category in config["file_paths"]
-
 
 @pytest.mark.usefixtures("db")
 class TestQuery:
@@ -86,40 +73,13 @@ class TestQuery:
         assert query.sql == "select * from foobar;"
 
 
-@pytest.mark.usefixtures("db")
-class TestFilePath:
-    def test_create(self):
-        target_paths = [
-            "/root/.ssh/%%",
-            "/home/.ssh/%%",
-        ]
-
-        file_path = FilePath.create(category="foobar", target_paths=target_paths)
-        assert file_path.to_dict() == {"foobar": target_paths}
-
-    def test_update(self):
-        target_paths = [
-            "/root/.ssh/%%",
-            "/home/.ssh/%%",
-        ]
-
-        file_path = FilePath.create(category="foobar", target_paths=target_paths)
-        assert file_path.to_dict() == {"foobar": target_paths}
-
-        target_paths.append("/etc/%%")
-        file_path.set_paths(*target_paths)
-        file_path.save()
-        assert file_path.to_dict() == {"foobar": target_paths}
-
-
 class TestVirusTotalAVEngine:
 
-    def test_init(self,db):
+    def test_init(self, db):
         vte = VirusTotalAvEngines(name="Test",status="Test",description="Test")
         assert vte.name == "Test"
         assert vte.status == "Test"
         assert vte.description == "Test"
-
 
 from polylogyx.db.models import DefaultQuery
 class TestDefaultQuery:
@@ -171,18 +131,13 @@ class TestDistributedQuery:
         assert dq.sql == "Test"
         assert dq.to_dict()["sql"] == "Test"
 
-from polylogyx.db.models import DistributedQueryResult
-class TestDistributedQueryResult:
-
-    def test_to_dict_obj(self,node):
-        dqr = DistributedQueryResult(columns={"test":"test"})
-        assert dqr.to_dict_obj()["columns"] == {"test":"test"}
 
 from polylogyx.db.models import Rule
 class TestRule:
 
     def test_to_dict(self,node):
         r = Rule(name="Test",alerters=["Email"])
+        r.save()
         assert r.to_dict()["name"] == "Test"
         assert r.as_dict()["name"] == "Test"
         assert r.as_dict()["updated_at"] is not None
@@ -214,7 +169,6 @@ class TestAlerts:
         a = Alerts(message="Test",query_name="test",
         node_id=node.id,
         rule_id=None,
-        recon_queries=None,
         result_log_uid=None,
         type=None,
         source=None,
@@ -226,23 +180,6 @@ class TestAlerts:
         assert a.as_dict()["created_at"] is not None
 
 
-from polylogyx.db.models import NodeData
-class TestNodeData:
-
-    def test_to_dict(self,node):
-        n = NodeData(node=node,name="Test")
-        assert n.name == "Test"
-        assert n.to_dict()["name"] == "Test"
-        assert n.to_dict_obj()["name"] == "Test"
-
-from polylogyx.db.models import NodeReconData
-class TestNodeReconData:
-
-    def test_to_dict(self,db):
-        n = NodeReconData(columns={},)
-        assert n.to_dict()["columns"] == "{}"
-        assert n.to_dict_obj()["columns"] == {}  
-
 from polylogyx.db.models import CarveSession
 class TestCarveSession:
 
@@ -250,11 +187,3 @@ class TestCarveSession:
         n = CarveSession(node_id=node.id)
         assert n.node_id == node.id
         assert n.to_dict()["node_id"] == node.id
-
-
-from polylogyx.db.models import ReleasedAgentVersions
-class TestReleasedAgentVersions:
-
-    def test_init(self,node):
-        rav = ReleasedAgentVersions(platform="linux")
-        assert rav.platform == "linux"

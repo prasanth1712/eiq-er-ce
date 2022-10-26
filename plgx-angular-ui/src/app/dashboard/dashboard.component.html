@@ -6,7 +6,10 @@
     <div class="kt-portlet" style="margin-bottom: 0px;">
       <div class="kt-portlet__head kt-portlet__head--lg">
         <div class="kt-portlet__head-label">
-          <h5 class=" text-dark mt-2 mb-2 mr-5">
+          <span class="kt-portlet__head-icon dashboard-icon">
+            <img alt=''  src='../../assets/media/icons/dashboard-icon.svg' height="24" width="24" alt=""/>
+          </span>
+          <h5 class=" text-dark kt-portlet__head-title custom-header-title">
             {{ProductNameER}} Dashboard
           </h5>
         </div>
@@ -14,7 +17,7 @@
           <div class="kt-portlet__head-wrapper">
             <div class="kt-portlet__head-actions">
               <div class="" style="">
-                <button type="button" class="btn btn-outline-secondary btn-icon-sm cust-btn" data-toggle="modal" data-target="#osquery_modal" aria-haspopup="true" aria-expanded="false" data-skin="dark" data-placement="top" title="Download {{project_name}} Installer">
+                <button type="button" class="btn btn-small btn-long" data-toggle="modal" data-target="#osquery_modal" aria-haspopup="true" aria-expanded="false" data-skin="dark" data-placement="top" title="Download {{project_name}} Installer">
                   <i class="la la-cloud-download"></i>
                   <span>Client Provisioning Tool</span>
                 </button>
@@ -33,7 +36,7 @@
                         <div class="">
                           <h6>Choose one of the packages below:</h6>
                         </div>
-                        <ul class="nav nav-tabs nav-tabs-line nav-tabs-bold nav-tabs-line-3x nav-tabs-line-success" role="tablist">
+                        <ul class="nav nav-tabs nav-tabs-line ul-nav-tabs nav-tabs-bold nav-tabs-line-3x nav-tabs-line-success" role="tablist">
                           <li class="nav-item" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Windows">
                             <a class="nav-link active" data-toggle="tab" href="#windows" role="tab"><img alt='' src='./assets/media/logo/windows.svg' height='19px' width='16px' /> Windows</a>
                           </li>
@@ -41,7 +44,7 @@
                             <a class="nav-link" data-toggle="tab" href="#linux" role="tab"> <img alt='' src='./assets/media/logo/Linux1.svg' height='19px' width='16px' /> Linux</a>
                           </li>
                           <li class="nav-item" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Darwin">
-                            <a class="nav-link" data-toggle="tab" href="#macos" role="tab"><i class="fab fa-apple"></i> Darwin</a>
+                            <a class="nav-link kt-mac" data-toggle="tab" href="#macos" role="tab"><i class="fab fa-apple apple-grey"></i> Darwin</a>
                           </li>
                         </ul>
                         <div class="tab-content">
@@ -62,14 +65,14 @@
                             <div class="">
                               <h3>Windows Installation:</h3>
                             </div>
-                            <pre style="word-wrap: break-word; white-space: pre-wrap; margin-bottom: -1rem;" class=""  data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Open Command Prompt -> write to this command ">
-                               <p style="background-color:#cccccc40;"> c:\user\downloads\&gt; plgx_cpt.exe -p -i/-h &lt; SERVER_IP/HOST_NAME &gt; -k &lt; Full path to the certificate file &gt;</p>
+                            <pre  class="kt-cmd-help"  data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Open Command Prompt -> write to this command ">
+                               <p style="background-color:#cccccc40;">c:\user\downloads\&gt; plgx_cpt.exe -p -i/-h &lt; SERVER_IP/HOST_NAME &gt; -k &lt; Full path to the certificate file &gt;</p>
                              </pre>
                              <!-- <label style="margin-bottom: 0px;"><span style="color:#cc1313cc">eg:</span> plgx_cpt.exe -p -i 10.10.12.14 -k certificate.crt</label>
                              <br>
                              <label style="margin-left: 21px;"><span style="color:#cc1313cc"></span> plgx_cpt.exe -p -h example.com -k certificate.crt</label> -->
-                             <h6>Run "plgx_cpt" to see help</h6>
-                            <h6><span style="color:#cc1313cc">Note:</span> Download CPT installer and Certificate both for installation. Use the respective command from terminal for installation with administrative privileges.</h6>
+                             <h6>Run plgx_cpt to view the help options.</h6>
+                            <h6><span style="color:#cc1313cc">Note:</span> Download the CPT installer and certificate for installation. Run the install command from a terminal with administrative privileges.</h6>
                           </div>
                           <!--end:: Download/Windows  -->
                           <!--begin:: Download/Linux  -->
@@ -88,14 +91,14 @@
                             <div class="">
                               <h3>Linux Based Installation:</h3>
                             </div>
-                            <pre style="word-wrap: break-word; white-space: pre-wrap; margin-bottom: -1rem;" class="" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Open terminal -> write to this command">
+                            <pre class="kt-cmd-help" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Open terminal -> write to this command">
                               <p style="background-color:#cccccc40;">sudo chmod +x plgx_cpt <br/>sudo ./plgx_cpt -p -i/-h &lt;SERVER_IP/HOST_NAME&gt; -k &lt;Full path to the certificate file&gt; </p>
                             </pre>
                             <!-- <label style="margin-bottom: 0px;"><span style="color:#cc1313cc">eg:</span> sudo ./plgx_cpt -p -i 10.10.12.14 -k certificate.crt</label>
                             <br>
                              <label style="margin-left: 21px;"><span style="color:#cc1313cc"></span> sudo ./plgx_cpt -p -h example.com -k certificate.crt</label> -->
-                            <h6>Run "./plgx_cpt" to see help</h6>
-                            <h6><span style="color:#cc1313cc">Note:</span> Download CPT installer for installation. Use the respective command from terminal for installation using sudo.</h6>
+                            <h6>Run plgx_cpt to view the help options.</h6>
+                            <h6><span style="color:#cc1313cc">Note:</span> Download the CPT installer and certificate for installation. Run the install command from a terminal with administrative privileges.</h6>
 
                           </div>
                           <!--end:: Download/Linux  -->
@@ -104,7 +107,7 @@
                             <br>
                             <div class="">
                               <span class="down-font" style="font-size: medium;">Darwin CPT Installer</span>
-                              <button type="button" class="btn btn-clean btn-elevate btn-elevate-air btn-sm focus pull-right fa fa-lg fa-cloud-download-alt" (click)="downloadFile($event,'plgx_cpt.sh')" alt="" value="" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title=" Download Darwin CPT Installer"></button>
+                              <button type="button" class="btn btn-clean btn-elevate btn-elevate-air btn-sm focus pull-right fa fa-lg fa-cloud-download-alt" (click)="downloadFile($event,'darwin/plgx_cpt.sh')" alt="" value="" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title=" Download Darwin CPT Installer"></button>
                             </div>
                             <div class="kt-separator kt-separator--dashed" style=""></div>
                             <div class="">
@@ -116,15 +119,21 @@
                             <div class="">
                               <h3>Darwin Based Installation:</h3>
                             </div>
-                            <pre style="word-wrap: break-word; white-space: pre-wrap; margin-bottom: -1rem;" class="" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Open terminal -> write to this command">
-                               <!-- <p style="background-color:#cccccc40;"> sudo bash plgx_cpt.sh -p -i &lt;SERVER_IP&gt;</p> -->
+                            <pre class="kt-cmd-help" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Open terminal -> write to this command">
                                <p style="background-color:#cccccc40;">sudo bash plgx_cpt.sh -p -i/-h &lt;SERVER_IP/HOST_NAME&gt; -k &lt;Full path to the certificate file&gt;</p>
                             </pre>
-                            <!-- <label style="margin-bottom: 0px;"><span style="color:#cc1313cc">eg:</span> sudo bash plgx_cpt.sh -p -i 10.10.12.14 -k certificate.crt </label>
-                            <br>
-                             <label style="margin-left: 21px;"><span style="color:#cc1313cc"></span> sudo bash plgx_cpt.sh -p -h example.com -k certificate.crt </label> -->
-                            <h6>"plgx_cpt.sh" to see help options </h6>
-                            <h6><span style="color:#cc1313cc">Note:</span> Download CPT installer for installation. Use the respective command from terminal for installation using sudo.</h6>
+                            <h6>Run plgx_cpt to view the help options.</h6>
+                            <h6><span style="color:#cc1313cc">Note:</span> Download the CPT installer and certificate for installation. Run the install command from a terminal with administrative privileges.</h6>
+                            <h6>Follow these steps to grant the Full Disk Access privilege to the EclecticIQ Endpoint Response client:</h6>
+                            <ol type="1">
+                              <li>In the Security & Privacy dialog box, switch to the Privacy tab and select Full Disk Access.</li>
+                              <li>Click the padlock icon to edit the settings.</li>
+                              <li>Expand the Full Disk Access category by clicking the + button.</li>
+                              <li>Press CMD + Shift + G, enter the name of client file (/user/local/bin/plgx_agent).</li>
+                              <li>Select the plgx_agent file and click Open.</li>
+                              <li> Scroll and verify the client file is added to the list.</li>
+                              <li>Repeat steps 4 through 7 for the /usr/local/bin/plgx_osqueryd and /usr/libexec/atrun files.</li>
+                            </ol>
                           </div>
                           <!--end:: Download/Darwin  -->
                           <!--begin:: Download/Manual  -->
@@ -170,7 +179,8 @@
                         <!--end:: Widgets/Tasks -->
                       </div>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+                        <!-- <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button> -->
+                        <appbutton text="Close"  btnClass="btn-small-opaque" btnType="button" (click)="closeModal('osquery_modal')"></appbutton>
                         <!-- <button type="button" class="btn btn-success">Finish</button> -->
                       </div>
                     </div>
@@ -194,13 +204,13 @@
 
             <!--begin:: AlienVault OTX Alerts -->
             <div class="otx_counter_val" style="display: none;">
-            <a *ngIf="otx_counter>0" [routerLink]="['/alerts/']"[queryParams]="{id: 'alienvault'}" id="div_alienvault">
+            <a *ngIf="otx_counter>0" class="status" (click)="goToAlerts('dashboard','alienvault');" id="div_alienvault">
 
               <div class="kt-portlet kt-portlet--border-bottom-success" style="border-bottom: 3px solid rgb(110, 190, 68);">
               <div class="kt-portlet__body kt-portlet__body-alerts kt-portlet__body--fluid body-fluid alerts-color-otx" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="">
 
-              <div class="">
-              <div class="">
+              <div class="full-width">
+              <div class="full-width">
               <div class="kt-widget26 text-overlap">
               <div class="row">
               <div class="col-md-6 col-xl-8 col-lg-8 col-sm-6 col-6">
@@ -224,43 +234,53 @@
               <div class="col">
               <!-- <ng-container *ngFor="let al of dashboardData.data"> -->
               <div class="kt-widget15__item">
-              <span class="kt-widget15__text" style="color: red;">
+              <span class="kt-widget15__text clr-red">
               Critical
               </span>
-              <span *ngIf ="alienvault_critical != 0;else alienvault_critical_val" id="alienvault_critical" class="kt-widget15__stats pull-right" style="color: red;">{{alienvault_critical | shortNumber}}
+              <span *ngIf ="alienvault_critical != 0;else alienvault_critical_val" id="alienvault_critical" class="kt-widget15__stats pull-right clr-red">{{alienvault_critical | shortNumber}}
               </span>
               <ng-template #alienvault_critical_val>
-              <span id="alienvault_critical" class="kt-widget15__stats pull-right" style="color: red;">0</span>
+              <span id="alienvault_critical" class="kt-widget15__stats pull-right clr-red">0</span>
               </ng-template>
               </div>
               <div class="kt-widget15__item">
-              <span class="kt-widget15__text" style="color: orange;">
-              Warning
+              <span class="kt-widget15__text clr-orange">
+              High
               </span>
-              <span *ngIf ="alienvault_warning != 0;else alienvault_warning_val" id="alienvault_warning" class="kt-widget15__stats pull-right" style="color: orange;">{{alienvault_warning | shortNumber}}
+              <span *ngIf ="alienvault_high != 0;else alienvault_high_val" id="alienvault_high" class="kt-widget15__stats pull-right clr-orange">{{alienvault_high | shortNumber}}
               </span>
-              <ng-template #alienvault_warning_val>
-              <span id="alienvault_warning" class="kt-widget15__stats pull-right" style="color: orange;">0</span>
+              <ng-template #alienvault_high_val>
+              <span id="alienvault_high" class="kt-widget15__stats pull-right clr-orange">0</span>
               </ng-template>
               </div>
               <div class="kt-widget15__item">
-              <span class="kt-widget15__text" style="color: forestgreen;">
+              <span class="kt-widget15__text clr-yellow">
+              Medium
+              </span>
+              <span *ngIf ="alienvault_medium != 0;else alienvault_medium_val" id="alienvault_medium" class="kt-widget15__stats pull-right clr-yellow">{{alienvault_medium | shortNumber}}
+              </span>
+              <ng-template #alienvault_medium_val>
+              <span id="alienvault_medium" class="kt-widget15__stats pull-right clr-yellow">0</span>
+              </ng-template>
+              </div>
+              <div class="kt-widget15__item">
+              <span class="kt-widget15__text clr-green">
               Low
               </span>
-              <span *ngIf ="alienvault_low != 0;else alienvault_low_val" id="alienvault_low" class="kt-widget15__stats pull-right" style="color: forestgreen;">{{alienvault_low | shortNumber}}
+              <span *ngIf ="alienvault_low != 0;else alienvault_low_val" id="alienvault_low" class="kt-widget15__stats pull-right clr-green">{{alienvault_low | shortNumber}}
               </span>
               <ng-template #alienvault_low_val>
-              <span id="alienvault_low" class="kt-widget15__stats pull-right" style="color: forestgreen;">0</span>
+              <span id="alienvault_low" class="kt-widget15__stats pull-right clr-green">0</span>
               </ng-template>
               </div>
               <div class="kt-widget15__item">
-              <span class="kt-widget15__text" style="color: navy;">
+              <span class="kt-widget15__text clr-blue">
               Info
               </span>
-              <span *ngIf ="alienvault_info != 0;else alienvault_info_val" id="alienvault_info" class="kt-widget15__stats pull-right" style="color: navy;">{{alienvault_info | shortNumber}}
+              <span *ngIf ="alienvault_info != 0;else alienvault_info_val" id="alienvault_info" class="kt-widget15__stats pull-right clr-blue">{{alienvault_info | shortNumber}}
               </span>
               <ng-template #alienvault_info_val>
-              <span id="alienvault_info" class="kt-widget15__stats pull-right" style="color: navy;">0</span>
+              <span id="alienvault_info" class="kt-widget15__stats pull-right clr-blue">0</span>
               </ng-template>
               </div>
               <!-- </ng-container> -->
@@ -280,8 +300,8 @@
               <div *ngIf="otx_counter == 0" class="kt-portlet kt-portlet--border-bottom-success" style="border-bottom: 3px solid rgb(110, 190, 68);">
               <div class="kt-portlet__body kt-portlet__body-alerts kt-portlet__body--fluid body-fluid alerts-color-otx" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="">
 
-              <div class="">
-              <div class="">
+              <div class="full-width">
+              <div class="full-width">
               <div class="kt-widget26 text-overlap">
               <div class="row">
               <div class="col-md-6 col-xl-8 col-lg-8 col-sm-6 col-6">
@@ -305,43 +325,53 @@
               <div class="col">
               <!-- <ng-container *ngFor="let al of dashboardData.data"> -->
               <div class="kt-widget15__item">
-              <span class="kt-widget15__text" style="color: red;">
+              <span class="kt-widget15__text clr-red">
               Critical
               </span>
-              <span *ngIf ="alienvault_critical != 0;else alienvault_critical_val" id="alienvault_critical" class="kt-widget15__stats pull-right" style="color: red;">{{alienvault_critical | shortNumber}}
+              <span *ngIf ="alienvault_critical && alienvault_critical != 0;else alienvault_critical_val" id="alienvault_critical" class="kt-widget15__stats pull-right clr-red">{{alienvault_critical | shortNumber}}
               </span>
               <ng-template #alienvault_critical_val>
-              <span id="alienvault_critical" class="kt-widget15__stats pull-right" style="color: red;">0</span>
+              <span id="alienvault_critical" class="kt-widget15__stats pull-right clr-red">0</span>
               </ng-template>
               </div>
               <div class="kt-widget15__item">
-              <span class="kt-widget15__text" style="color: orange;">
-              Warning
+              <span class="kt-widget15__text clr-orange">
+              High
               </span>
-              <span *ngIf ="alienvault_warning != 0;else alienvault_warning_val" id="alienvault_warning" class="kt-widget15__stats pull-right" style="color: orange;">{{alienvault_warning | shortNumber}}
+              <span *ngIf ="alienvault_high && alienvault_high != 0;else alienvault_high_val" id="alienvault_high" class="kt-widget15__stats pull-right clr-orange">{{alienvault_high | shortNumber}}
               </span>
-              <ng-template #alienvault_warning_val>
-              <span id="alienvault_warning" class="kt-widget15__stats pull-right" style="color: orange;">0</span>
+              <ng-template #alienvault_high_val>
+              <span id="alienvault_high" class="kt-widget15__stats pull-right clr-orange">0</span>
               </ng-template>
               </div>
               <div class="kt-widget15__item">
-              <span class="kt-widget15__text" style="color: forestgreen;">
+              <span class="kt-widget15__text clr-yellow">
+              Medium
+              </span>
+              <span *ngIf ="alienvault_medium  && alienvault_medium != 0;else alienvault_medium_val" id="alienvault_medium" class="kt-widget15__stats pull-right clr-yellow">{{alienvault_medium | shortNumber}}
+              </span>
+              <ng-template #alienvault_medium_val>
+              <span id="alienvault_medium" class="kt-widget15__stats pull-right clr-yellow">0</span>
+              </ng-template>
+              </div>
+              <div class="kt-widget15__item">
+              <span class="kt-widget15__text clr-green">
               Low
               </span>
-              <span *ngIf ="alienvault_low != 0;else alienvault_low_val" id="alienvault_low" class="kt-widget15__stats pull-right" style="color: forestgreen;">{{alienvault_low | shortNumber}}
+              <span *ngIf ="alienvault_low && alienvault_low != 0;else alienvault_low_val" id="alienvault_low" class="kt-widget15__stats pull-right clr-green">{{alienvault_low | shortNumber}}
               </span>
               <ng-template #alienvault_low_val>
-              <span id="alienvault_low" class="kt-widget15__stats pull-right" style="color: forestgreen;">0</span>
+              <span id="alienvault_low" class="kt-widget15__stats pull-right clr-green">0</span>
               </ng-template>
               </div>
               <div class="kt-widget15__item">
-              <span class="kt-widget15__text" style="color: navy;">
+              <span class="kt-widget15__text clr-blue">
               Info
               </span>
-              <span *ngIf ="alienvault_info != 0;else alienvault_info_val" id="alienvault_info" class="kt-widget15__stats pull-right" style="color: navy;">{{alienvault_info | shortNumber}}
+              <span *ngIf ="alienvault_info && alienvault_info != 0;else alienvault_info_val" id="alienvault_info" class="kt-widget15__stats pull-right clr-blue">{{alienvault_info | shortNumber}}
               </span>
               <ng-template #alienvault_info_val>
-              <span id="alienvault_info" class="kt-widget15__stats pull-right" style="color: navy;">0</span>
+              <span id="alienvault_info" class="kt-widget15__stats pull-right clr-blue">0</span>
               </ng-template>
               </div>
               <!-- </ng-container> -->
@@ -374,7 +404,7 @@
           <div class="col-xl-3 col-md-3 col-lg-3 col-6 col-sm-6">
             <!--begin:: IBMxForce Alerts -->
             <div class="ibm_counter_val" style="display: none;">
-            <a *ngIf="ibm_counter>0" [routerLink]="['/alerts/']" [queryParams]="{id: 'ibmxforce'}" id="div_ibmxforce">
+            <a *ngIf="ibm_counter>0" class="status" (click)="goToAlerts('dashboard','ibmxforce');" id="div_ibmxforce">
             <div class="kt-portlet kt-portlet--border-bottom-danger" style="border-bottom: 3px solid rgb(145, 217, 247);">
               <div class="kt-portlet__body kt-portlet__body-alerts kt-portlet__body--fluid body-fluid alerts-color-ibm" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="">
 
@@ -399,43 +429,53 @@
                       <div class="row">
                         <div class="col">
                           <div class="kt-widget15__item">
-                            <span class="kt-widget15__text" style="color: red;">
+                            <span class="kt-widget15__text clr-red">
                               Critical
                             </span>
-                            <span *ngIf ="ibmxforce_critical != 0;else ibmxforce_critical_val" id="ibmxforce_critical" class="kt-widget15__stats pull-right" style="color: red;">{{ibmxforce_critical | shortNumber}}
+                            <span *ngIf ="ibmxforce_critical != 0;else ibmxforce_critical_val" id="ibmxforce_critical" class="kt-widget15__stats pull-right clr-red">{{ibmxforce_critical | shortNumber}}
                             </span>
                             <ng-template #ibmxforce_critical_val>
-                            <span id="ibmxforce_critical" class="kt-widget15__stats pull-right" style="color: red">0</span>
+                            <span id="ibmxforce_critical" class="kt-widget15__stats pull-right clr-red">0</span>
                             </ng-template>
                           </div>
                           <div class="kt-widget15__item">
-                            <span class="kt-widget15__text" style="color: orange;">
-                              Warning
-                            </span>
-                            <span *ngIf ="ibmxforce_warning != 0;else ibmxforce_warning_val" id="ibmxforce_warning" class="kt-widget15__stats pull-right" style="color: orange;">{{ibmxforce_warning | shortNumber}}
-                            </span>
-                            <ng-template #ibmxforce_warning_val>
-                            <span id="ibmxforce_warning" class="kt-widget15__stats pull-right" style="color: orange">0</span>
-                            </ng-template>
+                          <span class="kt-widget15__text clr-orange">
+                          High
+                          </span>
+                          <span *ngIf ="ibmxforce_high != 0;else ibmxforce_high_val" id="ibmxforce_high" class="kt-widget15__stats pull-right clr-orange">{{ibmxforce_high | shortNumber}}
+                          </span>
+                          <ng-template #ibmxforce_high_val>
+                          <span id="ibmxforce_high" class="kt-widget15__stats pull-right clr-orange">0</span>
+                          </ng-template>
                           </div>
                           <div class="kt-widget15__item">
-                            <span class="kt-widget15__text" style="color: forestgreen;">
+                          <span class="kt-widget15__text clr-yellow">
+                          Medium
+                          </span>
+                          <span *ngIf ="ibmxforce_medium != 0;else ibmxforce_medium_val" id="ibmxforce_medium" class="kt-widget15__stats pull-right clr-yellow">{{ibmxforce_medium | shortNumber}}
+                          </span>
+                          <ng-template #ibmxforce_medium_val>
+                          <span id="ibmxforce_medium" class="kt-widget15__stats pull-right clr-yellow">0</span>
+                          </ng-template>
+                          </div>
+                          <div class="kt-widget15__item">
+                            <span class="kt-widget15__text clr-green">
                               Low
                             </span>
-                            <span *ngIf ="ibmxforce_low != 0;else ibmxforce_low_val" id="ibmxforce_low" class="kt-widget15__stats pull-right" style="color: forestgreen;">{{ibmxforce_low | shortNumber}}
+                            <span *ngIf ="ibmxforce_low != 0;else ibmxforce_low_val" id="ibmxforce_low" class="kt-widget15__stats pull-right clr-green">{{ibmxforce_low | shortNumber}}
                             </span>
                             <ng-template #ibmxforce_low_val>
-                            <span id="ibmxforce_low" class="kt-widget15__stats pull-right" style="color: forestgreen">0</span>
+                            <span id="ibmxforce_low" class="kt-widget15__stats pull-right clr-green">0</span>
                             </ng-template>
                           </div>
                           <div class="kt-widget15__item">
-                            <span class="kt-widget15__text" style="color: navy;">
+                            <span class="kt-widget15__text clr-blue">
                               Info
                             </span>
-                            <span  *ngIf ="ibmxforce_info != 0;else ibmxforce_info_val" id="ibmxforce_info" class="kt-widget15__stats pull-right" style="color: navy;">{{ibmxforce_info | shortNumber}}
+                            <span  *ngIf ="ibmxforce_info != 0;else ibmxforce_info_val" id="ibmxforce_info" class="kt-widget15__stats pull-right clr-blue">{{ibmxforce_info | shortNumber}}
                             </span>
                             <ng-template #ibmxforce_info_val>
-                            <span id="ibmxforce_info" class="kt-widget15__stats pull-right" style="color: navy">0</span>
+                            <span id="ibmxforce_info" class="kt-widget15__stats pull-right clr-blue">0</span>
                             </ng-template>
                           </div>
                         </div>
@@ -474,43 +514,53 @@
                         <div class="row">
                           <div class="col">
                             <div class="kt-widget15__item">
-                              <span class="kt-widget15__text" style="color: red;">
+                              <span class="kt-widget15__text clr-red">
                                 Critical
                               </span>
-                              <span *ngIf ="ibmxforce_critical != 0;else ibmxforce_critical_val" id="ibmxforce_critical" class="kt-widget15__stats pull-right" style="color: red;">{{ibmxforce_critical | shortNumber}}
+                              <span *ngIf ="ibmxforce_critical != 0;else ibmxforce_critical_val" id="ibmxforce_critical" class="kt-widget15__stats pull-right clr-red">{{ibmxforce_critical | shortNumber}}
                               </span>
                               <ng-template #ibmxforce_critical_val>
-                              <span id="ibmxforce_critical" class="kt-widget15__stats pull-right" style="color: red">0</span>
+                              <span id="ibmxforce_critical" class="kt-widget15__stats pull-right clr-red">0</span>
                               </ng-template>
                             </div>
                             <div class="kt-widget15__item">
-                              <span class="kt-widget15__text" style="color: orange;">
-                                Warning
+                              <span class="kt-widget15__text clr-orange">
+                              High
                               </span>
-                              <span *ngIf ="ibmxforce_warning != 0;else ibmxforce_warning_val" id="ibmxforce_warning" class="kt-widget15__stats pull-right" style="color: orange;">{{ibmxforce_warning | shortNumber}}
+                              <span *ngIf ="ibmxforce_high != 0;else ibmxforce_high_val" id="ibmxforce_high" class="kt-widget15__stats pull-right clr-orange">{{ibmxforce_high | shortNumber}}
                               </span>
-                              <ng-template #ibmxforce_warning_val>
-                              <span id="ibmxforce_warning" class="kt-widget15__stats pull-right" style="color: orange">0</span>
+                              <ng-template #ibmxforce_high_val>
+                              <span id="ibmxforce_high" class="kt-widget15__stats pull-right clr-orange">0</span>
                               </ng-template>
-                            </div>
+                              </div>
+                              <div class="kt-widget15__item">
+                              <span class="kt-widget15__text clr-yellow">
+                              Medium
+                              </span>
+                              <span *ngIf ="ibmxforce_medium != 0;else ibmxforce_medium_val" id="ibmxforce_medium" class="kt-widget15__stats pull-right clr-yellow">{{ibmxforce_medium | shortNumber}}
+                              </span>
+                              <ng-template #ibmxforce_medium_val>
+                              <span id="ibmxforce_medium" class="kt-widget15__stats pull-right clr-yellow">0</span>
+                              </ng-template>
+                              </div>
                             <div class="kt-widget15__item">
-                              <span class="kt-widget15__text" style="color: forestgreen;">
+                              <span class="kt-widget15__text clr-green">
                                 Low
                               </span>
-                              <span *ngIf ="ibmxforce_low != 0;else ibmxforce_low_val" id="ibmxforce_low" class="kt-widget15__stats pull-right" style="color: forestgreen;">{{ibmxforce_low | shortNumber}}
+                              <span *ngIf ="ibmxforce_low != 0;else ibmxforce_low_val" id="ibmxforce_low" class="kt-widget15__stats pull-right clr-green">{{ibmxforce_low | shortNumber}}
                               </span>
                               <ng-template #ibmxforce_low_val>
-                              <span id="ibmxforce_low" class="kt-widget15__stats pull-right" style="color: forestgreen">0</span>
+                              <span id="ibmxforce_low" class="kt-widget15__stats pull-right clr-green">0</span>
                               </ng-template>
                             </div>
                             <div class="kt-widget15__item">
-                              <span class="kt-widget15__text" style="color: navy;">
+                              <span class="kt-widget15__text clr-blue">
                                 Info
                               </span>
-                              <span  *ngIf ="ibmxforce_info != 0;else ibmxforce_info_val" id="ibmxforce_info" class="kt-widget15__stats pull-right" style="color: navy;">{{ibmxforce_info | shortNumber}}
+                              <span  *ngIf ="ibmxforce_info != 0;else ibmxforce_info_val" id="ibmxforce_info" class="kt-widget15__stats pull-right clr-blue">{{ibmxforce_info | shortNumber}}
                               </span>
                               <ng-template #ibmxforce_info_val>
-                              <span id="ibmxforce_info" class="kt-widget15__stats pull-right" style="color: navy">0</span>
+                              <span id="ibmxforce_info" class="kt-widget15__stats pull-right clr-blue">0</span>
                               </ng-template>
                             </div>
                           </div>
@@ -541,7 +591,7 @@
           <div class="col-xl-3 col-md-3 col-lg-3 col-6 col-sm-6">
             <!--begin:: Rule Alerts -->
             <div class="rule_counter_val" style="display: none;">
-            <a *ngIf="rule_counter>0" [routerLink]="['/alerts/']" [queryParams]="{id: 'rule'}" id="div_rule">
+            <a *ngIf="rule_counter>0" class="status" (click)="goToAlerts('dashboard','rule');" id="div_rule">
             <div class="kt-portlet kt-portlet--border-bottom-brand" style="border-bottom: 3px solid rgba(229, 87, 86, 0.81);">
               <div class="kt-portlet__body kt-portlet__body-alerts kt-portlet__body--fluid body-fluid alerts-color-rule" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="">
 
@@ -568,43 +618,53 @@
                         <div class="row">
                           <div class="col">
                             <div class="kt-widget15__item">
-                              <span class="kt-widget15__text" style="color: red;">
+                              <span class="kt-widget15__text clr-red">
                                 Critical
                               </span>
-                              <span *ngIf ="rule_critical != 0;else rule_critical_val" id="rule_critical" class="kt-widget15__stats pull-right" style="color: red;">{{rule_critical | shortNumber}}
+                              <span *ngIf ="rule_critical != 0;else rule_critical_val" id="rule_critical" class="kt-widget15__stats pull-right clr-red">{{rule_critical | shortNumber}}
                               </span>
                               <ng-template #rule_critical_val>
-                              <span id="rule_counter" class="kt-widget15__stats pull-right" style="color: red">0</span>
+                              <span id="rule_counter" class="kt-widget15__stats pull-right clr-red">0</span>
                               </ng-template>
                             </div>
                             <div class="kt-widget15__item">
-                              <span class="kt-widget15__text" style="color: orange;">
-                                Warning
+                              <span class="kt-widget15__text clr-orange">
+                              High
                               </span>
-                              <span *ngIf ="rule_warning != 0;else rule_warning_val" id="rule_warning" class="kt-widget15__stats pull-right" style="color: orange;">{{rule_warning | shortNumber}}
+                              <span *ngIf ="rule_high != 0;else rule_high_val" id="rule_high" class="kt-widget15__stats pull-right clr-orange">{{rule_high | shortNumber}}
                               </span>
-                              <ng-template #rule_warning_val>
-                              <span id="rule_warning" class="kt-widget15__stats pull-right" style="color: orange">0</span>
+                              <ng-template #rule_high_val>
+                              <span id="rule_high" class="kt-widget15__stats pull-right clr-orange">0</span>
                               </ng-template>
-                            </div>
+                              </div>
+                              <div class="kt-widget15__item">
+                              <span class="kt-widget15__text clr-yellow">
+                              Medium
+                              </span>
+                              <span *ngIf ="rule_medium != 0;else rule_medium_val" id="rule_medium" class="kt-widget15__stats pull-right clr-yellow">{{rule_medium | shortNumber}}
+                              </span>
+                              <ng-template #rule_medium_val>
+                              <span id="rule_medium" class="kt-widget15__stats pull-right clr-yellow">0</span>
+                              </ng-template>
+                              </div>
                             <div class="kt-widget15__item">
-                              <span class="kt-widget15__text" style="color: forestgreen;">
+                              <span class="kt-widget15__text clr-green">
                                 Low
                               </span>
-                              <span *ngIf ="rule_low != 0;else rule_low_val" id="rule_low" class="kt-widget15__stats pull-right" style="color: forestgreen;">{{rule_low | shortNumber}}
+                              <span *ngIf ="rule_low != 0;else rule_low_val" id="rule_low" class="kt-widget15__stats pull-right clr-green">{{rule_low | shortNumber}}
                               </span>
                               <ng-template #rule_low_val>
-                              <span id="rule_low" class="kt-widget15__stats pull-right" style="color: forestgreen">0</span>
+                              <span id="rule_low" class="kt-widget15__stats pull-right clr-green">0</span>
                               </ng-template>
                             </div>
                             <div class="kt-widget15__item">
-                              <span class="kt-widget15__text" style="color: navy;">
+                              <span class="kt-widget15__text clr-blue">
                                 Info
                               </span>
-                              <span *ngIf ="rule_info != 0;else rule_info_val" class="kt-widget15__stats pull-right" style="color: navy;">{{rule_info | shortNumber}}
+                              <span *ngIf ="rule_info != 0;else rule_info_val" class="kt-widget15__stats pull-right clr-blue">{{rule_info | shortNumber}}
                               </span>
                               <ng-template #rule_info_val>
-                              <span id="rule_info" class="kt-widget15__stats pull-right" style="color: navy">0</span>
+                              <span id="rule_info" class="kt-widget15__stats pull-right clr-blue">0</span>
                               </ng-template>
                             </div>
                           </div>
@@ -645,43 +705,53 @@
                           <div class="row">
                             <div class="col">
                               <div class="kt-widget15__item">
-                                <span class="kt-widget15__text" style="color: red;">
+                                <span class="kt-widget15__text clr-red">
                                   Critical
                                 </span>
-                                <span *ngIf ="rule_critical != 0;else rule_critical_val" id="rule_critical" class="kt-widget15__stats pull-right" style="color: red;">{{rule_critical | shortNumber}}
+                                <span *ngIf ="rule_critical != 0;else rule_critical_val" id="rule_critical" class="kt-widget15__stats pull-right clr-red">{{rule_critical | shortNumber}}
                                 </span>
                                 <ng-template #rule_critical_val>
-                                <span id="rule_counter" class="kt-widget15__stats pull-right" style="color: red">0</span>
+                                <span id="rule_counter" class="kt-widget15__stats pull-right clr-red">0</span>
                                 </ng-template>
                               </div>
                               <div class="kt-widget15__item">
-                                <span class="kt-widget15__text" style="color: orange;">
-                                  Warning
+                                <span class="kt-widget15__text clr-orange">
+                                High
                                 </span>
-                                <span *ngIf ="rule_warning != 0;else rule_warning_val" id="rule_warning" class="kt-widget15__stats pull-right" style="color: orange;">{{rule_warning | shortNumber}}
+                                <span *ngIf ="rule_high != 0;else rule_high_val" id="rule_high" class="kt-widget15__stats pull-right clr-orange">{{rule_high | shortNumber}}
                                 </span>
-                                <ng-template #rule_warning_val>
-                                <span id="rule_warning" class="kt-widget15__stats pull-right" style="color: orange">0</span>
+                                <ng-template #rule_high_val>
+                                <span id="rule_high" class="kt-widget15__stats pull-right clr-orange">0</span>
                                 </ng-template>
-                              </div>
+                                </div>
+                                <div class="kt-widget15__item">
+                                <span class="kt-widget15__text clr-yellow">
+                                Medium
+                                </span>
+                                <span *ngIf ="rule_medium != 0;else rule_medium_val" id="rule_medium" class="kt-widget15__stats pull-right clr-yellow">{{rule_medium | shortNumber}}
+                                </span>
+                                <ng-template #rule_medium_val>
+                                <span id="rule_medium" class="kt-widget15__stats pull-right clr-yellow">0</span>
+                                </ng-template>
+                                </div>
                               <div class="kt-widget15__item">
-                                <span class="kt-widget15__text" style="color: forestgreen;">
+                                <span class="kt-widget15__text clr-green">
                                   Low
                                 </span>
-                                <span *ngIf ="rule_low != 0;else rule_low_val" id="rule_low" class="kt-widget15__stats pull-right" style="color: forestgreen;">{{rule_low | shortNumber}}
+                                <span *ngIf ="rule_low != 0;else rule_low_val" id="rule_low" class="kt-widget15__stats pull-right clr-green">{{rule_low | shortNumber}}
                                 </span>
                                 <ng-template #rule_low_val>
-                                <span id="rule_low" class="kt-widget15__stats pull-right" style="color: forestgreen">0</span>
+                                <span id="rule_low" class="kt-widget15__stats pull-right clr-green">0</span>
                                 </ng-template>
                               </div>
                               <div class="kt-widget15__item">
-                                <span class="kt-widget15__text" style="color: navy;">
+                                <span class="kt-widget15__text clr-blue">
                                   Info
                                 </span>
-                                <span *ngIf ="rule_info != 0;else rule_info_val" class="kt-widget15__stats pull-right" style="color: navy;">{{rule_info | shortNumber}}
+                                <span *ngIf ="rule_info != 0;else rule_info_val" class="kt-widget15__stats pull-right clr-blue">{{rule_info | shortNumber}}
                                 </span>
                                 <ng-template #rule_info_val>
-                                <span id="rule_info" class="kt-widget15__stats pull-right" style="color: navy">0</span>
+                                <span id="rule_info" class="kt-widget15__stats pull-right clr-blue">0</span>
                                 </ng-template>
                               </div>
                             </div>
@@ -712,7 +782,7 @@
           <div class="col-xl-3 col-md-3 col-lg-3 col-6 col-sm-6">
             <!--begin:: VirusTotal Alerts -->
             <div class="vt_counter_val" style="display: none;">
-            <a *ngIf="vt_counter>0" [routerLink]="['/alerts/']"  [queryParams]="{id: 'virustotal'}" id="div_virustotal">
+            <a *ngIf="vt_counter>0" class="status" (click)="goToAlerts('dashboard','virustotal');" id="div_virustotal">
             <div class="kt-portlet kt-portlet--border-bottom-warning vt_counter_val" style="border-bottom: 3px solid rgb(60, 95, 246);">
               <div class="kt-portlet__body kt-portlet__body-alerts kt-portlet__body--fluid body-fluid alerts-color-virus" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="">
 
@@ -737,43 +807,53 @@
                       <div class="row">
                         <div class="col">
                           <div class="kt-widget15__item">
-                            <span class="kt-widget15__text" style="color: red;">
+                            <span class="kt-widget15__text clr-red">
                               Critical
                             </span>
-                            <span *ngIf ="virustotal_critical != 0;else virustotal_critical_val"  id="virustotal_critical" class="kt-widget15__stats pull-right" style="color: red;">{{virustotal_critical | shortNumber}}
+                            <span *ngIf ="virustotal_critical != 0;else virustotal_critical_val"  id="virustotal_critical" class="kt-widget15__stats pull-right clr-red">{{virustotal_critical | shortNumber}}
                             </span>
                             <ng-template #virustotal_critical_val>
-                            <span id="virustotal_critical" class="kt-widget15__stats pull-right" style="color: red">0</span>
+                            <span id="virustotal_critical" class="kt-widget15__stats pull-right clr-red">0</span>
                             </ng-template>
                           </div>
                           <div class="kt-widget15__item">
-                            <span class="kt-widget15__text" style="color: orange;">
-                              Warning
+                            <span class="kt-widget15__text clr-orange">
+                            High
                             </span>
-                            <span *ngIf ="virustotal_warning != 0;else virustotal_warning_val" id="virustotal_warning" class="kt-widget15__stats pull-right" style="color: orange;">{{virustotal_warning | shortNumber}}
+                            <span *ngIf ="virustotal_high != 0;else virustotal_high_val" id="virustotal_high" class="kt-widget15__stats pull-right clr-orange">{{virustotal_high | shortNumber}}
                             </span>
-                            <ng-template #virustotal_warning_val>
-                            <span id="virustotal_warning" class="kt-widget15__stats pull-right" style="color: orange">0</span>
+                            <ng-template #virustotal_high_val>
+                            <span id="virustotal_high" class="kt-widget15__stats pull-right clr-orange">0</span>
                             </ng-template>
-                          </div>
+                            </div>
+                            <div class="kt-widget15__item">
+                            <span class="kt-widget15__text clr-yellow">
+                            Medium
+                            </span>
+                            <span *ngIf ="virustotal_medium != 0;else virustotal_medium_val" id="virustotal_medium" class="kt-widget15__stats pull-right clr-yellow">{{virustotal_medium | shortNumber}}
+                            </span>
+                            <ng-template #virustotal_medium_val>
+                            <span id="virustotal_medium" class="kt-widget15__stats pull-right clr-yellow">0</span>
+                            </ng-template>
+                            </div>
                           <div class="kt-widget15__item">
-                            <span class="kt-widget15__text" style="color: forestgreen;">
+                            <span class="kt-widget15__text clr-green">
                               Low
                             </span>
-                            <span *ngIf ="virustotal_low != 0;else virustotal_low_val" id="virustotal_low" class="kt-widget15__stats pull-right" style="color: forestgreen;">{{virustotal_low | shortNumber}}
+                            <span *ngIf ="virustotal_low != 0;else virustotal_low_val" id="virustotal_low" class="kt-widget15__stats pull-right clr-green">{{virustotal_low | shortNumber}}
                             </span>
                             <ng-template #virustotal_low_val>
-                            <span id="virustotal_low" class="kt-widget15__stats pull-right" style="color: forestgreen">0</span>
+                            <span id="virustotal_low" class="kt-widget15__stats pull-right clr-green">0</span>
                             </ng-template>
                           </div>
                           <div class="kt-widget15__item">
-                            <span class="kt-widget15__text" style="color: navy;">
+                            <span class="kt-widget15__text clr-blue">
                               Info
                             </span>
-                            <span *ngIf ="virustotal_info != 0;else virustotal_info_val" id="virustotal_info" class="kt-widget15__stats pull-right" style="color: navy;">{{virustotal_info | shortNumber}}
+                            <span *ngIf ="virustotal_info != 0;else virustotal_info_val" id="virustotal_info" class="kt-widget15__stats pull-right clr-blue">{{virustotal_info | shortNumber}}
                             </span>
                             <ng-template #virustotal_info_val>
-                            <span id="virustotal_info" class="kt-widget15__stats pull-right" style="color: navy">0</span>
+                            <span id="virustotal_info" class="kt-widget15__stats pull-right clr-blue">0</span>
                             </ng-template>
                           </div>
                         </div>
@@ -812,43 +892,53 @@
                         <div class="row">
                           <div class="col">
                             <div class="kt-widget15__item">
-                              <span class="kt-widget15__text" style="color: red;">
+                              <span class="kt-widget15__text clr-red">
                                 Critical
                               </span>
-                              <span *ngIf ="virustotal_critical != 0;else virustotal_critical_val"  id="virustotal_critical" class="kt-widget15__stats pull-right" style="color: red;">{{virustotal_critical | shortNumber}}
+                              <span *ngIf ="virustotal_critical != 0;else virustotal_critical_val"  id="virustotal_critical" class="kt-widget15__stats pull-right clr-red">{{virustotal_critical | shortNumber}}
                               </span>
                               <ng-template #virustotal_critical_val>
-                              <span id="virustotal_critical" class="kt-widget15__stats pull-right" style="color: red">0</span>
+                              <span id="virustotal_critical" class="kt-widget15__stats pull-right clr-red">0</span>
                               </ng-template>
                             </div>
                             <div class="kt-widget15__item">
-                              <span class="kt-widget15__text" style="color: orange;">
-                                Warning
+                              <span class="kt-widget15__text clr-orange">
+                              High
                               </span>
-                              <span *ngIf ="virustotal_warning != 0;else virustotal_warning_val" id="virustotal_warning" class="kt-widget15__stats pull-right" style="color: orange;">{{virustotal_warning | shortNumber}}
+                              <span *ngIf ="virustotal_high != 0;else virustotal_high_val" id="virustotal_high" class="kt-widget15__stats pull-right clr-orange">{{virustotal_high | shortNumber}}
                               </span>
-                              <ng-template #virustotal_warning_val>
-                              <span id="virustotal_warning" class="kt-widget15__stats pull-right" style="color: orange">0</span>
+                              <ng-template #virustotal_high_val>
+                              <span id="virustotal_high" class="kt-widget15__stats pull-right clr-orange">0</span>
                               </ng-template>
-                            </div>
+                              </div>
+                              <div class="kt-widget15__item">
+                              <span class="kt-widget15__text clr-yellow">
+                              Medium
+                              </span>
+                              <span *ngIf ="virustotal_medium != 0;else virustotal_medium_val" id="virustotal_medium" class="kt-widget15__stats pull-right clr-yellow">{{virustotal_medium | shortNumber}}
+                              </span>
+                              <ng-template #virustotal_medium_val>
+                              <span id="virustotal_medium" class="kt-widget15__stats pull-right clr-yellow">0</span>
+                              </ng-template>
+                              </div>
                             <div class="kt-widget15__item">
-                              <span class="kt-widget15__text" style="color: forestgreen;">
+                              <span class="kt-widget15__text clr-green">
                                 Low
                               </span>
-                              <span *ngIf ="virustotal_low != 0;else virustotal_low_val" id="virustotal_low" class="kt-widget15__stats pull-right" style="color: forestgreen;">{{virustotal_low | shortNumber}}
+                              <span *ngIf ="virustotal_low != 0;else virustotal_low_val" id="virustotal_low" class="kt-widget15__stats pull-right clr-green">{{virustotal_low | shortNumber}}
                               </span>
                               <ng-template #virustotal_low_val>
-                              <span id="virustotal_low" class="kt-widget15__stats pull-right" style="color: forestgreen">0</span>
+                              <span id="virustotal_low" class="kt-widget15__stats pull-right clr-green" >0</span>
                               </ng-template>
                             </div>
                             <div class="kt-widget15__item">
-                              <span class="kt-widget15__text" style="color: navy;">
+                              <span class="kt-widget15__text clr-blue">
                                 Info
                               </span>
-                              <span *ngIf ="virustotal_info != 0;else virustotal_info_val" id="virustotal_info" class="kt-widget15__stats pull-right" style="color: navy;">{{virustotal_info | shortNumber}}
+                              <span *ngIf ="virustotal_info != 0;else virustotal_info_val" id="virustotal_info" class="kt-widget15__stats pull-right clr-blue">{{virustotal_info | shortNumber}}
                               </span>
                               <ng-template #virustotal_info_val>
-                              <span id="virustotal_info" class="kt-widget15__stats pull-right" style="color: navy">0</span>
+                              <span id="virustotal_info" class="kt-widget15__stats pull-right clr-blue">0</span>
                               </ng-template>
                             </div>
                           </div>
@@ -883,7 +973,7 @@
           <div class="col-xl-4 col-md-4 col-lg-4 col-12 col-sm-12">
 
             <!--begin::Portlet-->
-            <div class="kt-portlet">
+            <div class="kt-portlet responsive-card">
               <div class="kt-portlet__head">
                 <div class="kt-portlet__head-label">
                   <span class="kt-portlet__head-icon kt-hidden">
@@ -897,17 +987,19 @@
               <div id="no-data-platform-distribution-chart" class="no-data-platform-distribution" style="float:left;margin-left: 79px;margin-top: 40px;display: none;" ></div>
 
               <!-- <div id="divchart" > -->
+              <div class="responsive-card-body">
                 <canvas id="pie-chart-platform-distribution-chart" style="margin-top: 40px;height: auto;display: block;margin-bottom: 30px;" ></canvas>
+              </div>
+
 
             </div>
-
             <!--end::Portlet-->
           </div>
 
           <div class="col-xl-4 col-md-4 col-lg-4 col-12 col-sm-12">
 
             <!--begin::Portlet-->
-            <div class="kt-portlet">
+            <div class="kt-portlet responsive-card">
               <div class="kt-portlet__head">
                 <div class="kt-portlet__head-label">
                   <span class="kt-portlet__head-icon kt-hidden">
@@ -918,17 +1010,209 @@
                   </h3>
                 </div>
               </div>
-              <div id="no-data-pie-Host-status-result-chart" class="pie-chart-Host-status" style="float:left;margin-left: 79px;margin-top: 40px;display: none;height: 238px;" ></div>
-                <canvas id="pie-chart-Host-status-pie-chart" class="pie-chart-Host-canvas" style="margin-top: 40px;height: auto;display: block;margin-bottom: 30px;" ></canvas>
+                <div class="row kt-hoststatus full-height align-items-center">
+                  <div class="platform-mini-card full-height col-xl-4 col-lg-4 col-md-12 col-sm-12">
+      							<div class="kt-portlet apple_widget_body2" style="margin-right:15px; margin-bottom:0px;min-height: 87px;">
+      								<div class="ph-row">
+      									<div class="ph-col-4"></div>
+      									<div class="ph-col-8 empty"></div>
+      									<div class="ph-col-6"></div>
+      									<div class="ph-col-6 empty"></div>
+      									<div class="ph-col-2"></div>
+      									<div class="ph-col-10 empty"></div>
+      									<div class="ph-col-6"></div>
+      									<div class="ph-col-6 empty"></div>
+      								  </div>
+      							</div>
+      							<!--begin:: Apple Widgets -->
+      							<div class="apple_widget_body mr-05 full-height" style="display: none;">
+      							<div class="kt-portlet kt-portlet-div full-height">
+      								<div class="kt-portlet__body full-height" style="padding: 0px;" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Darwin Platforms">
+      									<div class="kt-widget14 kt-hoststatus-widget shadow-sm kt-border-rad">
+      										<div class="kt-widget14__content kt-widget21__icon pt-2">
+      											<!-- Begin:: Mac -->
+      											<div class="kt-widget14__legends"	style="line-height: 2.5rem; margin-top: auto;">
+                              <i class="fab fa-apple mb-3 darwin-icon"></i>
+      												<div *ngIf="darwinsOnline>=0" class="kt-widget14__legend"
+      													data-skin="dark" data-toggle="kt-tooltip" data-placement="top"
+      													title="Online Hosts">
+      													<span class="kt-widget14__bullet kt-bg-success"></span>
+      													<span class="kt-widget14__stats">
+      														<span style="color: #1b9300">
+      															{{darwinsOnline}}
+      														</span>
+      													</span>
+      												</div>
+      												<!-- End:: Mac Online -->
+      												<!-- begin:: Mac Offline -->
+      												<div *ngIf="darwinsOffline>=0" class="kt-widget14__legend"
+      													data-skin="dark" data-toggle="kt-tooltip" data-placement="top"
+      													title="Offline Hosts">
+      													<span class="kt-widget14__bullet" style="background-color: #f86c6b;"></span>
+      													<span class="kt-widget14__stats">
+      														<span style="color: #f86c6b">
+      															{{darwinsOffline}}
+      														</span>
+      													</span>
+      												</div>
 
+                              <div *ngIf="darwinsDisabled>=0" class="kt-widget14__legend pad-tb"
+      													data-skin="dark" data-toggle="kt-tooltip" data-placement="top"
+      													title="Archived Hosts">
+      													<span class="kt-widget14__bullet" style="background-color: #8e8e93;"></span>
+      													<span class="kt-widget14__stats">
+      														<span style="color: #8e8e93">
+      															{{darwinsDisabled}}
+      														</span>
+      													</span>
+      												</div>
+      											</div>
+      											<!-- End:: Mac -->
+      										</div>
+      									</div>
+      								</div>
+      							</div>
+      							</div>
+      							<!--end:: Apple Widgets -->
+      						</div>
+                  <div class="platform-mini-card full-height col-xl-4 col-lg-4 col-md-12 col-sm-12">
+      							<div class="kt-portlet linux_widget_body2" style="margin-right:15px; margin-bottom:0px;min-height: 87px;">
+      								<div class="ph-row">
+      									<div class="ph-col-4"></div>
+      									<div class="ph-col-8 empty"></div>
+      									<div class="ph-col-6"></div>
+      									<div class="ph-col-6 empty"></div>
+      									<div class="ph-col-2"></div>
+      									<div class="ph-col-10 empty"></div>
+      									<div class="ph-col-6"></div>
+      									<div class="ph-col-6 empty"></div>
+      								  </div>
+      							</div>
+      							<!--begin:: Linux Widgets -->
+      							<div class="linux_widget_body mr-05 full-height" style="display: none;">
+      							<div class="kt-portlet kt-portlet-div full-height ">
+      								<div class="kt-portlet__body full-height" style="padding: 0px;" data-skin="dark"
+      									data-toggle="kt-tooltip" data-placement="top" title="Linux Platforms">
+      									<div class="kt-widget14 kt-hoststatus-widget shadow-sm kt-border-rad">
+      										<div class="kt-widget14__content pt-2">
+      											<div class="kt-widget14__legends" style="line-height: 2.5rem; margin-top: auto;">
+                              <img alt="Logo" src="./assets/media/logo/Linux1.svg" class="mb-3" height="40px" width="30px" />
+      												<!-- Begin:: Linux Online -->
+      												<div *ngIf="ubuntuOnline>=0" class="kt-widget14__legend"
+      													data-skin="dark" data-toggle="kt-tooltip" data-placement="top"
+      													title="Online Hosts">
+      													<span class="kt-widget14__bullet kt-bg-success"></span>
+      													<span class="kt-widget14__stats">
+      														<span style="color: #1b9300">
+      															{{ubuntuOnline}}
+      														</span>
+      													</span>
+      												</div>
+      												<!-- End:: Linux Online -->
+      												<!-- begin:: Linux Offline -->
+      												<div *ngIf="ubuntuOffline>=0" class="kt-widget14__legend"
+      													data-skin="dark" data-toggle="kt-tooltip" data-placement="top"
+      													title="Offline Hosts">
+      													<span class="kt-widget14__bullet" style="background-color: #f86c6b;"></span>
+      													<span class="kt-widget14__stats">
+      														<span style="color: #f86c6b">
+      															{{ubuntuOffline}}
+      														</span>
+      													</span>
+      												</div>
+      												<!-- End:: Linux Offline -->
 
-            <!--end::Portlet-->
+                              <div *ngIf="ubuntuDisabled>=0" class="kt-widget14__legend pad-tb"
+      													data-skin="dark" data-toggle="kt-tooltip" data-placement="top"
+      													title="Archived Hosts">
+      													<span class="kt-widget14__bullet" style="background-color: #8e8e93;"></span>
+      													<span class="kt-widget14__stats">
+      														<span style="color: #8e8e93">
+      															{{ubuntuDisabled}}
+      														</span>
+      													</span>
+      												</div>
+      											</div>
+      											<!-- End:: Linux -->
+      										</div>
+      									</div>
+      								</div>
+      							</div>
+      							</div>
+      							<!--end:: Linux Widgets-->
+      						</div>
+                  <div class="platform-mini-card full-height col-xl-4 col-lg-4 col-md-12 col-sm-12">
+                    <div class="kt-portlet window_widget_body2" style="margin-right:15px; margin-bottom:0px;min-height: 87px;">
+                      <div class="ph-row">
+                        <div class="ph-col-4"></div>
+                        <div class="ph-col-8 empty"></div>
+                        <div class="ph-col-6"></div>
+                        <div class="ph-col-6 empty"></div>
+                        <div class="ph-col-2"></div>
+                        <div class="ph-col-10 empty"></div>
+                        <div class="ph-col-6"></div>
+                        <div class="ph-col-6 empty"></div>
+                        </div>
+                    </div>
+                    <!--begin:: Windows Widgets -->
+                    <div class="window_widget_body mr-05 full-height" style="display: none;">
+                    <div class="kt-portlet kt-portlet-div full-height ">
+                      <div class="kt-portlet__body full-height" style="padding: 0px;" data-skin="dark"
+                        data-toggle="kt-tooltip" data-placement="top" title="Windows Platforms">
+                        <div class="kt-widget14 kt-hoststatus-widget shadow-sm kt-border-rad">
+                          <div class="kt-widget14__content pt-2">
+                            <!-- Begin:: Windows -->
+                            <div class="kt-widget14__legends" style="line-height: 2.5rem; margin-top: auto;">
+                              <img alt="Logo" src="./assets/media/logo/windows.svg" class="mb-3" height="40px" width="30px" />
+                              <div *ngIf="windowsOnline>=0" class="kt-widget14__legend"
+                                data-skin="dark" data-toggle="kt-tooltip" data-placement="top"
+                                title="Online Hosts">
+                                <span class="kt-widget14__bullet kt-bg-success"></span>
+                                <span class="kt-widget14__stats">
+                                  <span style="color: #1b9300">
+                                    {{windowsOnline}}
+                                  </span>
+                                </span>
+                              </div>
+                              <div *ngIf="windowsOffline>=0"
+                                class="kt-widget14__legend" data-skin="dark"
+                                data-toggle="kt-tooltip" data-placement="top" title="Offline Hosts">
+                                <span class="kt-widget14__bullet" style="background-color: #f86c6b;"></span>
+                                <span class="kt-widget14__stats">
+                                  <span style="color: #f86c6b">
+                                    {{windowsOffline}}
+                                  </span>
+                                </span>
+                              </div>
+
+                              <div *ngIf="windowsDisabled>=0" class="kt-widget14__legend pad-tb" data-skin="dark" data-toggle="kt-tooltip"
+                                data-placement="top" title="Archived Hosts">
+                                <span class="kt-widget14__bullet" style="background-color: #8e8e93;"></span>
+                                <span class="kt-widget14__stats">
+                                  <span style="color: #8e8e93">
+                                    {{windowsDisabled}}
+                                  </span>
+                                </span>
+                              </div>
+
+                            </div>
+                            <!-- Begin:: Windows -->
+
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    </div>
+                    <!--end:: Windows Widgets -->
+                  </div>
+                </div>
+
           </div>
         </div>
           <div class="col-xl-4 col-md-4 col-lg-4 col-12 col-sm-12">
 
             <!--begin::Portlet-->
-            <div class="kt-portlet">
+            <div class="kt-portlet responsive-card">
               <div class="kt-portlet__head">
                 <div class="kt-portlet__head-label">
                   <span class="kt-portlet__head-icon kt-hidden">
@@ -941,7 +1225,10 @@
                 </div>
               </div>
               <div id="no-data-pie-Host-status-result-chart" class="pie-chart-Host-status" style="float:left;margin-left: 79px;margin-top: 40px;display: none;height: 238px;" ></div>
-              <canvas id="disk_usage-pie-chart" class="pie-chart-Host-canvas" style="margin-top: 40px;height: auto;display: block;margin-bottom: 30px;" ></canvas>
+              <div class="responsive-card-body">
+                <canvas id="disk_usage-pie-chart" class="pie-chart-Host-canvas" style="margin-top: 40px;height: auto;display: block;margin-bottom: 30px;" ></canvas>
+              </div>
+
 
 
               <!--end::Portlet-->
@@ -966,9 +1253,9 @@
                   </h3>
                 </div>
               </div>
-              <div id="divchart1" >
+              <div id="divchart1" class="max-width-100">
                 <canvas id="bar-chart-top_5_alerted_hosts" class="alerted_hosts"></canvas>
-                <div id="no-data-bar-chart-top_5_alerted_hosts" style="margin-left: 50px; margin-top: 40px;"  ></div>
+                <div id="no-data-bar-chart-top_5_alerted_hosts" class="center-align-empty-data"></div>
               </div>
 
             </div>
@@ -987,9 +1274,9 @@
                   </h3>
                 </div>
               </div>
-              <div id="divchart1" >
+              <div id="divchart1" class="max-width-100">
                 <canvas id="bar-chart-top_5_alerted_categries" class="categories_data"  width="50%" ></canvas>
-                <div id="no-data-bar-chart-top_5_alerted_categries" style="margin-left: 50px; margin-top: 40px;"  ></div>
+                <div id="no-data-bar-chart-top_5_alerted_categries" class="center-align-empty-data"></div>
               </div>
 
             </div>
@@ -1009,9 +1296,9 @@
                   </h3>
                 </div>
               </div>
-              <div id="divchart1" >
+              <div id="divchart1" class="max-width-100">
                 <canvas id="bar-chart-top_5_alerted_rules" class="top_rules"></canvas>
-                <div id="no-data-bar-chart-top_5_alerted_rules" style="margin-left: 50px; margin-top: 40px;"  ></div>
+                <div id="no-data-bar-chart-top_5_alerted_rules" class="center-align-empty-data" ></div>
               </div>
 
             </div>
@@ -1030,9 +1317,9 @@
                   </h3>
                 </div>
               </div>
-              <div id="divchart1" >
-                <canvas id="top5_hosts_data_graph" ></canvas>
-                <div id="no-data-bar-chart-top_5_alerted_rules" style="margin-left: 50px; margin-top: 40px;"  ></div>
+              <div id="divchart1" class="max-width-100">
+                <canvas id="top5_hosts_data_graph" class="bar-graph-top5-hosts"></canvas>
+                <div id="no-data-bar-chart-top_5_hosts" class="center-align-empty-data"></div>
               </div>
 
             </div>
@@ -1054,9 +1341,9 @@
                   </h3>
                 </div>
               </div>
-              <div id="divchart1" >
+              <div class="center-chart" id="divchart1" >
                 <canvas id="date_rate_graph" ></canvas>
-                <div id="no-data-bar-chart-top_5_alerted_hosts" style="margin-left: 50px; margin-top: 40px;"  ></div>
+                <div id="no-data-bar-chart-top_5_alerted_hosts" class="center-align-empty-data"></div>
               </div>
 
             </div>
@@ -1075,9 +1362,9 @@
                   </h3>
                 </div>
               </div>
-              <div id="divchart1" >
-                <canvas id="non_success_requests_graph"   width="50%" ></canvas>
-                <div id="no-data-bar-chart-top_5_alerted_categries" style="margin-left: 50px; margin-top: 40px;"  ></div>
+              <div class="center-chart" id="divchart1" >
+                <canvas id="non_success_requests_graph"  ></canvas>
+                <div id="no-data-bar-chart-top_5_alerted_categries" class="center-align-empty-data"></div>
               </div>
 
             </div>
@@ -1097,9 +1384,9 @@
                   </h3>
                 </div>
               </div>
-              <div id="divchart1" >
-                <canvas id="pending_rabbitmq_tasks_graph"   width="50%" ></canvas>
-                <div id="no-data-bar-chart-top_5_alerted_categries" style="margin-left: 50px; margin-top: 40px;"  ></div>
+              <div class="center-chart" id="divchart1" >
+                <canvas id="pending_rabbitmq_tasks_graph"  ></canvas>
+                <div id="no-data-bar-chart-top_5_alerted_categries" class="center-align-empty-data"></div>
               </div>
 
             </div>

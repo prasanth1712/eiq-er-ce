@@ -10,7 +10,7 @@ class TestUtilsLogSetting:
 
     def test_get_log_level_from_db_no_setting(self,db):
         Settings.query.filter(
-                    Settings.name == "esp_log_level"
+                    Settings.name == "er_log_level"
                 ).delete()
         assert _get_log_level_from_db()=="WARNING"
 
@@ -23,7 +23,7 @@ class TestUtilsLogSetting:
 
     def test_set_log_level_to_db_no_setting(self,db):
         Settings.query.filter(
-                    Settings.name == "esp_log_level"
+                    Settings.name == "er_log_level"
                 ).delete()
         _set_log_level_to_db("INFO")
         assert _get_log_level_from_db()=="INFO"

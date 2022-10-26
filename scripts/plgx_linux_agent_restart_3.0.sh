@@ -2,6 +2,7 @@
 # Copyright 2022 EclecticIQ. All rights reserved.
 # Platform: Linux x64
 # Description: This script creates task for service restart after 2 minutes
+# Pre-requisite: atd service should be running
 # Usage: ./plgx_linux_agent_restart_3.0.sh -i <IP/FQDN>
 
 _PROJECT="EclecticIQ"
@@ -55,6 +56,29 @@ whatOS() {
   fi   
 }
 
+isAtdRunning() {
+  SYSTYPE=$(ps -p 1 -o comm=)
+  if [ "$SYSTYPE" = "systemd" ]; then
+    log "Checking atd service state on systemd type system.."
+	STATUS="$(systemctl is-active atd.service)"
+	if [ "${STATUS}" = "active" ]; then
+		log "atd service detected as Active"
+	else
+		log " atd service not running.... so exiting!!"
+		exit 1
+	fi
+  else
+    log "Checking atd service state on systemV type system.."
+	service atd status | grep 'running' &> /dev/null
+	if [ $? == 0 ]; then
+		log "atd service detected as Running"
+	else
+		log " atd service not running.... so exiting!!"
+		exit 1
+	fi
+  fi
+}
+
 downloadDependents() {
   _BASE_URL="https://$ip"
   _BASE_URL="$_BASE_URL"/downloads/
@@ -83,6 +107,7 @@ _restart() {
 }
 
 whatOS
+isAtdRunning
 set -e
 parseCLArgs "$@"
 

@@ -7,7 +7,7 @@ export class CommonVariableService {
   APP_NAME="EclecticIQ ER"
   ProductName="Endpoint Response"
   ProductNameER="Endpoint Response"
-  Version="3.5.1"
+  Version="4.0.0"
 
   constructor() { }
 }

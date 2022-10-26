@@ -6,19 +6,20 @@
       <div class="kt-portlet kt-portlet--last kt-portlet--responsive-mobile" id="kt_page_portlet">
         <div class="kt-portlet__head kt-portlet__head--lg">
           <div class="kt-portlet__head-label">
-            <span class="kt-portlet__head-icon">
-              <i class="kt-font-brand fab fa-keycdn"></i>
+            <span class="kt-portlet__head-icon custom-header-icon-container">
+              <i class="kt-font-brand fab fa-keycdn custom-header-icon"></i>
             </span>
-            <h3 class="kt-portlet__head-title">
+            <h3 class="kt-portlet__head-title custom-header-title">
               Threat Intel Keys
             </h3>
           </div>
           <div class="kt-portlet__head-toolbar">
             <div class="kt-portlet__head-wrapper">
-              <a href="javascript:void(0);" (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page">
+              <!-- <a href="javascript:void(0);" (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page">
                 <i class="fas fa-chevron-left back_icon_align"></i>
                 Back
-              </a>
+              </a> -->
+              <appbutton (click)="goBack()" text="Back" icon="fa-chevron-left" btnClass="btn-small-light" btnType="button"></appbutton>
             </div>
           </div>
         </div>
@@ -42,7 +43,8 @@
                         <a class="black" href="https://exchange.xforce.ibmcloud.com/" target="_blank">IBM X-Force Key</a>
                       </label>
                       <div class="col-10">
-                        <input type="text" id="IBMxForceKey" name="ibmkey" [(ngModel)]="ibmkey" formControlName="ibmkey" (input)="removeError('ibmxforcekeyError')" class="form-control" value="{{ibmkey}}" [ngClass]="{ 'is-invalid': submitted && f.ibmkey.errors }" [readonly]="!hasAcess" />
+                        <input *ngIf="!hasAcess" type="text" class="form-control" value="************" [readonly]="!hasAcess" />
+                        <input *ngIf="hasAcess" type="text" id="IBMxForceKey" name="ibmkey" [(ngModel)]="ibmkey" formControlName="ibmkey" (input)="removeError('ibmxforcekeyError')" class="form-control" value="{{ibmkey}}" [ngClass]="{ 'is-invalid': submitted && f.ibmkey.errors }" [readonly]="!hasAcess" />
                         <div *ngIf="submitted && f.ibmkey.errors" class="invalid-feedback">
                           <div *ngIf="f.ibmkey.errors.required">Error On IBMxForceKey Field</div>
                         </div>
@@ -56,7 +58,8 @@
                         <a class="black" href="https://exchange.xforce.ibmcloud.com/" target="_blank">IBM X-Force Pass</a>
                       </label>
                       <div class="col-10">
-                        <input type="text" id="IBMxForcePass" name="ibmpass" [(ngModel)]="ibmpass" (input)="removeError('ibmxforcepassError')" formControlName="ibmpass" class="form-control" value="{{ibmpass}}" [ngClass]="{ 'is-invalid': submitted && f.ibmpass.errors }" [readonly]="!hasAcess" />
+                        <input *ngIf="!hasAcess" type="text" class="form-control" value="************" [readonly]="!hasAcess" />
+                        <input *ngIf="hasAcess" type="text" id="IBMxForcePass" name="ibmpass" [(ngModel)]="ibmpass" (input)="removeError('ibmxforcepassError')" formControlName="ibmpass" class="form-control" value="{{ibmpass}}" [ngClass]="{ 'is-invalid': submitted && f.ibmpass.errors }" [readonly]="!hasAcess" />
                         <div *ngIf="submitted && f.ibmpass.errors" class="invalid-feedback">
                           <div *ngIf="f.ibmpass.errors.required">Error On IBMxForcePass Field</div>
                         </div>
@@ -70,7 +73,8 @@
                         <a class="black" href="https://developers.virustotal.com/v2.0/reference" target="_blank">VirusTotal Key</a>
                       </label>
                       <div class="col-10">
-                        <input type="text" id="vt_key" name="virustotalkey" [(ngModel)]="virustotalkey" formControlName="virustotalkey" (input)="removeError('virustotalError')" class="form-control" value="{{virustotalkey}}" [ngClass]="{ 'is-invalid': submitted && f.virustotalkey.errors }" [readonly]="!hasAcess"/>
+                        <input *ngIf="!hasAcess" type="text" class="form-control" value="************" [readonly]="!hasAcess" />
+                        <input *ngIf="hasAcess" type="text" id="vt_key" name="virustotalkey" [(ngModel)]="virustotalkey" formControlName="virustotalkey" (input)="removeError('virustotalError')" class="form-control" value="{{virustotalkey}}" [ngClass]="{ 'is-invalid': submitted && f.virustotalkey.errors }" [readonly]="!hasAcess"/>
                         <div *ngIf="submitted && f.virustotalkey.errors" class="invalid-feedback">
                           <div *ngIf="f.virustotalkey.errors.required">Error On Virus Total Key Field</div>
                         </div>
@@ -84,7 +88,8 @@
                         <a class="black" href="https://otx.alienvault.com/api" target="_blank">AlienVault OTX Key</a>
                       </label>
                       <div class="col-10">
-                        <input type="text" id="otx_key" name="alienvaultkey" [(ngModel)]="alienvaultkey" (input)="removeError('alienvaultkeyError')" formControlName="alienvaultkey" class="form-control" value="{{alienvaultkey}}" [ngClass]="{ 'is-invalid': submitted && f.alienvaultkey.errors }" [readonly]="!hasAcess"/>
+                        <input *ngIf="!hasAcess" type="text" class="form-control" value="************" [readonly]="!hasAcess" />
+                        <input *ngIf="hasAcess" type="text" id="otx_key" name="alienvaultkey" [(ngModel)]="alienvaultkey" (input)="removeError('alienvaultkeyError')" formControlName="alienvaultkey" class="form-control" value="{{alienvaultkey}}" [ngClass]="{ 'is-invalid': submitted && f.alienvaultkey.errors }" [readonly]="!hasAcess"/>
                         <div *ngIf="submitted && f.alienvaultkey.errors" class="invalid-feedback">
                           <div *ngIf="f.alienvaultkey.errors.required">Error On AlienVault OTX Key Field</div>
                         </div>
@@ -97,10 +102,14 @@
                 </div>
                 <div class="kt-portlet__foot">
                   <div *AppHasRole="role.adminAccess" class="kt-form__actions kt-form__actions--center">
-                    <button type="submit" class="btn btn-success"><i class="fa fa-sync-alt"></i>
+                    <!-- <button type="submit" class="btn btn-success"><i class="fa fa-sync-alt"></i>
                       <span>Update</span>
-                    </button>
-                    <button type="reset" style="margin-left: 5px;" class="btn btn-secondary" (click)="clearForm()">Cancel</button>
+                    </button> -->
+                     <!-- <button type="reset" style="margin-left: 5px;" class="btn btn-secondary" (click)="clearForm()">Cancel</button> -->
+                    <appbutton *ngIf="isLoading" text="Updating" btnClass="btn-small" btnType="button" [isDisabled]="true" [isLoading]="true"></appbutton>
+                    <appbutton *ngIf="!isLoading" text="Update" btnClass="btn-small" btnType="submit" icon="fa-sync-alt"></appbutton>
+                    <appbutton text="Cancel" btnClass="btn-small-light" btnType="reset" (click)="clearForm()"></appbutton>
+
                   </div>
                 </div>
               </div>

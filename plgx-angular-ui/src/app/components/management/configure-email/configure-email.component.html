@@ -6,20 +6,21 @@
       <div class="kt-portlet kt-portlet--last kt-portlet--responsive-mobile" id="kt_page_portlet">
         <div class="kt-portlet__head kt-portlet__head--lg">
           <div class="kt-portlet__head-label">
-            <span class="kt-portlet__head-icon">
-              <i class="kt-font-brand fab fa-whmcs"></i>
+            <span class="kt-portlet__head-icon custom-header-icon-container">
+              <i class="kt-font-brand fab fa-whmcs custom-header-icon"></i>
             </span>
-            <h3 class="kt-portlet__head-title">
-              Configure Email 
+            <h3 class="kt-portlet__head-title custom-header-title">
+              Email
             </h3>
           </div>
           <div class="kt-portlet__head-toolbar">
             <div class="kt-portlet__head-wrapper">
-              <a href="javascript:void(0);" (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark"
+              <!-- <a href="javascript:void(0);" (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark"
                 data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page">
                 <i class="fas fa-chevron-left back_icon_align"></i>
                 Back
-              </a>
+              </a> -->
+              <appbutton (click)="goBack()" text="Back" icon="fa-chevron-left" btnClass="btn-small-light" btnType="button"></appbutton>
             </div>
           </div>
         </div>
@@ -85,17 +86,18 @@
                         SMTP Port
                       </label>
                       <div class="col-10">
-                        <input type="text" placeholder="Eg:465"  (keypress)="numberOnly($event)" name="smtpPort" value="{{conf_port_data}}" id="smtpPort"
+                        <input type="number" placeholder="Eg:465"  min="1" max="65535" onkeypress="if (this.value.length > 4) return false;"  name="smtpPort" value="{{conf_port_data}}" id="smtpPort"
                           [(ngModel)]="conf_port_data" formControlName="smtpPort" class="form-control"
                           [ngClass]="{ 'is-invalid': submitted && f.smtpPort.errors }" [readonly]="!hasAcess"/>
                         <div *ngIf="submitted && f.smtpPort.errors" class="invalid-feedback">
                           <div *ngIf="f.smtpPort.errors.required">Error On SMTP Port Field</div>
+                          <div *ngIf="f.smtpPort.errors.max">SMTP Port can be max 65535</div>
                         </div>
                       </div>
                     </div>
 
                     <div class="form-group row required">
-                      <label class="col-sm-2 col-form-label form--label">
+                      <label class="col-2 col-form-label form--label">
                         Email Recipients
                       </label>
                       <div class="col-10">
@@ -137,16 +139,24 @@
 
                 <div *AppHasRole="role.adminAccess" class="kt-portlet__foot ">
                   <div class="kt-form__actions kt-form__actions--center">
-                    <button  type="submit" class="btn btn-success" style="margin-left: 5px;">
+
+                    <appbutton text="Update" btnClass="btn-small" btnType="submit" [isDisabled]="isDisableUpdate" icon="fa-sync-alt"></appbutton>
+                    <appbutton text="Test" btnClass="btn-small-opaque" btnType="button" [isDisabled]="isDisableTest" (click)="testEmail(ConfigureEmail)"></appbutton>
+                    <appbutton text="Cancel" btnClass="btn-small-light" btnType="button" (click)="clearForm()"></appbutton>
+
+                    <!-- <button  type="submit" class="btn btn-success" style="margin-left: 5px;">
                       <i class="fa fa-sync-alt"></i>
                       <span>Update</span>
                     </button>
                     <button type="button" (click)="testEmail(ConfigureEmail)" class="btn btn-info"
-                      style="margin-left: 5px;">Test
+                      style="margin-left: 5px;">
+                      Test
                     </button>
-
                     <button type="reset" class="btn btn-secondary" style="margin-left: 5px;"
-                      (click)="clearForm()">Cancel</button>
+                    (click)="clearForm()">
+                      Cancel
+                    </button>  -->
+
                   </div>
                 </div>
               </div>

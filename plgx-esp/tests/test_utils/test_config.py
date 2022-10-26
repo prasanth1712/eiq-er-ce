@@ -17,11 +17,6 @@ class TestConfigUtils:
         assert 'foo' in config['schedule']
         assert config['schedule']['foo']['query'] == 'foobar'
 
-    def test_assemble_options(self, options):
-        option = assemble_options(configuration={'options': {'test': 'test_options'}})
-        assert option['foo'] == 'foobar'
-        assert option['test'] == 'test_options'
-
     def test_assemble_packs(self, db, query, pack, tag, node):
         pack.queries.append(query)
         pack.tags.append(tag)
@@ -39,4 +34,3 @@ class TestConfigUtils:
             if value == 'foobar':
                 found = True
         assert found is True
-

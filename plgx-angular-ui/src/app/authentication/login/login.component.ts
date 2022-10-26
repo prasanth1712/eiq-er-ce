@@ -91,6 +91,7 @@ export class LoginComponent implements OnInit {
           if(response.reset_password)
           {
             this.router.navigate(['/authentication/Change-Password']);
+            return;
           }
           else if (this.redirectURL) {
                this.router.navigateByUrl(this.redirectURL,).catch(() => this.router.navigate(['/dashboard']))
@@ -112,6 +113,7 @@ export class LoginComponent implements OnInit {
             }
         }else{
           this.error = 'Incorrect Username or Password';
+          this.toastr.warning("Incorrect Username or Password","");
         }
       },
       error => {

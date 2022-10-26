@@ -30,7 +30,7 @@
   }
 
   svg {
-    font: 11px sans-serif;
+    font: 11px Roboto;
   }
 
   .plot {
@@ -45,7 +45,7 @@
   }
 
   .axis text {
-    font-family: sans-serif;
+    font-family: Roboto;
     font-size: 11px;
   }
 
@@ -93,8 +93,8 @@
 
   .timeline-pf-chart {
     margin-left: -20px;
-    width: 870px;
-    /* width: 100% !important; */
+    /* width: 870px; */
+    width: 100% !important;
     /* height: 250px !important; */
   }
 
@@ -119,7 +119,7 @@
   }
 
   .axis text {
-    font: 10px sans-serif;
+    font: 10px Roboto;
   }
 
   .chartTitle {
@@ -289,7 +289,7 @@
     word-wrap: break-all;
     font-weight: 400;
     font-size: 10px;
-    font-family: Poppins;
+    font-family: Roboto;
     color: rgb(33, 37, 41);
   }
 
@@ -361,7 +361,7 @@
     }
 
     .node text {
-        font: 10px sans-serif;
+        font: 10px Roboto;
     }
 
     .collapsible2:after {
@@ -415,7 +415,7 @@
         word-wrap: break-all;
         font-weight: 400;
         font-size: 10px;
-        font-family: Poppins;
+        font-family: Roboto;
         color: rgb(33, 37, 41);
     }
     /*  Alerts -> Investigate -> Process Analysis Graph End   */
@@ -928,7 +928,7 @@ tbody.no_records::after{
 }
 /* boring stuff */
 body {
-  /*font-family: 'Helvetica', sans-serif;*/
+  /*font-family: 'Helvetica', Roboto;*/
   /* background-color: #e7e7e7; */
   color: #777;
   padding: 30px 0;

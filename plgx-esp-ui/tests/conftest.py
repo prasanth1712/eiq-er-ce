@@ -189,19 +189,6 @@ def alerts(db, node, rule):
         "process_guid": "3A4A7E16-1FCB-11EA-82AC-A8AFF0EAAE41",
         "process_name": "C:\\Windows\\System32\\cmd.exe"
     }
-    recon_querries = {
-        "live_queries": [
-            {"name": "win_epp_table", "query": "select * from win_epp_table;"}
-        ],
-        "scheduled_queries": [
-            {"after_event_interval": 60, "before_event_interval": 30, "name": "win_file_events"},
-            {"after_event_interval": 60, "before_event_interval": 30, "name": "win_process_events"},
-            {"after_event_interval": 60, "before_event_interval": 30, "name": "win_registry_events"},
-            {"after_event_interval": 60, "before_event_interval": 30, "name": "win_socket_events"},
-            {"after_event_interval": 60, "before_event_interval": 30, "name": "win_http_events"}
-        ]
-    }
-
     alerts = AlertsFactory(
         query_name='win_file_events',
         message=message,
@@ -209,7 +196,6 @@ def alerts(db, node, rule):
         rule_id=1,
         severity='LOW',
         type='Threat Intel',
-        recon_queries={},
         result_log_uid='f41d1a87-557a-4bbf-9e60-ed1c03265634',
         source='virustotal',
         source_data=source_data
@@ -222,7 +208,6 @@ def alerts(db, node, rule):
         rule_id=1,
         severity='INFO',
         type='rule',
-        recon_queries=recon_querries,
         result_log_uid='ac11ae27-59a5-47c9-9a05-f17e335f04f9',
         source='rule',
         source_data={}

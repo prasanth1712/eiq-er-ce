@@ -10625,19 +10625,22 @@ input.btn.btn-label-danger {
     .nav-tabs.nav-tabs-line a.nav-link.active {
       background: transparent;
       color: #6c7293;
-      border-bottom: 1px solid #184ba1; }
+      /* border-bottom: 1px solid #184ba1; */
+     }
       .nav-tabs.nav-tabs-line.nav.nav-tabs .nav-link:hover > i, .nav-tabs.nav-tabs-line.nav.nav-tabs .nav-link.active > i,
       .nav-tabs.nav-tabs-line a.nav-link:hover > i,
       .nav-tabs.nav-tabs-line a.nav-link.active > i {
         color: #a7abc3; }
   .nav-tabs.nav-tabs-line.nav-tabs-line-brand.nav.nav-tabs .nav-link:hover,
   .nav-tabs.nav-tabs-line.nav-tabs-line-brand a.nav-link:hover {
-    border-bottom: 1px solid #184ba1; }
+    /* border-bottom: 1px solid #184ba1;  */
+  }
   .nav-tabs.nav-tabs-line.nav-tabs-line-brand.nav.nav-tabs .nav-link:hover, .nav-tabs.nav-tabs-line.nav-tabs-line-brand.nav.nav-tabs .nav-link.active,
   .nav-tabs.nav-tabs-line.nav-tabs-line-brand a.nav-link:hover,
   .nav-tabs.nav-tabs-line.nav-tabs-line-brand a.nav-link.active {
     color: #184ba1;
-    border-bottom: 1px solid #184ba1; }
+    /* border-bottom: 1px solid #184ba1;  */
+  }
     .nav-tabs.nav-tabs-line.nav-tabs-line-brand.nav.nav-tabs .nav-link:hover > i, .nav-tabs.nav-tabs-line.nav-tabs-line-brand.nav.nav-tabs .nav-link.active > i,
     .nav-tabs.nav-tabs-line.nav-tabs-line-brand a.nav-link:hover > i,
     .nav-tabs.nav-tabs-line.nav-tabs-line-brand a.nav-link.active > i {
@@ -10688,12 +10691,14 @@ input.btn.btn-label-danger {
     border-bottom-color: rgba(88, 103, 221, 0.1); }
   .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link:hover,
   .nav-tabs.nav-tabs-line.nav-tabs-line-success a.nav-link:hover {
-    border-bottom: 1px solid #71bf44; }
+    /* border-bottom: 1px solid #71bf44;  */
+  }
   .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link:hover, .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link.active,
   .nav-tabs.nav-tabs-line.nav-tabs-line-success a.nav-link:hover,
   .nav-tabs.nav-tabs-line.nav-tabs-line-success a.nav-link.active {
     color: #71bf44;
-    border-bottom: 1px solid #71bf44; }
+    /* border-bottom: 1px solid #71bf44;  */
+  }
     .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link:hover > i, .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link.active > i,
     .nav-tabs.nav-tabs-line.nav-tabs-line-success a.nav-link:hover > i,
     .nav-tabs.nav-tabs-line.nav-tabs-line-success a.nav-link.active > i {

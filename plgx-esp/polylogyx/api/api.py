@@ -66,9 +66,9 @@ def logger(node=None):
 def tags(node=None):
     """ """
     data = request.get_json()
-    add_tags = [data.get("tag","")]
+    add_tags = [data.get("tag", "")]
     add_tags = create_tags(*add_tags)
-    assign_tags_to_node(add_tags,node)
+    assign_tags_to_node(add_tags, node['id'])
 
     return jsonify(node_invalid=False)
 
@@ -108,19 +108,17 @@ def upload_file(node=None):
 @blueprint.route("/v1/upload_blocks", methods=["POST", "PUT"])
 def upload_blocks(node=None):
     data = request.get_json()
-    print(data)
     CarvesDomain.upload_blocks(data)
     return jsonify(node_invalid=False)
 
 
 import logging
-from polylogyx.utils.cache import get_log_level
 from polylogyx.utils.log_setting import _set_log_level_to_db
-from flask import current_app
 import socket
 @blueprint.route("/log_setting", methods=["PUT"])
 @blueprint.route("/v1/log_setting", methods=["PUT"])
 def log_setting():
+    from polylogyx.utils.cache import get_a_setting, update_cached_setting
     data = request.get_json()
     if "host" in data and "log_level" in data:
         try:
@@ -129,16 +127,12 @@ def log_setting():
            ip = ""
         if data["log_level"] in logging._nameToLevel and ip == request.access_route[0]:
             _set_log_level_to_db(data["log_level"])
-            level = get_log_level()
-            return jsonify(status="success",message="Log level changed successfully",level=level)
-    return jsonify(status="failure",message="Invalid request payload")
+            update_cached_setting('er_log_level', data["log_level"])
+            log_level_setting = get_a_setting('er_log_level')
+            if log_level_setting:
+                log_level = log_level_setting
+            return jsonify(status="success", message="Log level changed successfully", level=log_level)
+    return jsonify(status="failure", message="Invalid request payload")
 
 
-# @blueprint.route("/test", methods=["GET"])
-# def test():
-#     current_app.logger.debug("debug message")
-#     current_app.logger.info("info message")
-#     current_app.logger.warning("warning message")
-#     current_app.logger.error("error message")
-#     current_app.logger.critical("critical message")
-#     return jsonify(test="ok")
+

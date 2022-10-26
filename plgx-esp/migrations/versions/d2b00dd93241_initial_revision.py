@@ -312,5 +312,4 @@ def upgrade():
         op.drop_table("node")
         op.drop_table("file_path")
         op.drop_table("alerts")
-
         ### end Alembic commands ###

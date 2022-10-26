@@ -3,7 +3,7 @@
 # Platform: Windows x64
 #
 # Description: This is a sample script that can be used to delete a scheduled 
-# task on Windows agent(s) via Polylogyx Endpoint Platform Server Response 
+# task on Windows agent(s) via EclecticIQ Endpoint Platform Server Response 
 # Action UI. Update your task name on line 17 and proceed to the steps described
 # below. 
 #
@@ -16,13 +16,13 @@
 
 $task = "MyTask"
 
-if ($(Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue).TaskName -eq $task)
+if ($(Get-ScheduledTaskInfo -TaskName $task -ErrorAction SilentlyContinue).TaskName -eq $task)
 {
     write-output "Unregistering existing scheduled task '$task'..."
     
     Unregister-ScheduledTask -TaskName $task -Confirm:$False
 
-    if ($(Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue).TaskName -ne $task)
+    if ($(Get-ScheduledTaskInfo -TaskName $task -ErrorAction SilentlyContinue).TaskName -ne $task)
     {
         write-output "Unregistered existing scheduled task '$task'"
     }

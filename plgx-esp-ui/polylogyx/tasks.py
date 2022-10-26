@@ -6,11 +6,10 @@ import sqlalchemy
 from sqlalchemy import or_, text, desc, and_, cast, not_
 from celery import Celery
 from flask import current_app, json
-from kombu import Exchange, Queue
 
 from polylogyx.models import Settings, AlertEmail, Node, ResultLog, StatusLog, db, Alerts, CarveSession, \
-    DistributedQueryTask, NodeQueryCount, AlertLog
-from polylogyx.constants import PolyLogyxServerDefaults
+    DistributedQueryTask, NodeQueryCount, AlertLog, DistributedQuery, PlatformActivity
+from polylogyx.constants import PolyLogyxServerDefaults, ModelStatusFilters
 
 celery = Celery(__name__)
 
@@ -50,7 +49,7 @@ def update_sender_email(db):
         settings = json.loads(email_sender_obj.setting)
         current_app.config['EMAIL_RECIPIENTS'] = settings['emailRecipients']
         current_app.config['MAIL_USERNAME'] = settings['email']
-        current_app.config['MAIL_PASSWORD'] = base64.decodestring(settings['password'].encode('utf-8')).decode('utf-8')
+        current_app.config['MAIL_PASSWORD'] = base64.b64decode(settings['password'].encode('utf-8')).decode('utf-8')
         current_app.config['MAIL_SERVER'] = settings['smtpAddress']
         current_app.config['MAIL_PORT'] = int(settings['smtpPort'])
         current_app.config['MAIL_USE_SSL'] = settings['use_ssl']
@@ -71,7 +70,7 @@ def send_alert_emails():
         nodes = Node.query.all()
         for node in nodes:
             try:
-                send_pending_node_emails(node, db)
+                send_pending_emails(node, db)
                 current_app.logger.info("Pending emails of the alerts reported are sent")
             except Exception as e:
                 current_app.logger.error(str(e))
@@ -86,7 +85,7 @@ def purge_old_data(days=None):
 
     current_app.logger.info("Task to purge older data is started")
     try:
-        deleted_hosts = Node.query.filter(Node.state == Node.DELETED).all()
+        deleted_hosts = Node.query.filter(ModelStatusFilters.HOSTS_DELETED).all()
         node_ids_to_delete = [node.id for node in deleted_hosts if
                               not node.result_logs.count() and not node.status_logs.count()]
         if node_ids_to_delete:
@@ -103,7 +102,7 @@ def purge_old_data(days=None):
                 #since = datetime.date.today() - dt.timedelta(hours=24 * int(int(delete_setting.setting)))
                 since = dt.datetime.now() - dt.timedelta(hours=24 * int(delete_setting.setting))
                 drop_date = datetime.date.today() - dt.timedelta(hours=24 * (int(delete_setting.setting)))
-                   
+                
             try:
                 partition_query = db.session.execute("""SELECT
                         child.relname       AS partition_name
@@ -122,7 +121,14 @@ def purge_old_data(days=None):
                     d = datetime.datetime(int(year), month, int(date))
                     partition_date = d.date()
                     if partition_date < drop_date:
+                        min_and_max = db.session.execute(f"select min(id), max(id) from {partition};")
+                        for row in min_and_max:
+                            min = row[0]
+                            max = row[1]
+                            break
                         db.session.execute("drop table " + partition + ";")
+                        if min and max:
+                            db.session.execute(f"delete from result_log_maps where result_log_id>={min} and result_log_id<={max}")
                         NodeQueryCount.query.filter(NodeQueryCount.date == partition_date).delete()
                         db.session.commit()
                         current_app.logger.info("Purged table {0}".format(partition))
@@ -133,15 +139,16 @@ def purge_old_data(days=None):
                 # No more older data needs to be purged
             current_app.logger.info("Purging the Status Logs beyond the purge duration")
             StatusLog.query.filter(StatusLog.created < since).delete()
-            db.session.commit()
             current_app.logger.info("Purging the Alerts beyond the purge duration")
-            Alerts.query.filter(Alerts.created_at < since).delete()
             AlertLog.query.filter(AlertLog.timestamp < since).delete()
+            Alerts.query.filter(Alerts.created_at < since).delete()
+            current_app.logger.info("Purging the Live Queries beyond the purge duration")
+            DistributedQueryTask.query.filter(DistributedQueryTask.distributed_query_id.in_(DistributedQuery.query.with_entities(DistributedQuery.id).filter(DistributedQuery.created_at < since))).delete(synchronize_session=False)
+            DistributedQuery.query.filter(DistributedQuery.created_at < since).delete()
+            current_app.logger.info("Purging the Platform Activity beyond the purge duration")
+            PlatformActivity.query.filter(PlatformActivity.created_at < since).delete()
+            hosts = Node.query.with_entities(Node.host_identifier, Node.id).filter(ModelStatusFilters.HOSTS_DELETED).filter(Node.updated_at < since).all()
             db.session.commit()
-            current_app.logger.info("Purging the Response actions  beyond the purge duration")
-            db.session.commit()
-            hosts = db.session.query(Node.host_identifier, Node.id).filter(Node.state == Node.DELETED).filter(
-                Node.updated_at < since).all()
             node_ids = [item[1] for item in hosts]
             permanent_host_deletion.apply_async(args=[node_ids])
         else:
@@ -162,15 +169,15 @@ def purge_status_log():
 
 @celery.task()
 def permanent_host_deletion(node_ids):
+    from polylogyx.cache import remove_cached_host
     if node_ids:
         current_app.logger.info("Hosts with ids {} are requested to delete permanently".format(node_ids))
         try:
-            nodes = db.session.query(Node).filter(Node.id.in_(node_ids)).all()
+            nodes = Node.query.filter(Node.id.in_(node_ids)).all()
             for node in nodes:
                 node.tags = []
-            db.session.commit()
-
-            deleted_count = Node.query.filter(Node.state == Node.DELETED).filter(Node.id.in_(node_ids)).delete(
+                remove_cached_host(node_key=node.node_key)
+            deleted_count = Node.query.filter(ModelStatusFilters.HOSTS_DELETED).filter(Node.id.in_(node_ids)).delete(
                 synchronize_session=False)
             current_app.logger.info("{} hosts are deleted permanently".format(deleted_count))
         except Exception as e:
@@ -182,15 +189,15 @@ def permanent_host_deletion(node_ids):
 
 
 def status_log_file_deletion(duration):
-    from os import walk
+    from os import walk, path
     file_list = []
-    for (dirpath, dirnames, filenames) in walk(current_app.config['BASE_URL'] + "/status_log/"):
+    for (dirpath, dirnames, filenames) in walk(path.join(current_app.config['RESOURCES_URL'], "status_log")):
         file_list.extend(filenames)
         break
     for file in file_list:
-        created_at = dt.datetime.fromtimestamp(os.stat(current_app.config['BASE_URL'] + "/status_log/" + file).st_ctime)
+        created_at = dt.datetime.fromtimestamp(os.stat(path.join(current_app.config['RESOURCES_URL'], "status_log", file)).st_ctime)
         if created_at < duration:
-            os.remove(current_app.config['BASE_URL'] + "/status_log/" + file)
+            os.remove(path.join(current_app.config['RESOURCES_URL'], "status_log", file))
 
 
 def format_records(results):
@@ -214,7 +221,7 @@ class DecimalEncoder(json.JSONEncoder):
         return super(DecimalEncoder, self).default(o)
 
 
-def send_pending_node_emails(node, db):
+def send_pending_emails(node, db):
     from polylogyx.utils import send_mail
     alert_emails = AlertEmail.query.filter(AlertEmail.node == node).filter(AlertEmail.status == None).all()
     body = ''

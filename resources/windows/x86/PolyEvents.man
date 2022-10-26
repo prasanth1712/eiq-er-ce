@@ -6,7 +6,7 @@
 					guid="{E21809E2-F9BC-48BA-9C6B-C0283A0F5C93}"
 					symbol="PlgxRealTimeEvents" 
 					resourceFileName="%systemdrive%\Program Files\plgx_osquery\plgx_win_extension.ext.exe" 
-					messageFileName="%systemdrive%\Program Files\plgx_osquery\plgx_win_extension.ext.exe">				
+					messageFileName="%systemdrive%\Program Files\plgx_osquery\plgx_win_extension.ext.exe">
 				<events>
 					<event symbol="FILE_EVENT" 
 						value="1" 
@@ -221,6 +221,19 @@
 						keywords="InfoWindowsEventLogMessage" 
 						message="$(string.polylogyx.event.message)">
 					</event>
+					
+					<event symbol="WINDOWS_NAMED_PIPE_EVENT" 
+						value="19" 
+						version="0" 
+						channel="RealTimeEvents" 
+						level="win:Informational" 
+						task="PlgxRealTimeEventsTask" 
+						opcode="MessageOpcode" 
+						template="_template_message" 
+						keywords="InfoWindowsEventLogMessage" 
+						message="$(string.polylogyx.event.message)">
+					</event>
+
 				</events>				
 				<levels>
 				</levels>				

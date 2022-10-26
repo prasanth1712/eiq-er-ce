@@ -15,10 +15,11 @@
 </div>
 <div class="kt-portlet__head-toolbar">
   <div class="kt-portlet__head-wrapper">
-    <a href="javascript:void(0);" (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page">
+    <!-- <a href="javascript:void(0);" (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page">
       <i class="fas fa-chevron-left"></i>
       Back
-    </a>
+    </a> -->
+    <appbutton (click)="goBack()" text="Back" icon="fa-chevron-left" btnClass="btn-small-light" btnType="button"></appbutton>
   </div>
 </div>
 </div>
@@ -83,7 +84,7 @@
          </thead>
          <tbody>
 
-           <tr *ngFor="let hostdata of this.activitydatanode " style="font-size: 13px; font-family:Poppins; font-weight: 600;">
+           <tr *ngFor="let hostdata of this.activitydatanode " style="font-size: 13px; font-family:Roboto; font-weight: 600;">
                <td class="cell-breakWord">
                 <div (click)="ele.class = ele.class == 'showChildren' ? '' : 'showChildren'" [ngClass]="{ hideChildren : ele.class !== 'showChildren' }" #ele>
                   <font color='#16ace3'>
@@ -93,6 +94,14 @@
                   <div class="col-10"></div>
                   <th >
                 <dt *ngFor="let subhostdata of hostdata.columns | keyvalue">
+                <dl *ngIf="subhostdata.key=='process_guid' || subhostdata.key=='parent_process_guid'" style="word-break: break-word;padding-left: 40px;" >
+
+                {{subhostdata.key}}
+                {{":"}}
+
+                <a *ngIf="this.queryname != 'win_image_load_events'" (click)="process_guid_graph(hostdata,subhostdata.value)" data-toggle="modal" href="#processTree">{{subhostdata.value}}</a>
+                <a *ngIf="this.queryname == 'win_image_load_events'" >{{subhostdata.value}}</a>
+                </dl>
 
                 <!--URL-->
                 <dl *ngIf="subhostdata.key=='url'" style="word-break: break-word;padding-left: 40px;" >
@@ -139,7 +148,7 @@
                 <a onclick="window.open(this.href,'_blank');return false;" href="https://www.virustotal.com/#/file/{{subhostdata.value}}/detection" >{{subhostdata.value}}</a>
                 </dl>
 
-                  <dl *ngIf="!(subhostdata.key=='url') && !(subhostdata.key=='md5') && !(subhostdata.key=='domain_name') && !(subhostdata.key=='sha1') && !(subhostdata.key=='sha256')" style="word-break: break-word;padding-left: 40px;" >
+                  <dl *ngIf="!(subhostdata.key=='process_guid' || subhostdata.key=='parent_process_guid') && !(subhostdata.key=='url') && !(subhostdata.key=='md5') && !(subhostdata.key=='domain_name') && !(subhostdata.key=='sha1') && !(subhostdata.key=='sha256')" style="word-break: break-word;padding-left: 40px;" >
 
                     {{subhostdata.key}}
                     {{":"}}
@@ -155,6 +164,55 @@
                 </div>
 
                 <div >
+                  <!-- Modal -->
+                  <div class="modal fade" id="processTree" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="">
+                    <div class="modal-dialog modal-lg" role="document">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h3 class="kt-portlet__head-title" style="font-size: 15px">
+                            Process Analysis Tree
+                          </h3>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="close_data()" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Close"></button>
+                        </div>
+                        <!-- <div class="modal-body"> -->
+                          <!--begin:: Widgets/Tasks -->
+                          <div class="modal-body">
+                            <!-- <p>test</p> -->
+                            <div class="card-body">
+                              <div class="row">
+                                <div class="col-md-8">
+                                  <div  id="d3-graph-2" style="overflow: auto"></div>
+                                </div>
+                                <div class="col-md-4" style="padding: 0px;">
+                                  <div style="text-align: center; margin-top: 6px;">
+                                    <!-- <i class="drawline2" style="left: 20px;"></i> -->
+                                    <i class="fa fa-info-circle nodeinfo"> Event info</i>
+                                    <!-- <i class="drawline2" style="right: 20px;"></i> -->
+                                  </div>
+                                  <table id="pf-timeline-data" class="display" style="margin-top: 3px !important">
+                                    <thead>
+                                    <tr style="text-align: center;">
+                                      <th></th>
+                                    </tr>
+                                    </thead>
+                                    <div  class="" id="accordion2" style="">
+                                      <tbody id="eventsData_process"></tbody>
+                                    </div>
+                                  </table>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!--end:: Widgets/Tasks -->
+                        <!-- </div> -->
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-outline-secondary" (click)="close_data()" data-dismiss="modal">Close</button>
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <!-- <mat-expansion-panel>
                 <mat-expansion-panel-header>

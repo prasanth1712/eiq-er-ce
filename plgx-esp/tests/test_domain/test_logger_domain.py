@@ -57,11 +57,12 @@ class TestLoggerDomain:
         assert ld.node == node
 
     def test_log_result(self,db,node,celery_worker):
-        ld = LoggerDomain(node=node, remote_addr="127.0.0.1")
-        ld._log_result(data_result)
-        sleep(5)
-        records = ResultLog.query.count()
-        assert records > 0
+        with celery_worker:
+            ld = LoggerDomain(node=node, remote_addr="127.0.0.1")
+            ld._log_result(data_result)
+            sleep(5)
+            records = ResultLog.query.count()
+            assert records > 0
 
     def test_log_status(self, db, node):
         ld = LoggerDomain(node=node, remote_addr="127.0.0.2")
@@ -71,19 +72,20 @@ class TestLoggerDomain:
         assert records > 0
 
     def test_log(self,db,node,celery_worker):
-        ld = LoggerDomain(node=node, remote_addr="127.0.0.2")
-        ld.log(data_status)
-        ld.log(data_result)
-        temp_data = data_status.copy()
-        temp_data["log_type"] = "other"
-        ld.log(temp_data)
-        assert True
-        sleep(5)
-        db.session.commit()
-        records = ResultLog.query.count()
-        assert records > 0
-        records = StatusLog.query.count()
-        assert records > 0
+        with celery_worker:
+            ld = LoggerDomain(node=node, remote_addr="127.0.0.2")
+            ld.log(data_status)
+            ld.log(data_result)
+            temp_data = data_status.copy()
+            temp_data["log_type"] = "other"
+            ld.log(temp_data)
+            assert True
+            sleep(5)
+            db.session.commit()
+            records = ResultLog.query.count()
+            assert records > 0
+            records = StatusLog.query.count()
+            assert records > 0
 
     def test_log_status_negative_severity(self, db, node):
         ld = LoggerDomain(node=node, remote_addr="127.0.0.2")

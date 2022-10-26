@@ -1,9 +1,6 @@
-FROM nickgryg/alpine-pandas:3.7.10
-
+FROM nickgryg/alpine-pandas:3.9.12
 
 ENV LANG C.UTF-8
-
-
 
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.8/main" >> /etc/apk/repositories \
   && apk add --update \
@@ -22,22 +19,19 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.8/main" >> /etc/apk/repositori
 
 
 RUN cd /usr/bin \
-  && ln -sf easy_install-3.7 easy_install \
-  && ln -sf python3.7 python \
-  && ln -sf python3.7-config python-config \
-  && ln -sf pip3.7 pip
-
+  && ln -sf easy_install-3.9 easy_install \
+  && ln -sf python3.9 python \
+  && ln -sf python3.9-config python-config \
+  && ln -sf pip3.9 pip
+RUN apk upgrade
 # Copy and install our requirements first, so they can be cached
 COPY ./plgx-esp-ui/requirements/prod.txt /tmp/requirements.txt
 RUN pip install -r /tmp/requirements.txt
 
 # Add our application to the container
 COPY ./plgx-esp-ui/. /src/plgx-esp-ui/
-COPY ./resources/. /src/plgx-esp-ui/resources/
-COPY ./resources/. /src/plgx-esp-ui/resources/ 
-
+COPY ./common/. /src/plgx-esp-ui/common/
 RUN chmod a+x /src/plgx-esp-ui/docker-entrypoint.sh
-#RUN mkdir -p /var/log/esp-ui
 
 ENTRYPOINT ["/src/plgx-esp-ui/docker-entrypoint.sh"]
 

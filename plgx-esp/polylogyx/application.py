@@ -1,21 +1,19 @@
 # -*- coding: utf-8 -*-
-import os
-
-from flask import Flask, render_template
+from flask import Flask
 from flask_cors import CORS
 
 from polylogyx.api.api import blueprint as api
 from polylogyx.celery.tasks import celery
 from polylogyx.extensions import (
-    cache,
-    csrf,
     db,
     log_tee,
     mail,
     make_celery,
     migrate,
     rule_manager,
-    threat_intel
+    threat_intel,
+    ioc_engine,
+    redis_client
 )
 from polylogyx.settings import ProdConfig
 
@@ -29,18 +27,15 @@ def create_app(config=ProdConfig):
     register_blueprints(app)
     register_loggers(app)
     register_extensions(app)
-    
 
     return app
 
 
 def register_blueprints(app):
     app.register_blueprint(api)
-    csrf.exempt(api)
 
 
 def register_extensions(app):
-    csrf.init_app(app)
     db.init_app(app)
 
     migrate.init_app(app, db)
@@ -51,7 +46,8 @@ def register_extensions(app):
 
     mail.init_app(app)
     make_celery(app, celery)
-    cache.init_app(app)
+    ioc_engine.init_app(app)
+    redis_client.init_app(app)
 
 
 def register_loggers(app):
@@ -72,8 +68,8 @@ def register_loggers(app):
         backup_cnt = app.config["POLYLOGYX_LOGFILE_BACKUP_COUNT"]
         handler = RotatingFileHandler(logfile, maxBytes=max_size, backupCount=backup_cnt)
         #handler = TimedRotatingFileHandler(logfile,"midnight",1,10,'utf-8')
-        namer = lambda fn : str(fn).split(".")[0]+"_"+ datetime.now().strftime("%Y-%m-%d_%H-%M")
-        handler.namer=namer
+        namer = lambda fn: str(fn).split(".")[0]+"_" + datetime.now().strftime("%Y-%m-%d_%H-%M")
+        handler.namer = namer
 
     level_name = app.config["POLYLOGYX_LOGGING_LEVEL"]
 

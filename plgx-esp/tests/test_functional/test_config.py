@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import url_for
 
-from polylogyx.db.models import FilePath, Pack, Query, Tag
+from polylogyx.db.models import Pack, Query, Tag
 
 from ..factories import PackFactory, QueryFactory, TagFactory
 
@@ -145,15 +145,6 @@ class TestConfiguration:
         pack.tags.append(tag)
         pack.save()
 
-        file_path = FilePath.create(
-            category="foobar",
-            target_paths=[
-                "/home/foobar/%%",
-            ],
-        )
-        file_path.tags.append(tag)
-        file_path.save()
-
         resp = testapp.post_json(
             url_for("api.configuration"),
             {"node_key": node.node_key},
@@ -176,7 +167,8 @@ class TestConfiguration:
         node.tags.append(tag)
 
         assert not node.get_config()["packs"]  # should be an empty {}
-        assert not node.get_config()["schedule"]  # should be an empty {}
+        # assert not node.get_config()["schedule"]  # should be an empty {}
+        # But this cannot be empty as default config schedule might be there, so commented
 
         query = Query.create(name="foobar", sql="select * from osquery_info;")
         query.tags.append(tag)
