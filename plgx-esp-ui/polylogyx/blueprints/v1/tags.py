@@ -1,41 +1,42 @@
-from flask_restplus import Namespace, Resource, inputs
-
+from flask_restful import  Resource, inputs
+from polylogyx.blueprints.v1.external_api import api
 from polylogyx.blueprints.v1.utils import *
 from polylogyx.dao.v1 import tags_dao
 from polylogyx.wrappers.v1 import tag_wrappers, parent_wrappers, query_wrappers
 from polylogyx.authorize import admin_required
 
-ns = Namespace('tags', description='tags related operations')
 
-
-@ns.route('', endpoint="list tags")
+@api.resource('/tags', endpoint="list tags")
 class TagsList(Resource):
     """
         List all tags of the Nodes
     """
-    parser = requestparse(['start', 'limit', 'searchterm'], [inputs.natural, inputs.natural, str],
-                          ['start', 'limit', "search term"], [False, False, False],
-                          [None, None, None], [None, None, ""])
+    parser = requestparse(['start', 'limit', 'searchterm','order_by'], [inputs.natural, inputs.natural, str,str],
+                          ['start', 'limit', "search term",'order_by'], [False, False, False,False],
+                          [None, None, None,None], [None, None, "",None])
 
-    @ns.expect(parser)
     def get(self):
         args = self.parser.parse_args()
-        base_qs = tags_dao.get_all_tags(args['searchterm'])
+        order_by=None
+        if args['order_by'] in ['ASC','asc','Asc']:
+            order_by='asc'
+        elif args['order_by'] in ['DESC','desc','Desc']:
+            order_by = 'desc'
+        base_qs = tags_dao.get_all_tags(args['searchterm'],order_by)
         total_count = tags_dao.get_tags_total_count()
         list_dict_data = [{'value': tag.value,
                            'nodes': [node.host_identifier for node in tag.nodes if node.state != node.REMOVED and
                                      node.state != node.DELETED],
                            'packs':[pack.name for pack in tag.packs],
-                           'queries':[query.name for query in tag.queries],
-                           'file_paths':tag.file_paths} for tag in
+                           'queries':[query.name for query in tag.queries]} for tag in
                           base_qs.offset(args['start']).limit(args['limit']).all()]
         data = marshal(list_dict_data, tag_wrappers.tag_wrapper)
         return marshal(prepare_response("Successfully fetched the tags info", "success",
                                         {'count': base_qs.count(), 'total_count': total_count, 'results': data}),
-                       parent_wrappers.common_response_wrapper, skip_none=True)
+                       parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/add', endpoint="add tags")
+@api.resource('/tags/add', endpoint="add tags")
 class AddTag(Resource):
     """
         Adds a new tag to the Tag model
@@ -43,12 +44,16 @@ class AddTag(Resource):
 
     parser = requestparse(['tag'], [str], ["tag to add"], [True])
 
-    @ns.expect(parser)
+    @admin_required
     def post(self):
         status = "failure"
         tag = self.parser.parse_args()['tag'].strip()
         if not tag:
             message = "Tag provided is invalid!"
+        elif not valid_string_parser(tag):
+            message = "Tags provided are not valid"
+        elif not (0 < len(tag) < int(current_app.config.get('INI_CONFIG', {}).get('max_tag_length'))):
+            message = f"Tag length should be between 0 and {current_app.config.get('INI_CONFIG', {}).get('max_tag_length')}"
         elif tags_dao.get_tag_by_value(tag):
             message = "Tag is already present!"
         else:
@@ -56,10 +61,10 @@ class AddTag(Resource):
             message = "Tag added successfully"
             status = "success"
             current_app.logger.info("A new tag '{}' has been added".format(tag))
-        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/delete', endpoint="delete tags")
+@api.resource('/tags/delete', endpoint="delete tags")
 class AddTag(Resource):
     """
         Deletes a tag from the Tag model
@@ -68,34 +73,34 @@ class AddTag(Resource):
     parser = requestparse(['tag'], [str], ["tag to delete"], [True])
 
     @admin_required
-    @ns.expect(parser)
     def post(self):
         args = self.parser.parse_args()
         tag = args['tag']
         message = "Tag is deleted successfully"
         status = "success"
         try:
-            tag = tags_dao.get_tag_by_value(tag)
+            tags = tag.split(',')
             if tag:
-                current_app.logger.warning("Tag {} is requested for deletion".format(tag.value))
-                tags_dao.delete_tag(tag)
+                current_app.logger.warning("Tag {} is requested for deletion".format(tags))
+                tags=[ tags_dao.get_tag_by_value(tag) for tag in tags]
+                for tag in tags:
+                    tags_dao.delete_tag(tag)
             else:
                 message = "Tag does not exists!"
         except Exception as e:
             message = str(e)
             status = "failure"
             current_app.logger.error("Unable to delete tag - {}".format(message))
-        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/tagged', endpoint='objects tagged')
+@api.resource('/tags/tagged', endpoint='objects tagged')
 class TaggedList(Resource):
     """
         List Nodes, Queries, Packs Details of a Tag
     """
     parser = requestparse(['tags'], [str], ["tags names separated by a comma"], [True])
-
-    @ns.expect(parser)
+    
     def post(self):
         from polylogyx.dao.v1 import queries_dao, hosts_dao, packs_dao
         from polylogyx.wrappers.v1 import pack_wrappers
@@ -125,13 +130,13 @@ class TaggedList(Resource):
             message = "All hosts, queries, packs for the tag provided!"
             status = "success"
             return marshal(prepare_response(message, status, {"hosts": hosts, "packs": packs, "queries": queries}),
-                           parent_wrappers.common_response_wrapper, skip_none=True)
+                           parent_wrappers.common_response_wrapper)
         else:
             return marshal(prepare_response("Tag(s) doesn't exists for the value(s) provided", "failure"),
-                           parent_wrappers.common_response_wrapper, skip_none=True)
+                           parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/<string:tag>', endpoint='tag resource')
+@api.resource('/tags/<string:tag>',  endpoint='tag resource')
 class Tag(Resource):
     """
         Tags nodes, packs, queries
@@ -142,7 +147,6 @@ class Tag(Resource):
                           [False, False, False, False])
 
     @admin_required
-    @ns.expect(parser)
     def put(self, tag):
         from polylogyx.dao.v1 import queries_dao, packs_dao, hosts_dao
         tag = tags_dao.get_tag_by_value(tag)
@@ -186,5 +190,5 @@ class Tag(Resource):
                     message = 'Provided entity does not exists to tag it!'
         else:
             message = 'Tag name provided does not exists!'
-        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)
 

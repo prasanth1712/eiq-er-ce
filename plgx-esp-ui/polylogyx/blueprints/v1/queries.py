@@ -1,16 +1,14 @@
-from flask_restplus import Namespace, Resource, inputs
+from flask_restful import Resource, inputs
 from flask import abort
-
+from polylogyx.blueprints.v1.external_api import api
 from polylogyx.blueprints.v1.utils import *
 from polylogyx.utils import validate_osquery_query, create_tags, is_number_positive
 from polylogyx.dao.v1 import queries_dao, tags_dao
 from polylogyx.wrappers.v1 import parent_wrappers, query_wrappers
 from polylogyx.authorize import admin_required
 
-ns = Namespace('queries', description='queries related operations')
 
-
-@ns.route('', endpoint="list queries")
+@api.resource('/queries', endpoint="list queries")
 class QueriesList(Resource):
     """
         Lists all queries of the Nodes
@@ -19,8 +17,6 @@ class QueriesList(Resource):
                           ["start", "limit", "searchterm"], [False, False, False],
                           [None, None, None], [None, None, ''])
 
-    @ns.expect(parser)
-    @ns.marshal_with(parent_wrappers.common_response_wrapper)
     def post(self):
         args = self.parser.parse_args()
         queryset = queries_dao.get_all_queries(args['searchterm']).offset(args['start']).limit(args['limit']).all()
@@ -38,7 +34,7 @@ class QueriesList(Resource):
         return prepare_response(message, status, data)
 
 
-@ns.route('/packed', endpoint="list packed queries")
+@api.resource('/queries/packed', endpoint="list packed queries")
 class PackedQueriesList(Resource):
     """
         List all packed queries of the Nodes
@@ -48,8 +44,6 @@ class PackedQueriesList(Resource):
                           ["start", "limit", "searchterm"], [False, False, False],
                           [None, None, None], [None, None, ''])
 
-    @ns.expect(parser)
-    @ns.marshal_with(parent_wrappers.common_response_wrapper)
     def post(self):
         args = self.parser.parse_args()
         queryset = queries_dao.get_all_packed_queries(args['searchterm']).offset(args['start'])\
@@ -68,7 +62,7 @@ class PackedQueriesList(Resource):
         return prepare_response(message, status, data)
 
 
-@ns.route('/<int:query_id>', endpoint="query by id")
+@api.resource('/queries/<int:query_id>',  endpoint="query by id")
 class QueryById(Resource):
     """
         Returns the query info for the given query id
@@ -91,7 +85,7 @@ class QueryById(Resource):
         return marshal(prepare_response(message), parent_wrappers.failure_response_parent)
 
 
-@ns.route('/<int:query_id>', endpoint="edit query")
+@api.resource('/queries/<int:query_id>',  endpoint="edit query")
 class EditQueryById(Resource):
     """
         Edit query by its id
@@ -105,16 +99,21 @@ class EditQueryById(Resource):
         [True, True, True, False, False, False, False, False, False, False],
         [None, None, None, None, ["all", "windows", "linux", "darwin", "freebsd", "posix"], None, None, None,
          ['true', 'false'], None],
-        [None, None, None, None, None, None, None, None, "true", None])
+        [None, None, None, None, 'all', None, None, None, "true", None])
 
     @admin_required
-    @ns.expect(parser)
     def post(self, query_id):
         args = self.parser.parse_args()
-        if not args['name']:
+        if args['name']:
+            args['name'] = args['name'].strip()
+        if args['name'] is not None and not args['name']:
             abort(400, "Please provide valid name!")
         elif not args['query']:
             abort(400, "Please provide valid SQL!")
+        elif args['tags'] and not tags_dao.are_all_tags_has_correct_length(args['tags'].split(',')) :
+                abort(400, f"Tag length should be between 0 and {current_app.config.get('INI_CONFIG', {}).get('max_tag_length')}")
+        elif args['tags'] and not tags_dao.are_all_tags_has_valid_strings(args['tags'].split(',')):
+                abort(400,"Tags provided are not valid")
         else:
             if args['snapshot'] == "true":
                 args['snapshot'] = True
@@ -126,6 +125,15 @@ class EditQueryById(Resource):
                 args['tags'] = []
             if query_id:
                 query = queries_dao.get_query_by_id(query_id)
+                exiting_query_name = queries_dao.get_query_by_name(args['name'])
+                if (query and not query.packs) and (exiting_query_name and query_id != exiting_query_name.id):
+                    message = 'Query with this name already exists'
+                    return marshal(prepare_response(message), parent_wrappers.failure_response_parent)
+                elif query and query.packs:
+                    exiting_pack_queries = [[query.name for query in pack.queries if query.name == args['name'] if query.id != query_id] for pack in query.packs]
+                    if any(args['name'] in queries for queries in exiting_pack_queries):
+                        message = 'Query with this name already exists in pack'
+                        return marshal(prepare_response(message), parent_wrappers.failure_response_parent)
                 if query:
                     if validate_osquery_query(args['query']):
                         query_tags = list(query.tags)
@@ -145,7 +153,7 @@ class EditQueryById(Resource):
             return marshal(prepare_response(message), parent_wrappers.failure_response_parent)
 
 
-@ns.route('/add', endpoint="add query")
+@api.resource('/queries/add', endpoint="add query")
 class AddQuery(Resource):
     """
         Add queries
@@ -159,18 +167,18 @@ class AddQuery(Resource):
         [True, True, True, False, False, False, False, False, False, False],
         [None, None, None, None, ["all", "windows", "linux", "darwin", "freebsd", "posix"], None, None, None,
          ["true", "false"], None],
-        [None, None, None, None, None, None, None, None, "true", None])
+        [None, None, None, None, 'all', None, None, None, "true", None])
 
     @admin_required
-    @ns.expect(parser)
     def post(self):
         from polylogyx.dao.v1 import packs_dao
         args = self.parser.parse_args()
-
+        if args['name']:
+            args['name'] = args['name'].strip()
         name = args['name']
         sql = args['query']
         interval = args['interval']
-        if not args['name']:
+        if args['name'] is not None and not args['name']:
             abort(400, "Please provide valid name!")
         elif not args['query']:
             abort(400, "Please provide valid SQL!")
@@ -194,6 +202,10 @@ class AddQuery(Resource):
                 message = ('Invalid osquery query: "{0}"'.format(args['query']))
             elif not is_number_positive(interval):
                 message = 'Interval provided is not valid! Please provide an interval greater than 0'
+            elif tags and not tags_dao.are_all_tags_has_correct_length(tags):
+                    message = f"Tag length should be between 0 and {current_app.config.get('INI_CONFIG', {}).get('max_tag_length')}"
+            elif tags and not tags_dao.are_all_tags_has_valid_strings(tags):
+                    message = "Tags provided are not valid"
             else:
                 query = queries_dao.create_query_obj(name, sql, interval, args['platform'], args['version'],
                                                      args['description'], args['value'], 100, snapshot=args['snapshot'])
@@ -212,7 +224,7 @@ class AddQuery(Resource):
             return marshal(prepare_response(message), parent_wrappers.failure_response_parent)
 
 
-@ns.route('/<int:query_id>/tags', endpoint='query tags list')
+@api.resource('/queries/<int:query_id>/tags',  endpoint='query tags list')
 class ListTagsOfQuery(Resource):
     """
         Resource for tags of a Query
@@ -235,10 +247,9 @@ class ListTagsOfQuery(Resource):
             data = [tag.value for tag in query.tags]
             status = "success"
             message = "Successfully fetched the tags of query"
-        return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper)
 
     @admin_required
-    @ns.expect(parser)
     def post(self, query_id=None):
         """
             Adds tags of a Query by its id
@@ -252,8 +263,10 @@ class ListTagsOfQuery(Resource):
             query = None
         if query:
             tag = args['tag'].strip()
-            if not tag:
-                message = "Tag provided is invalid!"
+            if not tag or not valid_string_parser(tag):
+                message = "Tag provided is not valid, tag should not be empty and should not contain ',' and space"
+            elif not (0 < len(tag) < int(current_app.config.get('INI_CONFIG', {}).get('max_tag_length'))):
+                message = f"Tag length should be between 0 and {current_app.config.get('INI_CONFIG', {}).get('max_tag_length')}"
             else:
                 tag = tags_dao.create_tag_obj(tag)
                 query.tags.append(tag)
@@ -264,10 +277,9 @@ class ListTagsOfQuery(Resource):
         else:
             message = "query id passed it not correct"
 
-        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)
 
     @admin_required
-    @ns.expect(parser)
     def delete(self, query_id=None):
         """
             Removes tags of a Query by its id
@@ -295,11 +307,11 @@ class ListTagsOfQuery(Resource):
                 message = "Tag provided doesn't exists"
         else:
             message = "Query id name passed it not correct"
-        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/<string:query_name>/delete', endpoint='query removed')
-@ns.route('/<int:query_id>/delete', endpoint='query removed by id')
+@api.resource('/queries/<string:query_name>/delete',  endpoint='query removed')
+@api.resource('/queries/<int:query_id>/delete',  endpoint='query removed by id')
 class QueryRemoved(Resource):
 
     @admin_required
@@ -321,5 +333,5 @@ class QueryRemoved(Resource):
             message = "Successfully Removed the query"
             status = "Success"
             current_app.logger.warning("Query {} has been deleted!".format(query))
-            return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
-        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
+            return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)
+        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)

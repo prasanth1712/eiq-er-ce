@@ -6,38 +6,37 @@
 <div class="kt-portlet kt-portlet--mobile kt-portlet--responsive-mobile">
 <div class="kt-portlet__head">
 <div class="kt-portlet__head-label">
-  <span class="kt-portlet__head-icon">
-    <i class="kt-font-brand fa fa-crosshairs"></i>
+  <span class="kt-portlet__head-icon custom-header-icon-container">
+    <i class="kt-font-brand fa fa-crosshairs custom-header-icon"></i>
   </span>
-  <h3 class="kt-portlet__head-title">
+  <h3 class="kt-portlet__head-title custom-header-title">
     Hunt
   </h3>
 </div>
 <div class="kt-portlet__head-toolbar">
   <div class="kt-portlet__head-wrapper">
     <div class="">
-      <a href="javascript:void(0);" (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page">
+      <!-- <a href="javascript:void(0);" (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page">
         <i class="fas fa-chevron-left"></i>
         Back
-      </a>
+      </a> -->
+      <appbutton (click)="goBack()" text="Back" icon="fa-chevron-left" btnClass="btn-small-light" btnType="button"></appbutton>
     </div>
   </div>
 </div>
 </div>
-<div class="kt-portlet__body">
+<div class="kt-portlet__body container-body" [ngClass]="searchDataOutput?.length === 0 ? 'flex-flow-col' : '' ">
 <!--begin::Portlet-->
     <form class="form form-horizontal" [formGroup]="md5form" (ngSubmit)="onSubmit()" enctype="multipart/form-data" id = "md5form">
       <div class="row">
         <div class="col-xl-12">
           <div class="form-group row">
-            <label class="col-2 col-form-label" style="color: #646c9a;">Hunt Type</label>
-      <div class="col-8">
+            <label class="col-2 col-xl-2 col-lg-3 col-sm-3 col-xs-3 col-form-label font-grey">Hunt Type</label>
+      <div class="col-6 col-xl-6 col-sm-7 col-xs-7">
       <angular2-multiselect [data]="dropdownPacknameList" [(ngModel)]="selectedPacknameItems" formControlName="huntType" [ngClass]="{ 'is-invalid': submitted && f.huntType.errors }"
           [settings]="dropdownPacknameSettings"
           (onSelect)="onItemSelect($event)"
-          (onDeSelect)="OnItemDeSelect($event)"
-          (onSelectAll)="onSelectAll($event)"
-          (onDeSelectAll)="onDeSelectAll($event)">
+          (onDeSelect)="OnItemDeSelect($event)" promptSearch>
       </angular2-multiselect>
       <div *ngIf="submitted && f.huntType.errors" class="invalid-feedback">
         <div *ngIf="f.huntType.errors.required">Hunt Type is required</div>
@@ -50,24 +49,26 @@
       <div class="row">
         <div class="col-xl-12">
           <div class="form-group row">
-            <label class="col-2 col-form-label" style="color: #646c9a;"></label>
-      <div class="col-2">
+            <label class="col-2 col-xl-2 col-lg-3 col-sm-3 col-xs-3 col-form-label font-grey"></label>
+      <div class="col-3">
+        <div class="d-flex full-width justify-content-start">
+        <span class="mt-auto mb-auto mr-10" data-toggle="tooltip" data-placement="top" title="Duration">Duration</span>
         <select  value="3" class="form-control" (change)="getDuration($event.target.value)" style="cursor: pointer;">
           <option value="2">1 day</option>
           <option value="3" selected="selected">1 week</option>
           <option value="4">1 month</option>
         </select>
       </div>
-      <div class="col-4" >
-        <div class="row">
-          <span style="margin-top:auto;margin-bottom: auto;margin-right:10px;" data-toggle="tooltip" data-placement="top" title="UTC Time Zone">Ending Date</span>
+      </div>
+      <div class="col-3 col-xl-3 col-lg-4 col-sm-4 col-xs-4">
+        <div class="d-flex full-width justify-content-end">
+          <span class="mt-auto mb-auto mr-10" data-toggle="tooltip" data-placement="top" title="UTC Time Zone">Ending Date</span>
 
-          <!-- <ng-datepicker [(ngModel)]="datepickerDate['date']" [ngModelOptions]="{standalone: true}" (ngModelChange)="myHandler()"></ng-datepicker> -->
           <form class="form-inline">
             <div class="form-group">
               <div class="input-group">
                 <input class="form-control" placeholder="yyyy-mm-dd"
-                       name="dp" [(ngModel)]="selectedDate['date']" [maxDate]="maxDate" (click)="d.toggle()" (ngModelChange)="myHandler()"  ngbDatepicker #d="ngbDatepicker">
+                       name="dp" [(ngModel)]="selectedDate['date']" [maxDate]="maxDate" (click)="d.toggle()"   ngbDatepicker #d="ngbDatepicker">
                 <div class="input-group-append">
                   <button class="btn calendar calender-img" (click)="d.toggle()" type="button"><i class="far fa-calendar-alt fa-2x" aria-hidden="true"></i></button>
                 </div>
@@ -82,31 +83,25 @@
       </div>
        <!-- End:: datepicker -->
       <div class="form-group row">
-        <div class="col-5 col-form-label">
+        <div class="col-2 col-xl-2 col-lg-3 col-sm-3 col-xs-3 col-form-label">
           <h6>Upload indicators using file, separated by newline to search across the entire collected endpoint data:</h6>
         </div>
-        <div class="col-5 col-form-label">
-          <input type="file" class="custom-input-file" formControlName="indicatorFile" (change)="uploadFile($event)"  name="indicatorFile" id="indicator_file_md5" style="cursor: pointer;" [ngClass]="{ 'is-invalid': submitted && f.indicatorFile.errors }">
-          <div *ngIf="submitted && f.indicatorFile.errors" class="invalid-feedback">
-            <div *ngIf="f.indicatorFile.errors.required">Please provide the File</div>
-            </div>
+        <div class="col-5 col-xl-4 col-sm-5 col-form-label">
+          <input type="file" class="custom-input-file" formControlName="indicatorFile" (change)="uploadFile($event)"  name="indicatorFile" id="indicator_file" style="cursor: pointer;" [ngClass]="{ 'is-invalid': (submitted && f.indicatorFile.errors) || indicatorFileSizeError }">
+          <ng-container *ngIf="(submitted && f.indicatorFile.errors) || indicatorFileSizeError">
+            <div *ngIf="indicatorFileSizeError && !submitted" class="invalid-feedback"> Max file size is {{maxFileSize/1048576 | number: '1.0-2'}}MB</div>
+            <div *ngIf="f.indicatorFile.errors?.required && submitted" class="invalid-feedback">Please provide the File</div>
+          </ng-container>
         </div>
-        <div class="col-2 col-form-label">
-                    <button type="submit" class="btn btn-primary submit">
-                      <i class="fas fa-file-upload"></i>Upload
-                      <span *ngIf="loading" class="spinner-border spinner-border-sm" style="margin-left: 10px" role="status" aria-hidden="true"></span>
-                    </button>
+        <div class="col-2 col-form-label d-flex justify-content-end">
+                    <appbutton text="Upload" btnClass="btn-small" btnType="submit" icon="fa-file-upload" [isLoading]="loading" [isDisabled]="loading"></appbutton>
         </div>
       </div>
     </form>
-    <div id="text">
-    </div>
-    <!-- <div id="results_md5">
-  </div> -->
-  <div   class="kt-portlet__body table_data">
-    <div class="" style="margin-bottom: 60px;" >
+  <div   class="table_data overflow-y-clip" [ngClass]="searchDataOutput?.length === 0? 'flex-2' : '' ">
+    <div class="full-height">
       <!--begin: Datatable -->
-      <table  datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable" style="text-align: left;" >
+      <table id="hunt_table" datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable full-height">
         <thead>
           <tr>
             <th style="width:15%">Host Name</th>
@@ -116,7 +111,7 @@
         </thead>
         <tbody >
             <tr *ngFor="let alrowdata of searchDataOutput; let i = index ">
-                <td style="vertical-align:left;">
+                <td class="host-link" style="vertical-align:left;">
                   <a [routerLink]="['/hosts/', alrowdata.node_id]" class="active" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="click -> Host Details" style="color:#5867dd;font-weight: 600;">{{alrowdata.hostname}}</a>
                 </td>
                 <td style="vertical-align:left;">
@@ -191,9 +186,15 @@
                   </td>
               </tr>
         </tbody>
+        <tr role="row" class="text-center" *ngIf="searchDataOutput?.length === 0">
+          <td colspan="3" style="font-size: larger;">
+            No results found
+          </td>
+        </tr>
+        <!-- searchDataOutput -->
       </table>
-      <div id="table_noresults"  >No results found
-      </div>
+      <!-- <div id="table_noresults"  class="text-center">No results found
+      </div> -->
       <!--end: Datatable -->
     </div>
   </div>

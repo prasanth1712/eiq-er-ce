@@ -15,8 +15,8 @@ except ImportError:
     from urllib.parse import urlparse
 
 from polylogyx.models import (
-    Node, Pack, Query, Tag, FilePath,
-    DistributedQuery, DistributedQueryTask, DistributedQueryResult, Rule,
+    Node, Pack, Query, Tag,
+    DistributedQuery, DistributedQueryTask, Rule,
 )
 from polylogyx.settings import TestConfig
 from polylogyx.utils import learn_from_result
@@ -425,12 +425,6 @@ class TestConfiguration:
         pack.queries.append(query1)
         pack.tags.append(tag)
         pack.save()
-
-        file_path = FilePath.create(category='foobar', target_paths=[
-            '/home/foobar/%%',
-        ])
-        file_path.tags.append(tag)
-        file_path.save()
 
         resp = testapp.post_json(url_for('api.configuration'), {
             'node_key': node.node_key})
@@ -936,9 +930,6 @@ class TestDistributedWrite:
         },
         extra_environ=dict(REMOTE_ADDR='127.0.0.2')
         )
-        result = DistributedQueryResult.query.filter(
-            DistributedQueryResult.columns['foo'].astext == 'baz').all()
-        assert not result
         assert node.last_ip == '127.0.0.2'
 
     def test_distributed_query_write_state_new(self, db, node, testapp):
@@ -1008,9 +999,6 @@ class TestDistributedWrite:
             "pid": "97831"
         }]
 
-        r = DistributedQueryResult.create(columns=data[0],
-                                          distributed_query=q,
-                                          distributed_query_task=t)
         t.update(status=DistributedQueryTask.COMPLETE)
 
         resp = testapp.post_json(url_for('api.distributed_write'), {
@@ -1024,7 +1012,6 @@ class TestDistributedWrite:
 
         assert q.results
         assert len(q.results) == 1
-        assert q.results[0] == r
         assert q.results[0].columns == data[0]
         assert node.last_ip == '127.0.0.2'
 
@@ -1114,12 +1101,7 @@ class TestDistributedTable:
         t1.update(status=DistributedQueryTask.PENDING)
         t2.update(status=DistributedQueryTask.PENDING)
 
-        r1 = DistributedQueryResult.create(distributed_query_task=t1, distributed_query=q1, columns={
-            'query': 'number 1',
-        })
-        r2 = DistributedQueryResult.create(distributed_query_task=t2, distributed_query=q2, columns={
-            'query': 'number 2',
-        })
+        # Removing DistributedQueryResult table logic as part of clean up and needs logic update here
 
         # Verify that the first query is there, and the second is not
         resp = testapp.get(url_for('manage.distributed_results', distributed_id=q1.id))
@@ -1139,12 +1121,7 @@ class TestDistributedTable:
         t1.update(status=DistributedQueryTask.PENDING)
         t2.update(status=DistributedQueryTask.COMPLETE)
 
-        r1 = DistributedQueryResult.create(distributed_query_task=t1, distributed_query=q, columns={
-            'query': 'number 1',
-        })
-        r2 = DistributedQueryResult.create(distributed_query_task=t2, distributed_query=q, columns={
-            'query': 'number 2',
-        })
+        # Removing DistributedQueryResult table logic as part of clean up and needs logic update here
 
         # Verify that only the complete one exists in the table
         resp = testapp.get(url_for('manage.distributed_results', distributed_id=q.id, status='complete'))

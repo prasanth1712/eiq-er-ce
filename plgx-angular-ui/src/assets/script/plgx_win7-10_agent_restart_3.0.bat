@@ -50,10 +50,10 @@ IF %ERRORLEVEL% NEQ 0 (
 echo "Task xml download successful !!"
 
 :tryagain
-REM Compute scheduled time for task (current time + 1 minutes)
+REM Compute scheduled time for task (current time + 2 minutes)
 SET CURRENTTIME=%TIME%
 for /F "tokens=1 delims=:" %%h in ('echo %CURRENTTIME%') do (set /a HR=%%h)
-for /F "tokens=2 delims=:" %%m in ('echo %CURRENTTIME%') do (set /a MIN=%%m + 1)
+for /F "tokens=2 delims=:" %%m in ('echo %CURRENTTIME%') do (set /a MIN=%%m + 2)
 
 IF %ERRORLEVEL% NEQ 0 (
         ECHO Probably Minute value is either 08 or 09 which is considered invalid **octal** number by DOS. !!

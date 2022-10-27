@@ -3,6 +3,18 @@
 import datetime as dt
 import os
 import pika
+from os.path import dirname, join, abspath
+
+
+def get_ini_config(file_path):
+    import configparser
+    config_dict = {}
+    config = configparser.ConfigParser()
+    config.read(file_path)
+    for section in config.sections():
+        for key, value in config[section].items():
+            config_dict[key] = value
+    return config_dict
 
 
 class RabbitConfig:
@@ -39,8 +51,8 @@ class Config(object):
 
     DEFAULT_ROLES = {1: 'admin', 2: 'analyst'}
 
-    APP_DIR = os.path.abspath(os.path.dirname(__file__))  # This directory
-    PROJECT_ROOT = os.path.abspath(os.path.join(APP_DIR, os.pardir))
+    APP_DIR = abspath(dirname(__file__))  # This directory
+    PROJECT_ROOT = abspath(join(APP_DIR, os.pardir))
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_POOL_TIMEOUT = 300
@@ -178,14 +190,11 @@ class Config(object):
     # for more information.
     # Alternatively, you can set filename to '-' to log to stdout.
     POLYLOGYX_LOGGING_DIR = '/var/log/er-ui'
-    POLYLOGYX_LOGGING_FILENAME = 'log'
+    POLYLOGYX_LOGGING_FILENAME = 'er_ui_log'
     POLYLOGYX_LOGFILE_SIZE = int(os.environ.get("LOGFILE_SIZE", 10485760))
     POLYLOGYX_LOGFILE_BACKUP_COUNT = int(os.environ.get("LOGFILE_BACKUP_COUNT", 10))
     POLYLOGYX_LOGGING_FORMAT = '%(asctime)s--%(levelname).1s--%(thread)d--%(funcName)s--%(message)s'
     POLYLOGYX_LOGGING_LEVEL = os.environ.get('LOG_LEVEL', 'WARNING')
-
-    CACHE_TYPE = 'filesystem'
-    CACHE_DIR = './cache'
 
     SESSION_COOKIE_SECURE = True
     REMEMBER_COOKIE_DURATION = dt.timedelta(days=30)
@@ -261,6 +270,12 @@ class Config(object):
 class ProdConfig(Config):
     ENV = 'prod'
     DEBUG = False
+    BASE_URL = join(dirname(dirname(__file__)))
+    RESOURCES_URL = join(BASE_URL, 'resources')
+    COMMON_FILES_URL = join(BASE_URL, 'common')
+
+    INI_CONFIG = get_ini_config(join(COMMON_FILES_URL, 'config.ini'))
+
     ESP_SERVER_ADDRESS = os.environ.get("ESP_SERVER_ADDRESS", 'http://plgx-esp:6000')
 
     ER_ADDRESS = os.environ.get("ER_ADDRESS", 'http://plgx-esp:6000')
@@ -268,14 +283,16 @@ class ProdConfig(Config):
 
     RABBITMQ_HOST = os.environ.get('RABBITMQ_URL', "rabbit1")
     RABBITMQ_PORT = os.environ.get('RABBITMQ_PORT', "5672")
-
     RABBITMQ_USERNAME = os.environ.get('RABBITMQ_USERNAME', "guest")
     RABBITMQ_PASSWORD = os.environ.get('RABBITMQ_PASSWORD', "guest")
     RABBIT_CREDS = pika.PlainCredentials(RABBITMQ_USERNAME, RABBITMQ_PASSWORD)
     BROKER_URL = 'pyamqp://{0}:{1}@{2}:{3}'.format(RABBITMQ_USERNAME, RABBITMQ_PASSWORD, RABBITMQ_HOST,RABBITMQ_PORT)
+    
     CELERY_RESULT_BACKEND = 'rpc://'
 
-    BASE_URL = "/src/plgx-esp-ui/resources"
+    REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
+    REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
+    REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "admin")
 
     DEBUG_TB_ENABLED = False
     DEBUG_TB_INTERCEPT_REDIRECTS = False
@@ -312,6 +329,12 @@ class DevConfig(Config):
     POLYLOGYX_LOGGING_DIR = '-'
     POLYLOGYX_LOGGING_FILENAME = '-'
 
+    BASE_URL = join(dirname(dirname(__file__)))
+    RESOURCES_URL = join(dirname(BASE_URL), 'resources')
+    COMMON_FILES_URL = join(dirname(BASE_URL), 'common')
+
+    INI_CONFIG = get_ini_config(join(COMMON_FILES_URL, 'config.ini'))
+
     ESP_SERVER_ADDRESS = os.environ.get("ESP_SERVER_ADDRESS", 'http://localhost:6000')
 
     ESP_ADDRESS = os.environ.get("ESP_ADDRESS", 'http://localhost:6000')
@@ -325,7 +348,9 @@ class DevConfig(Config):
     BROKER_URL = 'pyamqp://{0}:{1}@{2}:{3}'.format(RABBITMQ_USERNAME, RABBITMQ_PASSWORD, RABBITMQ_HOST,RABBITMQ_PORT)
     CELERY_RESULT_BACKEND = 'rpc://'
 
-    BASE_URL = os.path.dirname(os.getcwd()) + "/resources"
+    REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
+    REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
+    REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "admin")
 
     SQLALCHEMY_DATABASE_URI = 'postgresql://polylogyx:polylogyx@localhost:5432/polylogyx'
     RABBITMQ_URL = 'localhost'
@@ -339,12 +364,30 @@ class TestConfig(Config):
     """
     This class specifies a configuration that is used for our tests.
     """
+    ENV = 'test'
     TESTING = True
     DEBUG = True
 
-    SQLALCHEMY_DATABASE_URI = 'postgresql://polylogyx:polylogyx@localhost:5432/polylogyx_test'
-    BASE_URL = "/src/plgx-esp-ui"
+    BASE_URL = join(dirname(dirname(__file__)))
+    RESOURCES_URL = join(dirname(BASE_URL), 'resources')
+    COMMON_FILES_URL = join(dirname(BASE_URL), 'common')
 
+    INI_CONFIG = get_ini_config(join(COMMON_FILES_URL, 'config.ini'))
+
+    SQLALCHEMY_DATABASE_URI = 'postgresql://polylogyx:polylogyx@localhost:5432/polylogyx_test'
+
+    RABBITMQ_HOST = os.environ.get("RABBITMQ_URL", "localhost")
+    RABBITMQ_PORT = os.environ.get("RABBITMQ_PORT", "5672")
+    RABBITMQ_USERNAME = os.environ.get("RABBITMQ_USERNAME", "guest")
+    RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD", "guest")
+    RABBIT_CREDS = pika.PlainCredentials(RABBITMQ_USERNAME, RABBITMQ_PASSWORD)
+    BROKER_URL = "pyamqp://{0}:{1}@{2}:{3}".format(RABBITMQ_USERNAME, RABBITMQ_PASSWORD, RABBITMQ_HOST, RABBITMQ_PORT)
+    CELERY_RESULT_BACKEND = "rpc://"
+
+    REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
+    REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
+    REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "admin")
+    
     WTF_CSRF_ENABLED = False
     PRESERVE_CONTEXT_ON_EXCEPTION = False
 
@@ -415,16 +458,15 @@ if os.environ.get('DYNO'):
                     os.environ.get('MAIL_RECIPIENTS', '').split(';')
                 ],
             }),
-
         }
 
 # choose proper configuration based on environment -
 # this is both for manage.py and for worker.py
-if os.environ.get('POLYLOGYX_ENV') == 'prod':
+if os.environ.get("ENV") == ProdConfig.ENV:
     CurrentConfig = ProdConfig
-elif os.environ.get('POLYLOGYX_ENV') == 'test':
+elif os.environ.get("ENV") == TestConfig.ENV:
     CurrentConfig = TestConfig
-elif os.environ.get('DYNO'):
+elif os.environ.get("DYNO"):
     CurrentConfig = HerokuConfig
 else:
     CurrentConfig = DevConfig

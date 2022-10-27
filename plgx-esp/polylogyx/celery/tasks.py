@@ -5,11 +5,12 @@ import json
 import os
 import re
 from contextlib import contextmanager
+import asyncio
 
 from celery import Celery
 from flask import current_app
 
-from polylogyx.constants import PolyLogyxServerDefaults
+from polylogyx.constants import PolyLogyxServerDefaults, SettingsVariables
 from polylogyx.db.models import (
     CarvedBlock,
     CarveSession,
@@ -18,6 +19,7 @@ from polylogyx.db.models import (
     DistributedQueryTask,
     Node,
     ResultLog,
+    NodeQueryCount,
     db
 )
 from polylogyx.extensions import log_tee, threat_intel
@@ -25,7 +27,7 @@ from polylogyx.extensions import log_tee, threat_intel
 re._pattern_type = re.Pattern
 
 from polylogyx.constants import DefaultInfoQueries
-from polylogyx.db.models import DefaultQuery, DistributedQuery, DistributedQueryTask, Node
+
 
 LOCK_EXPIRE = 60 * 2
 
@@ -34,6 +36,7 @@ threat_frequency = 60
 celery.conf.update(
     worker_pool_restarts=True,
 )
+
 
 try:
     threat_frequency = int(os.environ.get("THREAT_INTEL_ALERT_FREQUENCY"))
@@ -51,11 +54,6 @@ celery.conf.beat_schedule = {
         "schedule": threat_frequency * 60,
         "options": {"queue": "default_esp_queue"},
     },
-    "send_defender_info_query": {
-        "task": "polylogyx.celery.tasks.send_defender_info_query",
-        "schedule": 3600,
-        "options": {"queue": "default_esp_queue"},
-    },
     "send_checkin_queries": {
         "task": "polylogyx.celery.tasks.send_checkin_query_to_all_hosts",
         "schedule": 21600,
@@ -66,6 +64,11 @@ celery.conf.beat_schedule = {
         "schedule": 43200,
         "options": {"queue": "default_esp_queue"},
     },
+    "update_cached_hosts": {
+        "task": "polylogyx.celery.tasks.update_cached_hosts",
+        "schedule": 300,
+        "options": {"queue": "default_esp_queue"},
+    }
 }
 
 
@@ -97,16 +100,10 @@ def memcache_lock(lock_id, oid):
 
 
 @celery.task()
-def analyze_result(result, node):
-    # learn_from_result.s(result, node).delay()
-    current_app.rule_manager.handle_log_entry(result, node)
-    return
-
-
-@celery.task()
 def add_partitions():
-   for i in range(7):
+    for i in range(SettingsVariables.pre_create_partitions_count):
         create_daily_partition(day_delay=i)
+
 
 @celery.task()
 def create_daily_partition(day_delay=1):
@@ -133,9 +130,6 @@ def create_daily_partition(day_delay=1):
         result_log_partition_table = (
                 "result_log_" + str(next_day_month) + "_" + str(next_day_date) + "_" + str(next_day_year)
         )
-        node_query_count_partition_table = (
-                "node_query_count_" + str(next_day_month) + "_" + str(next_day_date) + "_" + str(next_day_year)
-        )
 
         sql = (
                 "CREATE TABLE if not exists "
@@ -146,14 +140,20 @@ def create_daily_partition(day_delay=1):
                 + partition_end_date
                 + "');"
         )
+        pg_trgm_extn="CREATE EXTENSION if not exists pg_trgm;"
+        btree_gin_extn="CREATE EXTENSION if not exists btree_gin;"
+        
+        db.session.execute(pg_trgm_extn)
+        db.session.execute(btree_gin_extn)
         db.session.execute(sql)
-        create_index_and_trigger(result_log_partition_table, node_query_count_partition_table)
+
+        create_index_for_result_log(result_log_partition_table)
         db.session.commit()
     except Exception as e:
         current_app.logger.error(e)
 
 
-def create_index_and_trigger(result_log_partition_table,node_query_count_partition_table):
+def create_index_for_result_log(result_log_partition_table):
     node_timestamp_desc_index = (
             "CREATE INDEX if not exists idx_"
             + result_log_partition_table
@@ -246,6 +246,17 @@ def create_index_and_trigger(result_log_partition_table,node_query_count_partiti
             + result_log_partition_table
             + " ((columns ->> 'eventid'));"
     )
+
+    rl_id_index = (
+            "CREATE INDEX if not exists idx_"
+            + result_log_partition_table
+            + "_id on "
+            + result_log_partition_table
+            + " (id);"
+    )
+
+
+
     index_sqls = [
         node_timestamp_desc_index,
         uuid_index,
@@ -260,111 +271,189 @@ def create_index_and_trigger(result_log_partition_table,node_query_count_partiti
         process_name_index,
         remote_address_index,
         event_id_index,
+        rl_id_index,
     ]
     # Adding indexes of Result log to all partitions
     for sql in index_sqls:
         db.session.execute(sql)
-
-    trigger_string = (
-            """CREATE or REPLACE FUNCTION """
-            + node_query_count_partition_table
-            + """() RETURNS trigger
-        LANGUAGE plpgsql AS
-     $$ BEGIN                                                                                                                                                             
-         IF TG_OP = 'INSERT' and NEW.action != 'removed' THEN 
-             IF NEW.name != 'windows_real_time_events' THEN                                                                                                          
-                 UPDATE node_query_count SET total_results = total_results + 1 where node_id=NEW.node_id and query_name=NEW.name and date=date_trunc('day', NEW.created_at) ;
-             ELSE
-                 UPDATE node_query_count SET total_results=total_results+1 WHERE node_id=NEW.node_id and query_name=NEW.name and event_id=NEW.columns->>'eventid'and date=date_trunc('day', NEW.created_at);
-                 END IF;
-             IF found THEN 
-
-                  RETURN NEW;                                                                                                                                           
-             END IF; 
-
-             BEGIN
-                     IF NEW.name != 'windows_real_time_events' THEN
-                         INSERT INTO  node_query_count(node_id, query_name, total_results,date) VALUES (NEW.node_id, NEW.name, 1,date_trunc('day', NEW.created_at));
-                     ELSE
-                         INSERT INTO  node_query_count(node_id, query_name, event_id, total_results,date) VALUES (NEW.node_id, NEW.name, NEW.columns->>'eventid', 1,date_trunc('day', NEW.created_at));
-                     END IF;
-                     RETURN NEW;                                                                                                                                                                                                                                                                                        
-
-             END;                                                                                                                                                       
-         ELSIF TG_OP = 'DELETE' and OLD.action != 'removed' THEN  
-             IF OLD.name != 'windows_real_time_events' THEN
-                     UPDATE node_query_count SET total_results=total_results-1 WHERE node_id=OLD.node_id and query_name=OLD.name and date=date_trunc('day', OLD.created_at);
-             ELSE
-                     UPDATE node_query_count SET total_results=total_results-1 WHERE node_id=OLD.node_id and query_name=OLD.name and event_id=OLD.columns->>'eventid' and date=date_trunc('day', OLD.created_at);
-                 END IF;
-                 DELETE from node_query_count WHERE total_results=0;
-                 RETURN OLD;
-
-         ELSE                                                                                                                                                           
-            UPDATE node_query_count SET total_results = 0 where node_id=NEW.node_id and query_name=NEW.name;                                                                                                                                                                                                                        
-            RETURN NULL;                                                                                                                                                
-         END IF;                                                                                                                                                        
-      END;$$;
-      """
-    )
-    db.session.execute(trigger_string)
-
-    check_trg_name = str(node_query_count_partition_table)+"_mod"
-    check_if_trigger_exists = "select count(*) from pg_trigger where lower(tgname)='{}'".format(check_trg_name.lower())
-    res = db.session.execute(check_if_trigger_exists).first()[0]
-
-    if res==0:
-        trigger_mod_string = (
-                """
-            CREATE  CONSTRAINT TRIGGER """
-                + node_query_count_partition_table
-                + """_mod
-        AFTER INSERT OR DELETE ON """
-                + result_log_partition_table
-                + """
-        DEFERRABLE INITIALLY DEFERRED
-        FOR EACH ROW EXECUTE PROCEDURE """
-                + node_query_count_partition_table
-                + """();
-        """
-        )
-        db.session.execute(trigger_mod_string)
-
-    check_trg_name = str(node_query_count_partition_table)+"_trunc"
-    check_if_trigger_exists = "select count(*) from pg_trigger where lower(tgname)='{}'".format(check_trg_name.lower())
-    res = db.session.execute(check_if_trigger_exists).first()[0]
-
-    if res==0:
-        trigger_truncate = (
-                """
-            CREATE TRIGGER """
-                + node_query_count_partition_table
-                + """_trunc AFTER TRUNCATE ON """
-                + result_log_partition_table
-                + """
-        FOR EACH STATEMENT EXECUTE PROCEDURE """
-                + node_query_count_partition_table
-                + """();
-        """
-        )
-        db.session.execute(trigger_truncate)
-
     db.session.commit()
+
+
+def profiler(func):
+    def inner(*args, **kwargs):
+        import cProfile
+        pr = cProfile.Profile()
+        pr.enable()
+        func(*args, **kwargs)
+        pr.disable()
+        name = func.__name__
+        pr.dump_stats(name)
+    return inner
+
+
+def update_node_query_count(query_count_list, node_id):
+    # to form list of dictionaries for bulk update objects
+    create_list = []
+    update_list = []
+    node_query_counts = db.session.query(NodeQueryCount).filter(NodeQueryCount.node_id == node_id).filter(
+        NodeQueryCount.query_name.in_(list(query_count_list.keys()))).all()
+    for query_name, count in query_count_list.items():
+        if isinstance(count, int):
+            found = False
+            for item in node_query_counts:
+                if item.query_name == query_name and item.event_id is None and \
+                        item.date.date() == dt.datetime.now().date():
+                    update_list.append({'query_name': query_name, 'total_results': item.total_results+count,
+                                        'node_id': node_id, 'date': dt.datetime.now().date(), 'id': item.id})
+                    found = True
+                    break
+            if not found:
+                create_list.append({'query_name': query_name, 'total_results': count, 'node_id': node_id,
+                                    'date': dt.datetime.now().date()})
+        else:
+            for event_id, count_value in count.items():
+                found = False
+                for item in node_query_counts:
+                    if item.query_name == query_name and item.event_id == event_id and \
+                            item.date.date() == dt.datetime.now().date():
+                        update_list.append({'query_name': query_name, 'total_results': item.total_results+count_value,
+                                            'node_id': node_id, 'date': dt.datetime.now().date(), 'event_id': event_id,
+                                            'id': item.id})
+                        found = True
+                        break
+                if not found:
+                    create_list.append({'query_name': query_name, 'total_results': count_value,
+                                        'event_id': event_id, 'node_id': node_id, 'date': dt.datetime.now().date()})
+    db.session.bulk_insert_mappings(NodeQueryCount, create_list)
+    db.session.bulk_update_mappings(NodeQueryCount, update_list)
+
+
+def save_result_log_def(results, query_count_list, node_dict):
+    db.session.bulk_insert_mappings(ResultLog, results)
+    update_node_query_count(query_count_list, node_dict['id'])
+    db.session.commit()
+
+
+async def start_async_tasks(results, query_count_list, node_dict):
+    save_log = os.environ.get('SAVE_LOG')
+    match_rule = os.environ.get('MATCH_RULE')
+    match_ioc = os.environ.get('MATCH_IOC')
+    rule_eng_task = None
+    ioc_eng_task = None
+    if save_log and query_count_list and results and node_dict:
+        save_result_log_def(results, query_count_list, node_dict)
+    if match_rule and results and node_dict:
+        rule_eng_task = asyncio.create_task(current_app.rule_manager.handle_log_entry(results, node_dict))
+    if match_ioc and results and node_dict:
+        ioc_eng_task = asyncio.create_task(current_app.ioc_engine.process(node_dict['id'], results))
+    if rule_eng_task:
+        await rule_eng_task
+    if ioc_eng_task:
+        await ioc_eng_task
 
 
 @celery.task()
-def save_and_analyze_results(data, node_id):
-    from polylogyx.utils.results import process_result
+def save_analyze(results, query_count_list, node_dict):
+    asyncio.run(start_async_tasks(results=results, query_count_list=query_count_list, node_dict=node_dict))
 
-    node = db.session.query(Node).filter(Node.id == node_id).first()
-    current_app.logger.debug("Parsing the results for the node '{0}'".format(node))
-    results = process_result(data, node)
-    db.session.bulk_insert_mappings(ResultLog, results)
-    db.session.commit()
-    current_app.logger.debug("Saved the results successfully for the node '{0}'".format(node))
-    log_tee.handle_result(results, host_identifier=node.host_identifier, node=node.to_dict())
-    analyze_result(results, node.to_dict())
-    return
+
+@celery.task()
+def save_analyze_rules(results, query_count_list, node_dict):
+    asyncio.run(start_async_tasks(results=results, query_count_list=query_count_list, node_dict=node_dict))
+
+
+@celery.task()
+def save_analyze_iocs(results, query_count_list, node_dict):
+    asyncio.run(start_async_tasks(results=results, query_count_list=query_count_list, node_dict=node_dict))
+
+
+@celery.task()
+def analyze_rules_and_ioc(results, node_dict):
+    asyncio.run(start_async_tasks(results=results, query_count_list=None, node_dict=node_dict))
+
+
+@celery.task()
+def save_result_log(results, query_count_list, node_dict):
+    asyncio.run(start_async_tasks(results=results, query_count_list=query_count_list, node_dict=node_dict))
+
+
+@celery.task()
+def analyze_rules(results, node_dict):
+    asyncio.run(start_async_tasks(results=results, query_count_list=None, node_dict=node_dict))
+
+
+@celery.task()
+def analyze_ioc(results, node_dict):
+    asyncio.run(start_async_tasks(results=results, query_count_list=None, node_dict=node_dict))
+
+
+def analyze_result(results, query_count_list, node_dict):
+    save_log_queue = current_app.config.get('INI_CONFIG', {}).get('save_log_queue')
+    match_rule_queue = current_app.config.get('INI_CONFIG', {}).get('match_rule_queue')
+    match_ioc_queue = current_app.config.get('INI_CONFIG', {}).get('match_ioc_queue')
+
+    if save_log_queue is not None and save_log_queue == match_rule_queue == match_ioc_queue:
+        if save_log_queue !=  'result_log_queue':
+            save_analyze.apply_async(queue=save_log_queue, args=[results, query_count_list, node_dict])
+        else:
+            save_analyze(results, query_count_list, node_dict)
+    elif save_log_queue is not None and save_log_queue == match_rule_queue:
+        if save_log_queue !=  'result_log_queue':
+            save_analyze_rules.apply_async(queue=save_log_queue, args=[results, query_count_list, node_dict])
+        else:
+            save_analyze_rules(results, query_count_list, node_dict)
+        if match_ioc_queue != 'result_log_queue':
+            analyze_ioc.apply_async(queue=match_ioc_queue, args=[results, node_dict])
+        else:
+            analyze_ioc(results, node_dict)
+    elif save_log_queue is not None and save_log_queue == match_ioc_queue:
+        if save_log_queue !=  'result_log_queue':
+            save_analyze_iocs.apply_async(queue=save_log_queue, args=[results, query_count_list, node_dict])
+        else:
+            save_analyze_iocs(results, query_count_list, node_dict)
+        if match_rule_queue != 'result_log_queue':
+            analyze_rules.apply_async(queue=match_rule_queue, args=[results, node_dict])
+        else:
+            analyze_rules(results, node_dict)
+    elif match_rule_queue is not None and match_rule_queue == match_ioc_queue:
+        if save_log_queue != 'result_log_queue':
+            save_result_log.apply_async(queue=save_log_queue, args=[results, query_count_list, node_dict])
+        else:
+            save_result_log(results, query_count_list, node_dict)
+        if match_rule_queue != 'result_log_queue':
+            analyze_rules_and_ioc.apply_async(queue=match_rule_queue, args=[results, node_dict])
+        else:
+            analyze_rules_and_ioc(results, node_dict)
+    else:
+        if save_log_queue is not None:
+            if save_log_queue != 'result_log_queue':
+                save_result_log.apply_async(queue=save_log_queue, args=[results, query_count_list, node_dict])
+            else:
+                save_result_log(results, query_count_list, node_dict)
+        if match_rule_queue is not None:
+            if match_rule_queue != 'result_log_queue':
+                analyze_rules.apply_async(queue=match_rule_queue, args=[results, node_dict])
+            else:
+                analyze_rules(results, node_dict)
+        if match_ioc_queue is not None:
+            if match_ioc_queue != 'result_log_queue':
+                analyze_ioc.apply_async(queue=match_ioc_queue, args=[results, node_dict])
+            else:
+                analyze_ioc(results, node_dict)
+
+
+@celery.task()
+def save_and_analyze_results(data, node_dict):
+    from polylogyx.utils.results import process_result
+    from polylogyx.utils.cache import update_cached_host
+
+    current_app.logger.debug("Parsing the results for the node '{0}'".format([node_dict['hostname']]))
+    results, query_count_list, node_host_details_to_update = process_result(data, node_dict)
+    current_app.logger.debug("Saved the results successfully for the node '{0}'".format(node_dict['hostname']))
+    analyze_result(results, query_count_list, node_dict)
+    log_tee.handle_result(results, host_identifier=node_dict['host_identifier'], node=node_dict)
+    if node_host_details_to_update:
+        update_cached_host(node_dict['node_key'], {'host_details': node_host_details_to_update})
 
 
 @celery.task()
@@ -399,16 +488,13 @@ def build_carve_session_archive(session_id):
     carve_session.archive = out_file_name
 
     out_file_name = (
-        PolyLogyxServerDefaults.BASE_URL + "/carves/" + carve_session.node.host_identifier + "/" + out_file_name
+        os.path.join(current_app.config.get('RESOURCES_URL'), 'carves', carve_session.node.host_identifier, out_file_name)
     )
-    if not os.path.exists(PolyLogyxServerDefaults.BASE_URL + "/carves/" + carve_session.node.host_identifier + "/"):
-        os.makedirs(PolyLogyxServerDefaults.BASE_URL + "/carves/" + carve_session.node.host_identifier + "/")
-    f = open(out_file_name, "wb")
-
-    for data in carve_block_data:
-        f.write(base64.standard_b64decode(data[0]))
-    # break;
-    f.close()
+    if not os.path.exists(os.path.join(current_app.config.get('RESOURCES_URL'), 'carves', carve_session.node.host_identifier)):
+        os.makedirs(os.path.join(current_app.config.get('RESOURCES_URL'), 'carves', carve_session.node.host_identifier))
+    with open(out_file_name, "wb") as f:
+        for data in carve_block_data:
+            f.write(base64.standard_b64decode(data[0]))
     carve_session.status = CarveSession.StatusCompleted
     carve_session.update(carve_session)
     db.session.commit()
@@ -421,18 +507,16 @@ def example_task(one, two):
 
 
 @celery.task()
-def send_recon_on_checkin(node):
-    from polylogyx.db.database import db
-
+def send_recon_on_checkin(node_dict):
     try:
-        node_obj = Node.query.filter(Node.id == node.get("id")).first()
-        send_queries(node_obj, db)
+        send_queries(node_dict)
     except Exception as e:
         current_app.logger.error(e)
 
 
 @celery.task()
 def scan_result_log_data_and_match_with_threat_intel():
+
     try:
         lock_id = "scanResultLogDataAndMatchWithThreatIntel"
 
@@ -449,9 +533,9 @@ def send_threat_intel_alerts():
     threat_intel.generate_alerts()
 
 
-def clear_new_queries(node, db):
+def clear_new_queries(node_dict):
     try:
-        db.session.query(DistributedQueryTask).filter(DistributedQueryTask.node_id == node.id).filter(
+        db.session.query(DistributedQueryTask).filter(DistributedQueryTask.node_id == node_dict['id']).filter(
             DistributedQueryTask.save_results_in_db == True
         ).filter(DistributedQueryTask.status == DistributedQueryTask.NEW).update(
             {"status": DistributedQueryTask.NOT_SENT}
@@ -461,49 +545,38 @@ def clear_new_queries(node, db):
         current_app.logger.error(e)
 
 
-def is_extension_old(node):
-    return (
-        "extension_version" in node.host_details
-        and node.host_details["extension_version"]
-        and node.host_details["extension_version"].startswith("1")
-    )
-
-
-def send_queries(node, db):
-    clear_new_queries(node, db)
+def send_queries(node_dict):
+    clear_new_queries(node_dict)
     try:
         for key, value in DefaultInfoQueries.DEFAULT_QUERIES.items():
             query = DistributedQuery.create(
                 sql=value,
                 description=key,
             )
-            task = DistributedQueryTask(node=node, distributed_query=query, save_results_in_db=True)
+            task = DistributedQueryTask(node_id=node_dict['id'], distributed_query=query, save_results_in_db=True)
             db.session.add(task)
 
         for key, value in DefaultInfoQueries.DEFAULT_VERSION_INFO_QUERIES.items():
-            if key == DefaultInfoQueries.EXTENSION_HASH_QUERY_NAME and not is_extension_old(node):
-                continue
-            platform = node.platform
+            platform = node_dict['platform']
             if platform not in ["windows", "darwin", "freebsd"]:
                 platform = "linux"
             default_query = (
-                DefaultQuery.query.filter(DefaultQuery.name == key).filter(DefaultQuery.platform == platform).first()
+                DefaultQuery.query.filter(DefaultQuery.name == key).first()
             )
             if default_query:
                 query = DistributedQuery.create(sql=default_query.sql, description=value)
-                task = DistributedQueryTask(node=node, distributed_query=query, save_results_in_db=True)
+                task = DistributedQueryTask(node_id=node_dict['id'], distributed_query=query, save_results_in_db=True)
                 db.session.add(task)
         for key, value in DefaultInfoQueries.DEFAULT_DEFENDER_INFO_QUERY.items():
-            platform = node.platform
+            platform = node_dict['platform']
             if platform == "windows":
                 default_query = (
                     DefaultQuery.query.filter(DefaultQuery.name == key)
-                    .filter(DefaultQuery.platform == platform)
                     .first()
                 )
                 if default_query:
                     query = DistributedQuery.create(sql=default_query.sql, description=value)
-                    task = DistributedQueryTask(node=node, distributed_query=query, save_results_in_db=True)
+                    task = DistributedQueryTask(node_id=node_dict['id'], distributed_query=query, save_results_in_db=True)
                     db.session.add(task)
         db.session.commit()
 
@@ -512,37 +585,31 @@ def send_queries(node, db):
 
 
 @celery.task()
-def send_defender_info_query():
-    from polylogyx.db.database import db
+def send_checkin_query_to_all_hosts():
+    from polylogyx.utils.cache import get_all_cached_hosts
 
-    nodes = Node.query.all()
-    active_nodes = []
-    host_identifiers = []
-    for node in nodes:
-        if node.node_is_active() and node.platform == "windows":
-            active_nodes.append(node)
-            host_identifiers.append(node.host_identifier)
-    defender_status_check(active_nodes, db)
-
-
-def defender_status_check(nodes, db):
-    try:
-        for key, value in DefaultInfoQueries.DEFAULT_DEFENDER_INFO_QUERY.items():
-            default_query = DefaultQuery.query.filter(DefaultQuery.name == key).first()
-            query = DistributedQuery.create(sql=default_query.sql, description=value)
-            for node in nodes:
-                task = DistributedQueryTask(node=node, distributed_query=query, save_results_in_db=True)
-                db.session.add(task)
-            db.session.commit()
-    except Exception as e:
-        current_app.logger.error(e)
-    return
+    nodes = get_all_cached_hosts()
+    for node_key, node_dict in nodes.items():
+        send_queries(node_dict)
 
 
 @celery.task()
-def send_checkin_query_to_all_hosts():
-    from polylogyx.db.models import db
+def update_cached_hosts():
+    from polylogyx.utils.cache import get_all_cached_hosts, remove_cached_host
 
-    nodes = Node.query.all()
-    for node in nodes:
-        send_queries(node, db)
+    hosts = get_all_cached_hosts()
+    node_keys_from_db = [node.node_key for node in Node.query.with_entities(Node.node_key).all()]
+    final_hosts = {}
+    for node_key, node_dict in hosts.items():
+        for column, value in node_dict.items():
+            if node_key in node_keys_from_db:
+                if value is not None:
+                    if node_key in final_hosts:
+                        final_hosts[node_key][column] = value
+                    else:
+                        final_hosts[node_key] = {column: value}
+            else:
+                remove_cached_host(node_key=node_key)
+                
+    db.session.bulk_update_mappings(Node, list(final_hosts.values()))
+    db.session.commit()

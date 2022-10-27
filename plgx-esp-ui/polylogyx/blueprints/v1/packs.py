@@ -1,17 +1,15 @@
 from json import JSONDecodeError
 
-from flask_restplus import Namespace, Resource
+from flask_restful import Resource
 from flask import json
-
+from polylogyx.blueprints.v1.external_api import api
 from polylogyx.blueprints.v1.utils import *
 from polylogyx.dao.v1 import packs_dao, tags_dao
 from polylogyx.wrappers.v1 import pack_wrappers, parent_wrappers
 from polylogyx.authorize import admin_required
 
-ns = Namespace('packs', description='packs related operations')
 
-
-@ns.route('', endpoint='list packs')
+@api.resource('/packs', endpoint='list packs')
 class PacksList(Resource):
     """
         List all packs of the Nodes
@@ -21,8 +19,6 @@ class PacksList(Resource):
                           ['start', 'limit', 'searchterm'],
                           [False, False, False], [None, None, None], [None, None, ''])
 
-    @ns.expect(parser)
-    @ns.marshal_with(parent_wrappers.common_response_wrapper)
     def post(self):
         args = self.parser.parse_args()
         queryset = packs_dao.get_all_packs(args['searchterm']).offset(args['start']).limit(args['limit']).all()
@@ -45,7 +41,7 @@ class PacksList(Resource):
         return prepare_response(message, status, data)
 
 
-@ns.route('/<int:pack_id>', endpoint='pack by id')
+@api.resource('/packs/<int:pack_id>',  endpoint='pack by id')
 class PackById(Resource):
     """
         List all packs of the Nodes
@@ -67,7 +63,7 @@ class PackById(Resource):
         return marshal(prepare_response(message), parent_wrappers.failure_response_parent)
 
 
-@ns.route('/add', endpoint='pack add')
+@api.resource('/packs/add',  endpoint='pack add')
 class AddPack(Resource):
     """
         Adds a new pack to the Pack model
@@ -83,16 +79,31 @@ class AddPack(Resource):
                            ["windows", "linux", "darwin"], None, None, None])
 
     @admin_required
-    @ns.expect(parser)
     def post(self):
         args = self.parser.parse_args()
+        args['name'] = args['name'].strip()
+        if not args['name']:
+            message = "Pack name provided is not acceptable!"
+            return marshal(prepare_response(message, "failure"), parent_wrappers.common_response_wrapper)
+        if args['tags'] is not None and (not args['tags'] or not tags_dao.are_all_tags_has_correct_length(args['tags'].split(','))):
+            message = f"Tag length should be between 0 and {current_app.config.get('INI_CONFIG', {}).get('max_tag_length')}"
+            return marshal(prepare_response(message, "failure"), parent_wrappers.common_response_wrapper)
+        elif args['tags'] is not None and not tags_dao.are_all_tags_has_valid_strings(args['tags'].split(',')):
+                message = "Tags provided are not valid, tags should not contain ',' and space"
+                return marshal(prepare_response(message, "failure"), parent_wrappers.common_response_wrapper)
+        existing_pack = packs_dao.get_pack_by_name(args['name'])
         pack = add_pack_through_json_data(args)
-        current_app.logger.info("A new pack is added '{0}' with name '{1}'".format(pack, pack.name))
-        return marshal({'pack_id': pack.id}, pack_wrappers.response_add_pack)
+        if not existing_pack:
+            current_app.logger.info("A new pack is added '{0}' with name '{1}'".format(pack, pack.name))
+            message = 'Imported query pack and pack is added/uploaded successfully'
+        else:
+            current_app.logger.info("Existing pack is  updated '{0}' with name '{1}'".format(pack, pack.name))
+            message = 'Imported query pack and pack is updated to successfully'
+        return marshal({'pack_id': pack.id,'message': message}, pack_wrappers.response_add_pack)
 
 
-@ns.route('/<string:pack_name>/tags', endpoint='pack tags list')
-@ns.route('/<int:pack_id>/tags', endpoint='pack tags list by pack id')
+@api.resource('/packs/<string:pack_name>/tags',  endpoint='pack tags list')
+@api.resource('/packs/<int:pack_id>/tags',  endpoint='pack tags list by pack id')
 class ListOrEditsTagsOfPack(Resource):
     """
         Resource for tags of a Pack
@@ -118,10 +129,9 @@ class ListOrEditsTagsOfPack(Resource):
             data = [tag.value for tag in pack.tags]
             status = "success"
             message = "Successfully fetched the tags of pack"
-        return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper)
 
     @admin_required
-    @ns.expect(parser)
     def post(self, pack_name=None, pack_id=None):
         """
             Creates tags of a Pack by its id
@@ -137,8 +147,10 @@ class ListOrEditsTagsOfPack(Resource):
             pack = None
         if pack:
             tag = args['tag'].strip()
-            if not tag:
-                message = "Tag provided is invalid!"
+            if not tag or not valid_string_parser(tag):
+                message = "Tag provided is not valid, tag should not be empty or should not contain ',' and space"
+            elif not (0 < len(tag) < int(current_app.config.get('INI_CONFIG', {}).get('max_tag_length'))):
+                message = f"Tag length should be between 0 and {current_app.config.get('INI_CONFIG', {}).get('max_tag_length')}"
             else:
                 tag = tags_dao.create_tag_obj(tag)
                 pack.tags.append(tag)
@@ -149,10 +161,9 @@ class ListOrEditsTagsOfPack(Resource):
         else:
             message = "Pack id or pack name passed it not correct"
 
-        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)
 
     @admin_required
-    @ns.expect(parser)
     def delete(self, pack_name=None, pack_id=None):
         """
             Remove tags of a Pack by its id
@@ -182,10 +193,10 @@ class ListOrEditsTagsOfPack(Resource):
                 message = "Tag provided doesn't exists"
         else:
             message = "Pack id or pack name passed it not correct"
-        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/upload', endpoint="packs upload")
+@api.resource('/packs/upload',  endpoint="packs upload")
 class UploadPack(Resource):
     """
         Packs will be added through the uploaded file
@@ -198,22 +209,43 @@ class UploadPack(Resource):
                                           [None, "General"]])
 
     @admin_required
-    @ns.expect(parser)
+    @validate_file_size
     def post(self):
         args = self.parser.parse_args()
         status = "failure"
+        allowed_platforms = ['windows', 'linux', 'darwin', 'all']
         try:
             args_dict = json.loads(args['file'].read())
             args_dict['name'] = args['file'].filename.lower().split('.')[0]
             if args['category']:
                 args_dict['category'] = args['category']
-            if 'queries' not in args_dict:
+            if len(args_dict['name'].strip()) == 0:
+                message = "Please upload pack file with name"
+            elif 'queries' not in args_dict:
                 message = "Queries are compulsory!"
+            elif 'tags' in args_dict and args_dict['tags'] is not None and not tags_dao.are_all_tags_has_correct_length(args_dict['tags'].split(',')):
+                message = f"Tag length should be between 0 and {current_app.config.get('INI_CONFIG', {}).get('max_tag_length')}"
+            elif 'tags' in args_dict and args_dict['tags'] is not None and  not tags_dao.are_all_tags_has_valid_strings(args_dict['tags'].split(',')):
+                message = "Tags provided are not valid"
+            elif 'platform' in args_dict and args_dict['platform'] and args_dict['platform'].lower() not in allowed_platforms:
+                message = 'Invalid platform'
+            elif len([args_dict['queries'][query]['platform'] for query in args_dict['queries']
+                    if 'platform' in args_dict['queries'][query]
+                    if args_dict['queries'][query]['platform'].lower() not in allowed_platforms]) > 0:
+                    message = 'Invalid platform'
             else:
                 try:
+                    existing_pack = packs_dao.get_pack_by_name(args_dict['name'])
                     pack = add_pack_through_json_data(args_dict)
                     current_app.logger.info("A new pack '{0}' has been added with name '{1}'".format(pack, pack.name))
-                    return marshal({'pack_id': pack.id}, pack_wrappers.response_add_pack)
+                    if not existing_pack:
+                        current_app.logger.info("A new pack is added '{0}' with name '{1}'".format(pack, pack.name))
+                        message = 'Imported query pack and pack is added/uploaded successfully'
+                    else:
+                        current_app.logger.info(
+                            "Existing pack is  updated '{0}' with name '{1}'".format(pack, pack.name))
+                        message = 'Imported query pack and pack is updated to successfully'
+                    return marshal({'pack_id': pack.id, 'message': message}, pack_wrappers.response_add_pack)
                 except JSONDecodeError:
                     message = "Json provided is not well formatted/invalid!"
                     current_app.logger.error("Json provided is not well formatted/invalid! - JSONDecodeError")
@@ -221,11 +253,11 @@ class UploadPack(Resource):
             message = "Please upload only readable(.json/.conf) formatted files with well json!"
             current_app.logger.error("Please upload only readable(.json/.conf) formatted files with well json! - {}"
                                      .format(str(e)))
-        return marshal(prepare_response(message, status, None), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status, None), parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/<string:pack_name>/delete', endpoint='pack removed')
-@ns.route('/<int:pack_id>/delete', endpoint='pack removed by id')
+@api.resource('/packs/<string:pack_name>/delete', endpoint='pack removed')
+@api.resource('/packs/<int:pack_id>/delete', endpoint='pack removed by id')
 class PackRemoved(Resource):
     """
         Delete Pack
@@ -249,5 +281,5 @@ class PackRemoved(Resource):
             message = "Successfully removed the Pack"
             status = "Success"
             current_app.logger.warning("Pack {} is requested for deletion".format(pack))
-            return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
-        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
+            return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)
+        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)

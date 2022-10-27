@@ -2,10 +2,22 @@
 # -*- coding: utf-8 -*-
 import datetime as dt
 import os
+from os.path import dirname, join, abspath
 from binascii import b2a_hex
 
 import pika
 from distutils.util import strtobool
+
+
+def get_ini_config(file_path):
+    import configparser
+    config_dict = {}
+    config = configparser.ConfigParser()
+    config.read(file_path)
+    for section in config.sections():
+        for key, value in config[section].items():
+            config_dict[key] = value
+    return config_dict
 
 
 class Config(object):
@@ -41,8 +53,8 @@ class Config(object):
 
     DEFAULT_ROLES = {1: 'admin', 2: 'analyst'}
 
-    APP_DIR = os.path.abspath(os.path.dirname(__file__))  # This directory
-    PROJECT_ROOT = os.path.abspath(os.path.join(APP_DIR, os.pardir))
+    APP_DIR = abspath(dirname(__file__))  # This directory
+    PROJECT_ROOT = abspath(join(APP_DIR, os.pardir))
 
     POSTGRES_USE_SSL = os.getenv("POSTGRES_USE_SSL", "False").lower() in (
         "true",
@@ -103,20 +115,18 @@ class Config(object):
     CELERY_TASK_SERIALIZER = "djson"
     # CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
 
-    CELERY_ROUTES = {
-        "polylogyx.celery.tasks.save_and_analyze_results": {"queue": "result_log_queue", "routing_key": "default"},
-        "polylogyx.celery.tasks.analyze_result": {"queue": "result_log_queue", "routing_key": "default"},
-        "polylogyx.celery.tasks.*": {"queue": "default_esp_queue", "routing_key": "default"},
-    }
     CELERY_QUEUES = {
-        "websocket_refresh_esp_queue": {
-            "exchange": "websocket_refresh_exchange",
-            "binding_key": "default",
-            "queue_arguments": {"x-max-priority": 10},
-        },
         "default_esp_queue": {"exchange": "default_esp_exchange", "binding_key": "default"},
-        "result_log_queue": {},
+        "result_log_queue": {}
     }
+    INI_CONFIG = get_ini_config(join(dirname(dirname(abspath(__file__))), 'config.ini'))
+    if INI_CONFIG.get('save_log_queue'):
+        CELERY_QUEUES[INI_CONFIG.get('save_log_queue')] = {}
+    if INI_CONFIG.get('match_rule_queue'):
+        CELERY_QUEUES[INI_CONFIG.get('match_rule_queue')] = {}
+    if INI_CONFIG.get('match_ioc_queue'):
+        CELERY_QUEUES[INI_CONFIG.get('match_ioc_queue')] = {}
+
     BROKER_CONNECTION_MAX_RETRIES = None
     BROKER_USE_SSL = RABBITMQ_USE_SSL
 
@@ -124,7 +134,6 @@ class Config(object):
     # You can specify a set of custom logger plugins here.  These plugins will
     # be called for every status or result log that is received, and can
     # do what they wish with them.
-
 
     POLYLOGYX_LOG_PLUGINS_OBJ = {"rsyslog": "polylogyx.plugins.logs.rsyslog.RsyslogPlugin"}
     # These are the configuration variables for the example logger plugin given
@@ -219,16 +228,15 @@ class Config(object):
     # for more information.
     # Alternatively, you can set filename to '-' to log to stdout.
     POLYLOGYX_LOGGING_DIR = '/var/log/er'
-    POLYLOGYX_LOGGING_FILENAME = "log"
+    POLYLOGYX_LOGGING_FILENAME = "er_log"
     POLYLOGYX_LOGFILE_SIZE = int(os.environ.get("LOGFILE_SIZE", 10485760))
     POLYLOGYX_LOGFILE_BACKUP_COUNT = int(os.environ.get("LOGFILE_BACKUP_COUNT", 10))
     POLYLOGYX_LOGGING_FORMAT = "%(asctime)s--%(levelname).1s--%(thread)d--%(funcName)s--%(message)s"
     POLYLOGYX_LOGGING_LEVEL = os.environ.get("LOG_LEVEL", "WARNING")
 
-    HIGH_INTEL_VOLUME = bool(strtobool(os.environ.get("HIGH_INTEL_VOLUME",'false')))
-    
-    CACHE_TYPE = 'filesystem'
-    CACHE_DIR = './cache'
+    RULE_MATCHING = bool(strtobool(os.environ.get("RULE_MATCHING",'false')))
+    IOC_MATCHING = bool(strtobool(os.environ.get("IOC_MATCHING",'false')))
+    THREAT_INTEL_MATCHING = bool(strtobool(os.environ.get("THREAT_INTEL_MATCHING",'false')))
 
     SESSION_COOKIE_SECURE = True
     REMEMBER_COOKIE_DURATION = dt.timedelta(days=30)
@@ -252,8 +260,6 @@ class Config(object):
 
     POLYLOGYX_OAUTH_CLIENT_ID = ""
     POLYLOGYX_OAUTH_CLIENT_SECRET = ""
-
-
 
     # When using POLYLOGYX_AUTH_METHOD = 'ldap', see
     # http://flask-ldap3-login.readthedocs.io/en/latest/configuration.html#core
@@ -300,8 +306,13 @@ class ProdConfig(Config):
     DEBUG_TB_ENABLED = False
     DEBUG_TB_INTERCEPT_REDIRECTS = False
 
-    ENFORCE_SSL = True
+    BASE_URL = join(dirname(dirname(__file__)))
+    RESOURCES_URL = join(BASE_URL, 'resources')
+    COMMON_FILES_URL = join(BASE_URL, 'common')
 
+    INI_CONFIG = get_ini_config(join(COMMON_FILES_URL, 'config.ini'))
+
+    ENFORCE_SSL = True
     API_KEY = os.environ.get("API_KEY", "c05910fe-7f77-11e8-adc0-fa7ae01bbebc")
 
     RABBITMQ_HOST = os.environ.get("RABBITMQ_URL", "rabbit1")
@@ -312,6 +323,10 @@ class ProdConfig(Config):
     BROKER_URL = "pyamqp://{0}:{1}@{2}:{3}".format(RABBITMQ_USERNAME, RABBITMQ_PASSWORD, RABBITMQ_HOST, RABBITMQ_PORT)
 
     CELERY_RESULT_BACKEND = "rpc://"
+
+    REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
+    REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
+    REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "admin")
 
     FLOWER_URL = "http://plgx-esp:5555"
     FLOWER_USERNAME = os.environ.get("FLOWER_USERNAME", "admin")
@@ -351,17 +366,20 @@ class DevConfig(Config):
     This class specifies a configuration that is suitable for running in
     development.  It should not be used for running in production.
     """
-
     ENV = "dev"
     DEBUG = True
     DEBUG_TB_ENABLED = True
     DEBUG_TB_INTERCEPT_REDIRECTS = False
     ASSETS_DEBUG = True
-    # POLYLOGYX_LOGGING_DIR = '-'
-    # POLYLOGYX_LOGGING_FILENAME = '-'
 
-    POLYLOGYX_LOGGING_DIR = '.'
-    POLYLOGYX_LOGGING_FILENAME = "log"
+    POLYLOGYX_LOGGING_DIR = '-'
+    POLYLOGYX_LOGGING_FILENAME = "-"
+
+    BASE_URL = join(dirname(dirname(__file__)))
+    RESOURCES_URL = join(dirname(BASE_URL), 'resources')
+    COMMON_FILES_URL = join(dirname(BASE_URL), 'common')
+
+    INI_CONFIG = get_ini_config(join(COMMON_FILES_URL, 'config.ini'))
 
     API_KEY = os.environ.get("API_KEY", "c05910fe-7f77-11e8-adc0-fa7ae01bbebc")
 
@@ -374,26 +392,37 @@ class DevConfig(Config):
 
     CELERY_RESULT_BACKEND = "rpc://"
 
+    REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
+    REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
+    REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "admin")
+
     FLOWER_URL = "http://localhost:5555"
     FLOWER_USERNAME = os.environ.get("FLOWER_USERNAME", "admin")
     FLOWER_PASSWORD = os.environ.get("FLOWER_PASSWORD", "admin")
 
-    SQLALCHEMY_DATABASE_URI = "postgresql://polylogyx:polylogyx@3.110.85.21:5432/polylogyx"
+    SQLALCHEMY_DATABASE_URI = "postgresql://polylogyx:polylogyx@localhost:5432/polylogyx"
 
     POLYLOGYX_ENROLL_SECRET = [
         "secret",
     ]
+    SLACK_TOKEN = os.environ.get("SLACK_TOKEN", "")
 
 
 class TestConfig(Config):
     """
     This class specifies a configuration that is used for our tests.
     """
+    ENV = "test"
+    TESTING = True
+    DEBUG = True
     POLYLOGYX_LOGGING_DIR = ''
     POLYLOGYX_LOGGING_FILENAME = "-"
 
-    TESTING = True
-    DEBUG = True
+    BASE_URL = join(dirname(dirname(__file__)))
+    RESOURCES_URL = join(dirname(BASE_URL), 'resources')
+    COMMON_FILES_URL = join(dirname(BASE_URL), 'common')
+
+    INI_CONFIG = get_ini_config(join(COMMON_FILES_URL, 'config.ini'))
 
     SQLALCHEMY_DATABASE_URI = "postgresql://polylogyx:polylogyx@localhost:5432/polylogyx_test"
 
@@ -413,6 +442,10 @@ class TestConfig(Config):
     RABBIT_CREDS = pika.PlainCredentials(RABBITMQ_USERNAME, RABBITMQ_PASSWORD)
     BROKER_URL = "pyamqp://{0}:{1}@{2}:{3}".format(RABBITMQ_USERNAME, RABBITMQ_PASSWORD, RABBITMQ_HOST, RABBITMQ_PORT)
     CELERY_RESULT_BACKEND = "rpc://"
+
+    REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
+    REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
+    REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "admin")
 
 
 if os.environ.get("DYNO"):
@@ -483,11 +516,12 @@ if os.environ.get("DYNO"):
 
 # choose proper configuration based on environment -
 # this is both for manage.py and for worker.py
-if os.environ.get("POLYLOGYX_ENV") == "prod":
+if os.environ.get("ENV") == ProdConfig.ENV:
     CurrentConfig = ProdConfig
-elif os.environ.get("POLYLOGYX_ENV") == "test":
+elif os.environ.get("ENV") == TestConfig.ENV:
     CurrentConfig = TestConfig
 elif os.environ.get("DYNO"):
     CurrentConfig = HerokuConfig
 else:
     CurrentConfig = DevConfig
+

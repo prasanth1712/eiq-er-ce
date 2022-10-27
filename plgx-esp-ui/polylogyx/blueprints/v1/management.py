@@ -1,10 +1,10 @@
 import json
 
-from flask_restplus import Namespace, Resource, inputs
+from flask_restful import Resource, inputs
 from flask import request, abort
 from werkzeug.exceptions import NotFound
-
-from polylogyx.models import User, Settings, ThreatIntelCredentials, HandlingToken
+from polylogyx.blueprints.v1.external_api import api
+from polylogyx.models import User, Settings, ThreatIntelCredentials, AuthToken, VirusTotalAvEngines
 from polylogyx.extensions import bcrypt
 from polylogyx.util.api_validator import ApiValidator
 from polylogyx.blueprints.v1.utils import *
@@ -15,22 +15,21 @@ from polylogyx.utils import is_password_strong
 
 import jwt
 
-ns = Namespace('management', description='Management operations')
+
 api_validator_obj = ApiValidator()
 
 
-@ns.route('/changepw', endpoint='change password')
+@api.resource('/management/changepw', endpoint='change password')
 class ChangePassword(Resource):
     """
         Changes user password
     """
     parser = requestparse(['old_password', 'new_password', 'confirm_new_password'], [str, str, str], ["old password", "new password", "confirm new password"], [True, True, True])
 
-    @ns.expect(parser)
     def post(self):
         args = self.parser.parse_args()
         status = "failure"
-        payload = jwt.decode(request.headers.environ.get('HTTP_X_ACCESS_TOKEN'), current_app.config['SECRET_KEY'])
+        payload = jwt.decode(request.headers.environ.get('HTTP_X_ACCESS_TOKEN'), current_app.config['SECRET_KEY'], algorithms=["HS512"])
         user = User.query.filter_by(id=payload['id']).first()
         if is_password_strong(args['new_password']):
             if bcrypt.check_password_hash(user.password, args['old_password']):
@@ -40,11 +39,11 @@ class ChangePassword(Resource):
                         user.update(password=bcrypt.generate_password_hash(args['new_password']
                                                                            .encode("utf-8")).decode("utf-8"),
                                     reset_password=False)
-                        user_logged_in = HandlingToken.query.filter(
-                           HandlingToken.token == request.headers.environ.get('HTTP_X_ACCESS_TOKEN')).first()
+                        user_logged_in = AuthToken.query.filter(
+                           AuthToken.token == request.headers.environ.get('HTTP_X_ACCESS_TOKEN')).first()
 
-                        for token_object in HandlingToken.query.filter(HandlingToken.token_expired == False)\
-                                .filter(HandlingToken.user == user_logged_in.user):
+                        for token_object in AuthToken.query.filter(AuthToken.token_expired == False)\
+                                .filter(AuthToken.user == user_logged_in.user):
                             token_object.logged_out_at = dt.datetime.utcnow()
                             token_object.token_expired = True
                         db.session.commit()
@@ -62,20 +61,19 @@ class ChangePassword(Resource):
         else:
             message = "Password should contain 1 uppercase, 1 lowercase, 1 digit, 1 special character and min 8 characters of length!"
         current_app.logger.info(message)
-        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/verifypw', endpoint='verify password')
+@api.resource('/management/verifypw', endpoint='verify password')
 class VerifyPassword(Resource):
     """
         Verifies user's password
     """
     parser = requestparse(['password'], [str], ["password of the user to verify"], [True])
 
-    @ns.expect(parser)
     def post(self):
         args = self.parser.parse_args()
-        payload = jwt.decode(request.headers.environ.get('HTTP_X_ACCESS_TOKEN'), current_app.config['SECRET_KEY'])
+        payload = jwt.decode(request.headers.environ.get('HTTP_X_ACCESS_TOKEN'), current_app.config['SECRET_KEY'], algorithms=["HS512"])
         user = User.query.filter_by(id=payload['id']).first()
         if bcrypt.check_password_hash(user.password, args['password']):
             message = "Password for the current user is verified successfully"
@@ -85,10 +83,10 @@ class VerifyPassword(Resource):
             message = "Password is not matching with the current user"
             status = "failure"
         current_app.logger.info(message)
-        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/settings', endpoint="settings update")
+@api.resource('/management/settings', endpoint="settings update")
 class SettingsUpdate(Resource):
     """
         To change purge data duration and alert aggregation settings
@@ -112,29 +110,40 @@ class SettingsUpdate(Resource):
             else:
                 settings[setting.name] = setting.setting
         return marshal(prepare_response("Platform settings are fetched successfully", "success", settings),
-                       parent_wrappers.common_response_wrapper, skip_none=True)
+                       parent_wrappers.common_response_wrapper)
 
     @admin_required
-    @ns.expect(parser)
     def put(self):
         args = self.parser.parse_args()
         if args['purge_data_duration']:
             try:
-                data_duration = str(int(args['purge_data_duration']))
+                if 0 < int(args['purge_data_duration']) < int(current_app.config.get('INI_CONFIG', {}).get('max_data_retention_days')):
+                    data_duration = str(int(args['purge_data_duration']))
+                else:
+                    return marshal(prepare_response(f"Data retention days should be greater than 0 days and less than {current_app.config.get('INI_CONFIG', {}).get('max_data_retention_days')} days!", 'failure'),
+                                   parent_wrappers.common_response_wrapper
+                                   )
             except ValueError:
-                return marshal(prepare_response("Please pass a valid integer for data retention days!", 'failure'), parent_wrappers.common_response_wrapper,
-                               skip_none=True)
+                return marshal(prepare_response("Please pass a valid integer for data retention days!", 'failure'), parent_wrappers.common_response_wrapper
+                               )
             settings_dao.update_or_create_setting('data_retention_days', data_duration)
+            message = "data retention setting is updated successfully"
             current_app.logger.info("Purge data duration is set to {0} days".format(data_duration))
         if args['alert_aggregation_duration']:
             try:
-                aggr_duration = str(int(args['alert_aggregation_duration']))
+                max_alert_aggr_limit = int(current_app.config.get('INI_CONFIG', {}).get('max_alert_aggregation_in_secs', 86400))
+                req_alert_aggr = int(args['alert_aggregation_duration'])
+                if not (0 <= req_alert_aggr <= max_alert_aggr_limit):
+                    return marshal(prepare_response(f"Alert aggregation duration should be greater than 0 seconds and less than {max_alert_aggr_limit} seconds!", 'failure'),
+                                   parent_wrappers.common_response_wrapper
+                                   )
             except ValueError:
-                return marshal(prepare_response("Please pass a valid integer(seconds) for alert aggregation interval!", 'failure'), parent_wrappers.common_response_wrapper,
-                               skip_none=True)
-            settings_dao.update_or_create_setting('alert_aggregation_duration', aggr_duration)
+                return marshal(prepare_response("Please pass a valid integer(seconds) for alert aggregation duration!", 'failure'), parent_wrappers.common_response_wrapper
+                               )
+            settings_dao.update_or_create_setting('alert_aggregation_duration', req_alert_aggr)
             current_app.logger.info(
-                "Alert aggregation duration is set to {0} seconds".format(aggr_duration))
+                "Alert aggregation duration is set to {0} seconds".format(req_alert_aggr))
+            message = "Alert settings is updated successfully"
         if args['sso_enable']:
             settings_dao.update_or_create_setting('sso_enable', args['sso_enable'])
             current_app.logger.info(
@@ -144,19 +153,19 @@ class SettingsUpdate(Resource):
             if 'idp_metadata_url' not in config or 'app_name' not in config or 'entity_id' not in config:
                 message = "Please provide idp_metadata_url, app_name and entity_id!"
                 current_app.logger.info(message)
-                return marshal(prepare_response(message, 'failure'), parent_wrappers.common_response_wrapper,
-                               skip_none=True)
+                return marshal(prepare_response(message, 'failure'), parent_wrappers.common_response_wrapper
+                               )
             else:
                 settings_dao.update_or_create_setting('sso_configuration', json.dumps(config))
                 current_app.logger.info(
                     "SSO Configuration is set to {0}".format(args['sso_configuration']))
+                message = "sso configurations are updated successfully"
         db.session.commit()
-        message = "Platform settings are updated successfully"
         status = "success"
-        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/apikeys', endpoint='add apikey')
+@api.resource('/management/apikeys', endpoint='add apikey')
 class UpdateApiKeys(Resource):
     """
         Resource for Threat Intel API keys management
@@ -166,7 +175,6 @@ class UpdateApiKeys(Resource):
     parser_get = requestparse([], [], [], [])
 
     @admin_required
-    @ns.expect(parser)
     def post(self):
         """
             Updates Threat Intel API keys
@@ -181,7 +189,7 @@ class UpdateApiKeys(Resource):
         if not args['IBMxForcePass'] and args['IBMxForceKey'] or args['IBMxForcePass'] and not args['IBMxForceKey']:
             return marshal({'status': "failure", 'message': "Both IBMxForceKey and IBMxForcePass are required!",
                             'data': None, 'errors': {'ibmxforce': "Both IBMxForceKey and IBMxForcePass are required!"}},
-                           parent_wrappers.common_response_with_errors_wrapper, skip_none=True)
+                           parent_wrappers.common_response_with_errors_wrapper)
 
         threat_intel_creds = {'ibmxforce': {}, 'virustotal': {}, 'alienvault': {}}
         if args['IBMxForceKey'] and args['IBMxForcePass']:
@@ -234,9 +242,8 @@ class UpdateApiKeys(Resource):
             message = "{} api key(s) provided is/are invalid!".format(','.join(invalid))
         current_app.logger.info(message)
         return marshal({'status': status, 'message': message, 'data': API_KEYS, 'errors': errors},
-                       parent_wrappers.common_response_with_errors_wrapper, skip_none=True)
+                       parent_wrappers.common_response_with_errors_wrapper)
 
-    @ns.expect(parser_get)
     def get(self):
         """
             Returns Threat Intel API keys
@@ -247,11 +254,11 @@ class UpdateApiKeys(Resource):
             API_KEYS[threat_intel_credential.intel_name] = threat_intel_credential.credentials
         message = "Threat Intel Keys are fetched successfully"
         status = "success"
-        return marshal(prepare_response(message, status, API_KEYS), parent_wrappers.common_response_wrapper,
-                       skip_none=True)
+        return marshal(prepare_response(message, status, API_KEYS), parent_wrappers.common_response_wrapper
+                       )
 
 
-@ns.route('/virustotal/av_engine', endpoint="Virus Total AV engine update")
+@api.resource('/management/virustotal/av_engine', endpoint="Virus Total AV engine update")
 class VirusTotalAvEngineUpdate(Resource):
 
     """to update av engine status"""
@@ -278,8 +285,9 @@ class VirusTotalAvEngineUpdate(Resource):
         return prepare_response(message, status, data)
 
     @admin_required
-    @ns.expect(parser)
     def post(self):
+        from polylogyx.db.signals import create_platform_activity_obj
+        from polylogyx.dao.v1.users_dao import get_current_user
         args = self.parser.parse_args()
         av_engines = args['av_engines']
         minimum_count = args['min_match_count']
@@ -305,17 +313,22 @@ class VirusTotalAvEngineUpdate(Resource):
             for av_engine in av_engines:
                 if "status" not in av_engines[av_engine]:
                     abort(400, "Please provide status OR please provide valid payload")
-
-        common_dao.update_av_engine_status(av_engines)
+            common_dao.update_av_engine_status(av_engines)  # Update only if its provided
+            current_user = get_current_user()
+            if current_user:
+                user_id = current_user.id
+            else:
+                user_id = None
+            create_platform_activity_obj(db.session, 'updated', VirusTotalAvEngines, user_id)
+        db.session.commit()
         status = "success"
         message = "Virus Total AV engines configuration has been changed successfully"
         current_app.logger.info(message)
         return prepare_response(message, status)
 
 
-from polylogyx.cache import get_log_level
-from polylogyx.log_setting import _set_log_level_to_db,set_another_server_log_level,_get_log_level_from_db
-@ns.route('/log_setting', endpoint="Log level settings")
+from polylogyx.log_setting import update_log_level_setting, get_log_level_setting, set_another_server_log_level
+@api.resource('/management/log_setting', endpoint="Log level settings")
 class LogSetting(Resource):
     """
         To update log level of the servers
@@ -324,36 +337,42 @@ class LogSetting(Resource):
                           ["ER Log Level", "ER-UI Log Level"],
                           [False, False],
                           [['WARNING', 'INFO', 'DEBUG'], ['WARNING', 'INFO', 'DEBUG']])
+
     @admin_required
     def get(self):
-        server_name=request.args.get("server_name","ER-UI")
-        if server_name=="ER-UI":
-            level = get_log_level()
-        if server_name=="ER":
-            level = _get_log_level_from_db("er_log_level")
-
-        data={"log_level":level}
+        server_name = request.args.get("server_name", "ER-UI")
+        if server_name == "ER":
+            setting = get_log_level_setting("er_log_level")
+        else:
+            setting = get_log_level_setting('er_ui_log_level')
+        if setting:
+            level = setting.setting
+        else:
+            level = "WARNING"
+        data = {"log_level": level}
         status = "success"
         message = "Log levels fetched"
         current_app.logger.info("Log levels are fetched successfully")
         return prepare_response(message, status, data)
 
     @admin_required
-    @ns.expect(parser)
     def put(self):
+        from polylogyx.cache import refresh_log_level
         args = self.parser.parse_args()
         status = "success"
         message = "Log level has been changed successfully"
         if args['er_log_level']:
-            status,message=set_another_server_log_level("ER",args["er_log_level"])
+            update_log_level_setting('er_log_level', args["er_log_level"])
+            set_another_server_log_level('ER', args["er_log_level"])
         if args['er_ui_log_level']:
-            _set_log_level_to_db(args["er_ui_log_level"])
+            update_log_level_setting('er_ui_log_level', args["er_ui_log_level"])
+        refresh_log_level()
         current_app.logger.info(message)
         return prepare_response(message, status)
 
 
 from polylogyx.tasks import purge_old_data
-@ns.route('/manual_purge', endpoint="Manual Purge Request")
+@api.resource('/management/manual_purge', endpoint="Manual Purge Request")
 class ManualPurge(Resource):
     """
         On demand data purge
@@ -364,7 +383,6 @@ class ManualPurge(Resource):
                           )
 
     @admin_required
-    @ns.expect(parser)
     def post(self):
         args = self.parser.parse_args()
         status = "success"
@@ -372,22 +390,23 @@ class ManualPurge(Resource):
         if args['rentention_days'] > 0:
             purge_old_data.apply_async(args=[args['rentention_days']])
         else:
-            status="failure"
+            status = "failure"
             message = "Manual purge failed, Retention days should be greater than 0!"
         current_app.logger.info(message)
         return prepare_response(message, status)
 
+
 from flask import send_from_directory
 import datetime as dt
-@ns.route('/download_log', endpoint="Download server logs")
+@api.resource('/management/download_log', endpoint="Download server logs")
 class DownloadLog(Resource):
     """
         Download server logs
     """
-    parser = requestparse(['server_name','filename'], [str,str],
-                          ["Server Name",'file name'],
-                          [True,True],
-                          [["ER","ER-UI"],None]
+    parser = requestparse(['server_name', 'filename'], [str, str],
+                          ["Server Name", 'file name'],
+                          [True, True],
+                          [["ER","ER-UI"], None]
                           )
     @admin_required
     def get(self):
@@ -396,25 +415,24 @@ class DownloadLog(Resource):
         data = []
         filename = None
         dir = None
-        server_name=request.args.get("server_name","ER-UI")
-        if server_name =="ER":
-            dir='/var/log/er'
-            filename = 'log'
-        elif server_name =="ER-UI":
-            dir=current_app.config['POLYLOGYX_LOGGING_DIR']
+        server_name = request.args.get("server_name","ER-UI")
+        if server_name == "ER":
+            dir = '/var/log/er'
+            filename = 'er_log'
+        elif server_name == "ER-UI":
+            dir = current_app.config['POLYLOGYX_LOGGING_DIR']
             filename = current_app.config["POLYLOGYX_LOGGING_FILENAME"]
         else:
-            status="failure"
+            status = "failure"
             message = "No such container found"
 
         if dir:
             import os
             fdir = os.listdir(dir)
             data = [f for f in fdir if f.startswith(filename) and os.path.isfile(os.path.join(dir,f))]
-        return prepare_response(message, status,data)
+        return prepare_response(message, status, data)
 
     @admin_required
-    @ns.expect(parser)
     def post(self):
         args = self.parser.parse_args()
         status = "success"
@@ -447,7 +465,7 @@ class DownloadLog(Resource):
 
 from polylogyx.dao.v1.metrics_dao import get_metrics
 
-@ns.route('/metrics', endpoint="Server Metrics")
+@api.resource('/management/metrics', endpoint="Server Metrics")
 class Metrics(Resource):
     """
         Download server logs
@@ -458,7 +476,7 @@ class Metrics(Resource):
                           [None]
                           )
 
-    @ns.expect(parser)
+    
     def post(self):
         args = self.parser.parse_args()
         status = "success"

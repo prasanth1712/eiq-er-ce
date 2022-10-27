@@ -1,14 +1,15 @@
-from flask_restplus import Namespace, Resource
-
+from flask_restful import Resource
+from polylogyx.blueprints.v1.external_api import api
 from polylogyx.blueprints.v1.utils import *
 from polylogyx.dao.v1 import iocs_dao
+from polylogyx.models import IOCIntel
 from polylogyx.wrappers.v1 import parent_wrappers
 from polylogyx.authorize import admin_required
 
-ns = Namespace('iocs', description='iocs related operations')
 
 
-@ns.route('', endpoint='get ioc data')
+
+@api.resource('/iocs', endpoint='get ioc data')
 class IndicatorsOfCompromise(Resource):
     """
         lists ioc json data
@@ -27,12 +28,12 @@ class IndicatorsOfCompromise(Resource):
                 "test-intel_ipv4": {
                     "type": "remote_address",
                     "values": "3.30.1.15,3.30.1.16",
-                    "severity": "WARNING"
+                    "severity": "MEDIUM"
                 },
                 "test-intel_domain_name": {
                     "type": "domain_name",
                     "values":"unknown.com,slackabc.com",
-                    "severity": "WARNING"
+                    "severity": "MEDIUM"
                 },
                 "test-intel_md5": {
                     "type": "md5",
@@ -42,11 +43,11 @@ class IndicatorsOfCompromise(Resource):
             }
         status = "success"
         message = "Successfully fetched the IOCs"
-        return marshal(prepare_response(message, status, ioc_full_data), parent_wrappers.common_response_wrapper,
-                       skip_none=True)
+        return marshal(prepare_response(message, status, ioc_full_data), parent_wrappers.common_response_wrapper
+                       )
 
 
-@ns.route('/add', endpoint='add ioc')
+@api.resource('/iocs/add', endpoint='add ioc')
 class AddIOC(Resource):
     """
         Uploads and adds an ioc file to the iocs folder
@@ -54,17 +55,36 @@ class AddIOC(Resource):
     parser = requestparse(['data'], [dict], ['Threat Intel Data Json'], [True])
 
     @admin_required
-    @ns.expect(parser)
     def post(self):
+        from polylogyx.cache import refresh_cached_iocs
+        from polylogyx.db.signals import create_platform_activity_obj
+        from polylogyx.dao.v1.users_dao import get_current_user
         args = self.parser.parse_args()
         data = args['data']
         iocs_dao.del_manual_threat_intel('self')
+        dictionary_list = []
         try:
             for intel_name, values in data.items():
                 if ('severity' in values and 'type' in values) and isinstance(values['values'], str):
                     for value in values['values'].split(','):
-                        iocs_dao.create_manual_threat_intel(intel_type='self', type=values['type'], value=value,
-                                                            severity=values['severity'], threat_name=intel_name)
+                        severity = str(values.get('severity', 'MEDIUM')).upper()
+                        if severity == 'WARNING':
+                            severity = 'MEDIUM'
+                        if severity not in [IOCIntel.MEDIUM, IOCIntel.CRITICAL, IOCIntel.INFO,IOCIntel.HIGH,IOCIntel.LOW]:
+                            severity = IOCIntel.MEDIUM
+                        dictionary_list.append({'intel_type': 'self', 'type': values['type'],
+                                                'value': value.strip(), 'severity': severity,
+                                                'threat_name': intel_name})
+            
+            db.session.bulk_insert_mappings(IOCIntel, dictionary_list)
+            current_user = get_current_user()
+            if current_user:
+                user_id = current_user.id
+            else:
+                user_id = None
+            create_platform_activity_obj(db.session, 'updated', IOCIntel, user_id)
+            db.session.commit()
+            refresh_cached_iocs()
             current_app.logger.info("IOCs(Indicators of compromise) are updated")
             message = "Successfully updated the intel data"
             status = "success"
@@ -72,4 +92,4 @@ class AddIOC(Resource):
             current_app.logger.error("Unable to update IOCs - {}".format(str(e)))
             message = str(e)
             status = "failure"
-        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status), parent_wrappers.common_response_wrapper)

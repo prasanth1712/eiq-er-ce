@@ -30,7 +30,8 @@ def push_live_query_results_to_websocket(results, queryId):
     connection.close()
 
 
-def assign_tags_to_node(add_tags,node):
+def assign_tags_to_node(add_tags, node_id):
+    node = Node.query.filter(Node.id == node_id).first()
     for add_tag in add_tags:
         if add_tag not in node.tags:
             node.tags.append(add_tag)
@@ -107,13 +108,16 @@ def fetch_platform(data):
 
 
 def get_ip():
-    trusted_proxies = {"127.0.0.1"}  # define your own set
     route = request.access_route + [request.remote_addr]
-
-    remote_addr = next(
-        (addr for addr in reversed(route) if addr not in trusted_proxies),
-        request.remote_addr,
-    )
+    # trusted_proxies = {"127.0.0.1"}  # define your own set
+    # remote_addr = next(
+    #     (addr for addr in reversed(route) if addr not in trusted_proxies),
+    #     request.remote_addr,
+    # )
+    if route != [request.remote_addr] and len(route) > 1:
+        remote_addr = route[0]
+    else:
+        remote_addr = request.remote_addr
     if remote_addr == "::1":
         remote_addr = "127.0.0.1"
     elif remote_addr[:7] == "::ffff:":
@@ -124,7 +128,6 @@ def get_ip():
 
 def send_checkin_queries(node):
     from polylogyx.celery.tasks import send_recon_on_checkin
-
     send_recon_on_checkin.apply_async(queue="default_esp_queue", args=[node.to_dict()])
 
 

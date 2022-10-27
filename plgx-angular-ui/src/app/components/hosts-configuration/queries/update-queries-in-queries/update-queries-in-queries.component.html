@@ -1,0 +1,204 @@
+
+
+<div class="kt-grid kt-grid--hor kt-grid--root">
+  <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
+    <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
+
+<div class="kt-portlet kt-portlet--last kt-portlet--responsive-mobile" id="kt_page_portlet">
+<div class="kt-portlet__head kt-portlet__head--lg">
+<div class="kt-portlet__head-label">
+  <!-- <h3 class="kt-portlet__head-title txt-fmly break-word-all">
+    <i class="kt-font-brand fas fa-pen-square"></i>
+      Update Query - {{ queriesdata_name }}
+  </h3> -->
+  <span class="kt-portlet__head-icon d-flex">
+    <i class="kt-font-brand fas fa-pen-square fnt-dark-black font-19 kt-font-brand"></i>
+  </span>
+  <h3 class="kt-portlet__head-title custom-header-title break-word-all">
+    Update Query - {{ queriesdata_name }}
+  </h3>
+</div>
+<div class="kt-portlet__head-toolbar ">
+  <div class="kt-portlet__head-wrapper">
+    <!-- <a href="javascript:void(0)" (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page">
+      <i class="fas fa-chevron-left back_icon_align"></i>
+      Back
+    </a> -->
+
+    <appbutton (click)="goBack()" text="Back" icon="fa-chevron-left" btnClass="btn-small-light" btnType="button"></appbutton>
+  </div>
+</div>
+</div>
+
+<div class="kt-portlet__body txt-fmly">
+<form class="kt-form" [formGroup]="updateQuery" >
+  <div class="row">
+   <div class="col-xl-12">
+     <div class="kt-section kt-section--first">
+       <!-- <div *ngFor="let queries of queriesdata_data | keyvalue" class="kt-section__body"> -->
+
+         <div class="form-group row required_field ">
+           <label class="col-sm-2 col-form-label form--label">
+             Name
+           </label>
+           <div class="col-10">
+            <input type="text" id="name"  formControlName="name" class="form-control" [(ngModel)]="queriesdata_data.name" value="{{queriesdata_data.name}}" [ngClass]="{ 'is-invalid': submitted && f.name.errors }" />
+            <div *ngIf="submitted && f.name.errors" class="invalid-feedback">
+            <div *ngIf="f.name.errors.required">Name is required</div>
+            </div>
+            <div *ngIf="f.name.invalid && (f.name.dirty || f.name.touched)" class="error-msg text-danger">
+              <div *ngIf="f.name.errors?.['maxlength']">Name cannot be more than {{maxInputCharacters}} characters</div>
+            </div>
+
+         </div>
+         </div>
+         <div class="form-group row required_field">
+           <label class="col-sm-2 col-form-label form--label">
+             Query
+           </label>
+           <div class="col-10">
+            <input type="hidden" formControlName="sql" name="sql" id="sql" value="">
+             <input type="hidden" name="live_query_val" id="live_query_val" value="{{this.query_data}}">
+
+
+            <!-- <div class="query-editor">
+              <section class="query-editor__wrapper">
+                <div id="js-query-editor" class="query-editor__flex-editor" style="flex-basis: calc((25vh));">
+                  <div class="query-editor__editor ace_editor ace_focus" id="live-query-editor"></div>
+                </div>
+              </section>
+            </div> -->
+            <div class="query-editor">
+            <section class="query-editor__wrapper">
+              <div id="js-query-editor" class="query-editor__flex-editor" style="flex-basis: calc((25vh));">
+                <!-- <div class="query-editor__editor ace_editor ace_focus" id="live-query-editor"></div> -->
+                <ace-editor
+                      #editor style="height:70px;">
+                    </ace-editor>
+              </div>
+            </section>
+          </div>
+             <span class="description_ex">Example: select * from processes;</span>
+           </div>
+         </div>
+         <div class="form-group row required_field">
+           <label class="col-2 col-form-label" for="interval">Interval <span class="intrvl-fnt-sm">(in secs)</span></label>
+           <div class="col-10">
+             <!-- <input class="form-control" id="interval" min="1" name="interval" type="number" value="{{queriesdata_data.interval}}"> -->
+             <input type="number" id="interval" min="1" max="604800" formControlName="interval" class="form-control" [(ngModel)]="queriesdata_data.interval" value="{{queriesdata_data.interval}}" [ngClass]="{ 'is-invalid': submitted && f.interval.errors }"/>
+             <div *ngIf="submitted && f.interval.errors" class="invalid-feedback">
+          <div *ngIf="f.interval.errors.required">Interval is required</div>
+          <div *ngIf="f.interval.errors.min">Please select a positive value </div>
+          <div *ngIf="f.interval.errors.max">Interval limit is 604800</div>
+          </div>
+           </div>
+         </div>
+         <div class="form-group row required_field">
+           <label class="col-2 col-form-label" for="platform">Platform</label>
+           <div class="col-10">
+
+        <!-- <label for="exampleFormControlSelect1"></label> -->
+              <select  class="form-control" style="cursor: pointer;" id="platform" placeholder="select  Platform" formControlName="platform" [(ngModel)]="queriesdata_data.platform" value="{{queriesdata_data.platform}}" [ngClass]="{ 'is-invalid': submitted && f.platform.errors }">
+                <option value="all">All</option>
+               <option value="darwin">Darwin</option>
+               <option value="linux">Linux</option>
+               <option value="freebsd">FreeBSD</option>
+               <option value="posix">POSIX Compatible</option>
+               <option value="windows">Windows</option>
+             </select>
+              <div *ngIf="submitted && f.platform.errors" class="invalid-feedback">
+                <div *ngIf="f.platform.errors.required">platform is required</div>
+                </div>
+            </div>
+          </div>
+
+         <div class="form-group row">
+           <label class="col-2 col-form-label" for="version">Version</label>
+           <div class="col-10">
+             <input  type="text" id="version" name="version"  class="form-control" formControlName="version" [(ngModel)]="queriesdata_data.version" value="{{queriesdata_data.version}}"/>
+           </div>
+         </div>
+         <div class="form-group row">
+           <label class="col-2 col-form-label" for="description">Description</label>
+           <div class="col-10">
+             <textarea class="form-control" type="text" name="description" id="description" formControlName="description" [(ngModel)]="queriesdata_data.description" value="{{queriesdata_data.description}}"></textarea>
+           </div>
+         </div>
+         <div class="form-group row">
+           <label class="col-2 col-form-label">Value</label>
+           <div class="col-10">
+             <textarea class="form-control" type="text" name="value" id="value" rows="3" formControlName="value" [(ngModel)]="queriesdata_data.value" value="{{queriesdata_data.value}}"></textarea>
+           </div>
+         </div>
+         <div class="form-group row">
+          <label class="col-2 col-form-label">packs</label>
+          <div class="col-10 kt-pack">
+            <angular2-multiselect [data]="dropdownPacknameList" [(ngModel)]="selectedPacknameItems" formControlName="packs"
+                [settings]="dropdownPacknameSettings" 
+                (onDeSelectAll)="onDeSelectAll($event)">
+            </angular2-multiselect>
+
+          </div>
+        </div>
+
+
+
+         <div class="form-group row">
+           <label class="col-2 col-form-label" for="tags">Tags <i _ngcontent-cji-c4="" class="help-badge badge-pill badge-light fa fa-info" title="One tag per line"></i></label>
+           <div class="col-10">
+             <textarea class="form-control" id="tags" name="tags" placeholder="One tag per line"  name="tags" id="tags" formControlName="tags" [(ngModel)]="queriesdata_data.tags" value="{{queriesdata_data.tags}}"></textarea>
+             <div *ngIf = "errorMessageTag != '' " class="error-msg text-danger">
+              {{errorMessageTag}}
+            </div>
+           </div>
+         </div>
+         <div class="form-group row">
+           <label class="col-2 col-form-label">Query Options</label>
+           <div class="col-10">
+             <div class="kt-checkbox-inline">
+               <div class="checkbox col-sm-5 row">
+                 <label>
+                   <div class="kt-checkbox-inline">
+                   <!-- <span class="col-md-3">Query Options</span> -->
+                   <div class="checkbox">
+                     <label>
+                       <input id="snapshot" name="snapshot" type="checkbox"  formControlName="snapshot" [(ngModel)]="queriesdata_data.snapshot" value="{{queriesdata_data.snapshot}}"> Snapshot
+                     </label>
+                   </div>
+                 </div>
+                 </label>
+               </div>
+             </div>
+           </div>
+         </div>
+       <!-- </div> -->
+     </div>
+     <!-- <div class="kt-separator kt-separator--border-dashed kt-separator--space-lg"></div> -->
+
+     <div class="kt-portlet__foot">
+       <div class="mandary txt-fmly">
+         <span class="" style="color: #e32;">*</span><span style="font-size: smaller;"> Mandatory Fields</span>
+       </div>
+       <div class="kt-form__actions kt-form__actions--center">
+         <!-- <a href="{{ url_for('manage.queries') }}" class="btn btn-outline-success btn-sm">
+                      <i class="la la-long-arrow-left"></i>
+                      Back
+                    </a> -->
+         <!-- <input class="btn btn-success" type="submit" value="{% if query is defined %}Update{% else %}Add{% endif %}"> -->
+         <!-- <button type="submit" (click)="saveForm()" id="run_query" class="btn btn-success"><i class="fa fa-sync-alt"></i>Update</button> -->
+         <appbutton text="Update" btnClass="btn-small" btnType="submit" icon="fa-sync-alt" (click)="saveForm()"></appbutton>
+
+         <!-- <button (click)="resetForm()"  style="margin-left:5px;" class="btn btn-secondary">Clear</button> -->
+         <appbutton text="Clear" btnClass="btn-small-light" btnType="button" (click)="resetForm()"></appbutton>
+
+       </div>
+     </div>
+    </div>
+  </div>
+</form>
+</div>
+
+</div>
+</div>
+</div>
+</div>

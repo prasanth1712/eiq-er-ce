@@ -1,17 +1,20 @@
 from polylogyx.models import db, User, Role, PlatformActivity, Node, Rule, Tag, Query, Pack, Settings, \
-    ThreatIntelCredentials, VirusTotalAvEngines, Config, DefaultQuery, CarveSession, IOCIntel
+    ThreatIntelCredentials, VirusTotalAvEngines, Config, DefaultQuery, CarveSession, IOCIntel, Alerts, NodeConfig, \
+    DefaultFilters
 from sqlalchemy import desc, and_, or_
+from sqlalchemy.orm import aliased
 import sqlalchemy
 
 
-def add_user(**payload):
-    if get_user(payload['username']):
+def add_user(username, email=None, password=None, first_name=None, last_name=None, roles=None, enable_sso=None):
+    if get_user(username):
         return False, 'User with this username already exists!'
-    if get_user_by_email(payload['email']):
+    if get_user_by_email(email):
         return False, 'User with this mail id already exists!'
     try:
-        return True, User.create(**payload)
+        return True, User.create(username=username, email=email, password=password, first_name=first_name, last_name=last_name, roles=roles, groups=[], reset_password=True, enable_sso=enable_sso)
     except sqlalchemy.exc.DataError:
+        # As column value length is set on the model, We use exception than a explicit check to check the length of it
         return False, "Username cannot exceed 80 characters!"
 
 
@@ -41,12 +44,17 @@ def get_user_by_email(email):
 
 
 def get_user_by_mail_or_username(username):
-    return User.query.filter(or_(User.username == username, User.email == username)).first()
+    return User.query.filter(or_(User.username == username, User.email == username)).filter(User.status != False).first()
 
 
-def get_all_users(start, limit, search_term):
+def get_all_users(start, limit, search_term,col=None,order_by=None,role=None,status=None):
     total_count = User.query.count()
-    qs = User.query
+    qs = db.session.query(User)
+    if role:
+        role = get_role(role)
+        qs = qs.filter(User.roles.any(Role.id == role.id))
+    if status is not None:
+        qs = qs.filter(User.status == status)
     if search_term:
         qs = qs.filter(or_(
             User.username.ilike('%' + search_term + '%'),
@@ -54,10 +62,14 @@ def get_all_users(start, limit, search_term):
             User.first_name.ilike('%' + search_term + '%'),
             User.last_name.ilike('%' + search_term + '%')
         ))
-    if search_term:
+    if search_term or role or status is not None:
         count = qs.count()
     else:
         count = total_count
+    if order_by and order_by == 'asc':
+        qs=qs.order_by(User.username)
+    if order_by and order_by == 'desc':
+        qs=qs.order_by(desc(User.username))
     if start is not None and limit:
         qs = qs.offset(start).limit(limit)
     return qs.all(), count, total_count
@@ -102,78 +114,88 @@ def delete_user(user):
 
 def update_user(user, email=None, first_name=None, last_name=None, role=None, username=None, status=None,
                 enable_sso=None):
+    dict_to_update = {}
     if username:
         if not User.query.filter(and_(User.username == username, User.id != user.id)).first():
             try:
-                user.update(username=username)
+                dict_to_update['username'] = username
             except sqlalchemy.exc.DataError:
+                # As column value length is set on the model, We use exception than a explicit check to check the length of it
                 return False, "Username cannot exceed 80 characters!"
         else:
             return False, "This username is being used already by another user!"
     if email:
         if not User.query.filter(and_(User.email == email, User.id != user.id)).first():
-            user.update(email=email, reset_email=False)
+            dict_to_update['email'] = email
+            dict_to_update['reset_email'] = False
+            # reset_email will be set to true only to those users who gets added as part of server initial compose
         else:
             return False, "This email is being used already by another user!"
     if first_name:
-        user.update(first_name=first_name)
-    if last_name:
-        user.update(last_name=last_name)
+        dict_to_update['first_name'] = first_name
+    if last_name is not None:
+        dict_to_update['last_name'] = last_name
     if role:
-        user.update(roles=[role])
+        dict_to_update['roles'] = [role]
+        # As role column in a many to many relationship, We should give it in a list
     if status is not None:
-        user.update(status=status)
+        dict_to_update['status'] = status
+        # Setting this controls user to the platform, Setting True allows user to login and False restricts
     if enable_sso is not None:
-        user.update(enable_sso=enable_sso)
+        dict_to_update['enable_sso'] = enable_sso
+        # Setting this will allow user to use SSO login
+    user.update(**dict_to_update)
     return True, user
 
 
 def get_users_activity(user_id, start, limit, searchterm):
-    query_set = db.session.query(PlatformActivity)
+    AliasedUser = aliased(User)
+    # As user is being joined for owner column, We needed to aliase and join
+    to_join = [Node, Rule, Alerts, Tag, Query, Pack, Config, Settings, DefaultFilters, DefaultQuery, NodeConfig,
+               ThreatIntelCredentials, VirusTotalAvEngines, IOCIntel, CarveSession, AliasedUser]
+
+    query_set = db.session.query(PlatformActivity, Node, Rule, Alerts, Tag, Query, Pack, Config, Settings,
+                                 DefaultFilters, DefaultQuery, NodeConfig, ThreatIntelCredentials, VirusTotalAvEngines,
+                                 IOCIntel, CarveSession, AliasedUser).join(User, PlatformActivity.user_id == User.id)
+    for table_kls in to_join:
+        # All the models which records the user activity are added to be joined with outer join
+        query_set = query_set.outerjoin(table_kls, and_(PlatformActivity.entity_id == table_kls.id,
+                                                        PlatformActivity.entity == table_kls.__tablename__))
+
     total_count = query_set.count()
     count = total_count
-    count_again = False
+    count_again = False  
+    # Using this flag to decide if the count query needs to run again, Will be True only when a searchterm is passed
+
     if user_id:
         query_set = query_set.filter(PlatformActivity.user_id == user_id)
         count_again = True
+
     if searchterm:
-        user_qs = db.session.query(PlatformActivity.id).filter(PlatformActivity.user_id == User.id)\
-            .filter(or_(User.username.ilike('%' + searchterm + '%'),
-                        User.first_name.ilike('%' + searchterm + '%'),
-                        User.last_name.ilike('%' + searchterm + '%')))
-        node_qs = db.session.query(PlatformActivity.id).filter(PlatformActivity.node_id == Node.id)\
-            .filter(or_(Node.node_info['computer_name'].astext.ilike('%' + searchterm + '%'),
-                        Node.node_info['display_name'].astext.ilike('%' + searchterm + '%'),
-                        Node.node_info['hostname'].astext.ilike('%' + searchterm + '%')))
-        rule_qs = db.session.query(PlatformActivity.id).filter(PlatformActivity.rule_id == Rule.id)\
-            .filter(Rule.name.ilike('%' + searchterm + '%'))
-        tag_qs = db.session.query(PlatformActivity.id).filter(PlatformActivity.tag_id == Tag.id)\
-            .filter(Tag.value.ilike('%' + searchterm + '%'))
-        query_qs = db.session.query(PlatformActivity.id).filter(PlatformActivity.query_id == Query.id)\
-            .filter(Query.name.ilike('%' + searchterm + '%'))
-        pack_qs = db.session.query(PlatformActivity.id).filter(PlatformActivity.pack_id == Pack.id)\
-            .filter(Pack.name.ilike('%' + searchterm + '%'))
-        config_qs = db.session.query(PlatformActivity.id).filter(PlatformActivity.config_id == Config.id)\
-            .filter(Config.name.ilike('%' + searchterm + '%'))
-        settings_qs = db.session.query(PlatformActivity.id).filter(PlatformActivity.settings_id == Settings.id)\
-            .filter(Settings.name.ilike('%' + searchterm + '%'))
-        default_query_qs = db.session.query(PlatformActivity.id).filter(PlatformActivity.default_query_id == DefaultQuery.id)\
-            .filter(DefaultQuery.name.ilike('%' + searchterm + '%'))
-        threat_intel_qs = db.session.query(PlatformActivity.id).filter(PlatformActivity.threat_intel_credentials_id == ThreatIntelCredentials.id)\
-            .filter(ThreatIntelCredentials.intel_name.ilike('%' + searchterm + '%'))
-        vt_qs = db.session.query(PlatformActivity.id).filter(PlatformActivity.virus_total_av_engines_id == VirusTotalAvEngines.id)\
-            .filter(VirusTotalAvEngines.name.ilike('%' + searchterm + '%'))
-        ioc_qs = db.session.query(PlatformActivity.id).filter(PlatformActivity.ioc_intel_id == IOCIntel.id)\
-            .filter(IOCIntel.threat_name.ilike('%' + searchterm + '%'))
-        carve_qs = db.session.query(PlatformActivity.id).filter(PlatformActivity.carve_session_id == CarveSession.id)\
-            .filter(CarveSession.session_id.ilike('%' + searchterm + '%'))
-        qs_list = [user_qs, node_qs, rule_qs, tag_qs, query_qs, pack_qs, config_qs, settings_qs, default_query_qs,
-                   threat_intel_qs, vt_qs, ioc_qs, carve_qs]
-        qs_new = qs_list[0]
-        query_set = query_set.filter(PlatformActivity.id.in_(qs_new.union_all(*qs_list).all()))
+        query_set = query_set.filter(or_(
+                                        User.username.ilike('%' + searchterm + '%'),
+                                        User.first_name.ilike('%' + searchterm + '%'),
+                                        User.last_name.ilike('%' + searchterm + '%'),
+                                        Node.node_info['computer_name'].astext.ilike('%' + searchterm + '%'),
+                                        Node.node_info['display_name'].astext.ilike('%' + searchterm + '%'),
+                                        Node.node_info['hostname'].astext.ilike('%' + searchterm + '%'),
+                                        Rule.name.ilike('%' + searchterm + '%'),
+                                        Tag.value.ilike('%' + searchterm + '%'),
+                                        Query.name.ilike('%' + searchterm + '%'),
+                                        Pack.name.ilike('%' + searchterm + '%'),
+                                        Config.name.ilike('%' + searchterm + '%'),
+                                        Config.platform.ilike('%' + searchterm + '%'),
+                                        Settings.name.ilike('%' + searchterm + '%'),
+                                        DefaultQuery.name.ilike('%' + searchterm + '%'),
+                                        ThreatIntelCredentials.intel_name.ilike('%' + searchterm + '%'),
+                                        VirusTotalAvEngines.name.ilike('%' + searchterm + '%'),
+                                        IOCIntel.threat_name.ilike('%' + searchterm + '%'),
+                                        CarveSession.session_id.ilike('%' + searchterm + '%')))
         count_again = True
+
     if count_again:
         count = query_set.count()
-    results = query_set.order_by(desc(PlatformActivity.id)).offset(start).limit(limit).all()
-    db.session.commit()
+
+    results = query_set.order_by(desc(PlatformActivity.created_at)).offset(start).limit(limit).all()
+
     return count, total_count, results

@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 
 from polylogyx.compat import basestring
 from polylogyx.extensions import db
+import abc
 
 
 # Alias common SQLAlchemy names
@@ -45,10 +46,27 @@ class CRUDMixin(object):
         return commit and db.session.commit()
 
 
-class Model(CRUDMixin, db.Model):
+class Model(CRUDMixin, db.Model, object):
     """Base model class that includes CRUD convenience methods."""
 
     __abstract__ = True
+
+    def delete_by_ids(self, record_ids):
+         active_records=[]
+         for record_id in record_ids:
+             if any(
+                (isinstance(record_id, basestring) and record_id.isdigit(),
+                 isinstance(record_id, (int, float))),):
+                 active_records.append(record_id)
+         if len(active_records)==0:
+            return None
+         db.session.query(self).filter(self.id.in_(active_records)).delete(synchronize_session=False)
+         return db.session.commit()
+
+    @abc.abstractmethod
+    def get_entity_dict(self):
+        return None
+
 
 
 # From Mike Bayer's "Building the app" talk

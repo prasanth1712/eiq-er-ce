@@ -1,0 +1,84 @@
+table.dataTable thead .sorting,
+table.dataTable thead .sorting_asc,
+table.dataTable thead .sorting_desc {
+    background : none;
+}
+.modal-dialog{
+  color: #646c9a;
+  margin-top: 13em;
+}
+:host ::ng-deep div.dataTables_wrapper,
+:host ::ng-deep div.dataTables_filter,
+:host ::ng-deep div.dataTables_length{
+  color: #646c9a !important;
+}
+.label {
+  display: inline;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 2.5;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: .25em;
+}
+
+.dataTable > thead > tr > th[class*="sort"]:before,
+.dataTable > thead > tr > th[class*="sort"]:after {
+    content: "" !important;
+}
+.txt-clr{
+  color: indianred;
+  text-align: center;
+  /* margin-bottom: 0px; */
+  font-weight: 400;
+}
+.kt-portlet .kt-portlet__head .kt-portlet__head-label .kt-portlet__head-title {
+   margin: 0;
+   padding: 0;
+   font-size: 1.1rem;
+   font-weight: 600;
+   color:  #464457;
+}
+td.sorting_1 {
+
+  display: table-cell;
+
+}
+.table thead th, .table thead td {
+  font-weight: 500;
+  border-bottom-width: 1px;
+}
+p{
+    text-overflow:ellipsis !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-align: left;
+    margin-bottom: 0px;
+}
+.row-selected {
+ background-color:#EDF7F6;
+}
+table.dataTable thead th, table.dataTable thead td {
+
+  border-bottom: 1px solid #ebedf2;}
+  table.dataTable {
+    border-bottom: 1px solid #ebedf2;}
+
+.kt-portlet__body{
+  height: 100%;
+}
+::ng-deep.dataTables_wrapper{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+::ng-deep.table-controls{
+  margin: auto 0px 0px 0px;
+  width: 100%;
+}
+.table-wrapper{
+  height: 100%;
+}

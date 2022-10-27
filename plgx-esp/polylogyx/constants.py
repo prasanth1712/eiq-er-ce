@@ -421,6 +421,7 @@ class PolyLogyxConstants:
         "win_event_log_events": 15,
         "win_file_timestamp_events": 16,
         "win_pefile_events": 17,
+        "win_named_pipe_events": 19
     }
 
 
@@ -429,7 +430,6 @@ class PolyLogyxServerDefaults:
     plgx_config_all_settings = "plgx_config_all_settings"
     default_type = "default"
     current_ip = "https://localhost:9000"
-    BASE_URL = "/src/plgx-esp"
     POLYLOGYX_OSQUERY_SCHEMA_JSON = {}
     RECON_INTERVAL = 30
 
@@ -615,14 +615,33 @@ class DefaultInfoQueries:
         "patches": "Operating system vendors regularly release software updates and patches for their operating system. An unpatched system adds to the risk and vulnerability of the computer. For the latest cumulative list of updates released by Microsoft click here (https://support.microsoft.com/en-us/help/894199/software-update-services-and-windows-server-update-services-2018). The following table lists the updates installed on your computer",
         "kva_speculative_info": "e following table provides the presence (or absence) of mitigations for the Spectre and Meltdown vulnerabilites. To know more about fix of these vulnerabilites on Windows operating systems click here (https://support.microsoft.com/en-us/help/4073119/protect-against-speculative-execution-side-channel-vulnerabilities-in). Mitigations for Spectre - Kernel VA Shadowing. Kernel VA Shadowing Enabled (kva_shadow_enabled: 1 => Yes and 0 => No ). ----> With User pages marked global (kva_shadow_user_global: 1 => Yes and 0 => No )",
     }
-
-    EXTENSION_HASH_QUERY_NAME = "plgx_extension_hash"
-
     DEFAULT_VERSION_INFO_QUERIES = {
         "osquery_extensions_snapshot": "Snapshot query to find out the osquery & extension running in agent",
-        "osquery_extensions": "Query to find out the osquery & extension running in agent",
-        EXTENSION_HASH_QUERY_NAME: "Snapshot query to find out the extension hash running in agent",
+        "osquery_extensions": "Query to find out the osquery & extension running in agent"
     }
     DEFAULT_DEFENDER_INFO_QUERY = {
         "windows_security_status": "Snapshot query to find out the status of windows defender"
     }
+
+
+class CacheVariables:
+    """
+    These can be changes anytime as function refreshes its data when a new name is passed as cache name
+    """
+    hosts = 'cached_hosts'
+    rules = 'cached_rules'
+    iocs = 'cached_iocs'
+    settings = 'cached_settings'
+    user_roles = 'cached_user_roles'
+    configs = 'cached_configs'
+    avg_task_wait_time = 'avg_task_wait_time'
+    node_rule_alerts = 'node_rule_alerts'
+    rule_network = 'cached_network'
+    default_cache_refresh_interval = 3600
+
+
+class SettingsVariables:
+    """
+    We highly recommend not to change all these variables as these may impact persisting un-necessary data
+    """
+    pre_create_partitions_count = 7

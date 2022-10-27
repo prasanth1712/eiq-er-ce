@@ -71,7 +71,7 @@
         <!-- <div class="text-center" [class.disabled]="!ssoStatus" style="width:100%;margin-top: 20px;">
         <a (click)="makeSSOAuth()" ><span style="color: #20b2aa; font-size: 11px;"> Sign in with Single Sign On (SSO)</span></a>
         </div> -->
-        <button class="kt-login-sso" (click)="makeSSOAuth()" [disabled]="!ssoStatus" >
+        <button class="kt-login-sso" (click)="makeSSOAuth()" [disabled]="!ssoStatus" [ngClass]="{'ky-login-sso-disabled': !ssoStatus}">
           Sign in with Single Sign On (SSO)
         </button>
       </div>

@@ -41,7 +41,7 @@ export class EditUserAccessComponent implements OnInit {
         lastName: this.getuser.last_name,
         email: this.getuser.email,
         role:this.getuser.roles[0],
-        status:this.getuser.status,
+        status: false,
         enable_sso:this.getuser.enable_sso
       })
     },(error) => {
@@ -59,13 +59,20 @@ export class EditUserAccessComponent implements OnInit {
     if (this.EditUserForm.invalid) {
         return;
     }
+    let newStatus: any;
+    if(this.getuser?.status ==true){
+      newStatus = !this.f.status.value
+    }
+    else{
+      newStatus = this.f.status.value
+    }
     let payload={
     "new_user_name": this.f.userName.value,
      "first_name": this.f.firstName.value,
      "last_name": this.f.lastName.value,
      "email": this.f.email.value,
      "role": this.f.role.value,
-     "status": this.f.status.value,
+     "status": newStatus,
      "enable_sso":this.f.enable_sso.value
      }
      Swal.fire({
@@ -79,7 +86,7 @@ export class EditUserAccessComponent implements OnInit {
         if(res['status']=='success'){
           this.toaster.success(res['message']);
           setTimeout(() => {
-            this.router.navigate(['/management/UserAdministration']);
+            this.router.navigate(['/settings/user-management']);
             },1500);
         }else{
           this.toaster.error(res['message']);

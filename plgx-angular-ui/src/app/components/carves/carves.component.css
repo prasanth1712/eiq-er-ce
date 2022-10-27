@@ -8,7 +8,7 @@
   border-bottom-width: 1px;
   padding-top: 1rem;
   padding-bottom: 1rem;
-  font-family: "Poppins";
+  font-family: "Roboto";
 }
 .back_icon_align {
 vertical-align: unset !important;
@@ -32,15 +32,15 @@ cursor:pointer;
 tbody {
 font-size: 13px;
 font-weight: 300;
-font-family: Poppins;
+font-family: Roboto;
 line-height: 1.5;
 width: 200%;
 
 }
 .badge {
 display: inline-block;
-padding: .5em .75em;
-font-size: 85%;
+padding: .6em .75em;
+font-size: 60%;
 font-weight: 700;
 line-height: 1;
 text-align: center;
@@ -192,4 +192,30 @@ transition: color .15s ease-in-out,background-color .15s ease-in-out,border-colo
 }
 .Progress-bg{
   background-color: #31b2a4 !important;
+}
+.row-selected {
+  background-color:#EDF7F6;
+ }
+table.dataTable thead th, table.dataTable thead td {
+    border-bottom: 1px solid #B8B8B8;}
+ ::ng-deep .dataTables_wrapper.no-footer .dataTables_scrollBody {
+    border-bottom: 1px solid white;
+}
+.kt-portlet{
+  height: 100%;
+}
+.kt-portlet__body{
+  height: 100%;
+}
+.table-wrapper{
+  height: 100%;
+}
+::ng-deep.dataTables_wrapper{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+::ng-deep.table-controls{
+  margin: auto 0px 0px 0px;
+  width: 100%;
 }

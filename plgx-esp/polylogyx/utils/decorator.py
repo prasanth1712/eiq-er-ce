@@ -13,6 +13,7 @@ from polylogyx.utils.esp import get_ip
 def node_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        from polylogyx.utils.cache import get_a_host
         # in v1.7.4, the Content-Encoding header is set when
         # --logger_tls_compress=true
         remote_addr = get_ip()
@@ -29,34 +30,10 @@ def node_required(f):
             return ""
 
         node_key = request_json.get("node_key")
-        node = (
-            Node.query.filter(
-                and_(
-                    Node.state != Node.DELETED,
-                    Node.state != Node.REMOVED,
-                    Node.node_key == node_key,
-                )
-            )
-            .options(db.lazyload("*"))
-            .first()
-        )
-
-        if not node:
+        node = get_a_host(node_key=node_key)
+        if not node or node.get('state') != Node.ACTIVE:
             current_app.logger.error("%s - Could not find node with node_key %s", remote_addr, node_key)
             return jsonify(node_invalid=True)
-
-        if not node.node_is_active():
-            current_app.logger.info("%s - Node %s came back from the dead!", request.remote_addr, node_key)
-            current_app.logger.info(
-                "[Checkin] Last checkin time for node :" + str(node.id) + " is  :: " + str(node.last_checkin)
-            )
-
-        # Needed when no last_checkin update is happening on resource level
-        # node.update(
-        #     last_checkin=dt.datetime.utcnow(),
-        #     last_ip=remote_addr,
-        #     commit=False
-        # )
 
         return f(node=node, *args, **kwargs)
 

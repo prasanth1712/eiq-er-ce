@@ -1,0 +1,204 @@
+
+<!-- /home/puviyarasan/plgx-osq-server/plgx-angular-ui/src/css/query-builder.default.css -->
+<div class="kt-grid kt-grid--hor kt-grid--root">
+  <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
+    <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
+
+    <!--begin::Portlet-->
+    <div class="kt-portlet kt-portlet--last kt-portlet--responsive-mobile" id="kt_page_portlet">
+      <div class="kt-portlet__head kt-portlet__head--lg">
+        <div class="kt-portlet__head-label">
+          <h3 class="kt-portlet__head-title font-20">
+            <i class="kt-font-brand fas fa-plus-square fnt-dark-black mr-14 font-19"></i>Add Rule
+          </h3>
+        </div>
+        <div class="kt-portlet__head-toolbar">
+          <div class="kt-portlet__head-wrapper">
+            <!-- <a href="javascript:void(0)" (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page">
+              <i class="fas fa-chevron-left back_icon_align"></i>
+              Back
+            </a> -->
+            <appbutton (click)="goBack()" text="Back" icon="fa-chevron-left" btnClass="btn-small-light" btnType="button"></appbutton>
+          </div>
+        </div>
+      </div>
+      <div class="kt-portlet__body">
+        <form class="kt-form" id="frmData"  [formGroup]="addRule" (ngSubmit)="onSubmit()">
+          <div class="row">
+            <div class="col-xl-12">
+              <div class="kt-section kt-section--first">
+                <div class="kt-section__body">
+                  <div class="kt-section__body">
+                    <div class="form-group row required">
+                      <label class="col-2 col-form-label">Rule Name </label>
+                      <div class="col-10">
+                        <input type= "text" (input)="$event.target.value.length > maxInputLength ? lengthErrorMessage = true : lengthErrorMessage = false" class="form-control" name="name" id="name" [(ngModel)]="addRuleObj.name" formControlName="name" [ngClass]="{ 'is-invalid': submitted && f.name.errors }" >
+                        <div *ngIf="submitted && f.name.errors" class="invalid-feedback">
+                          <div *ngIf="f.name.errors.required">Rule Name is required</div>
+                        </div>
+                        <div *ngIf="lengthErrorMessage" class="error-message">Rule Name should not be more than {{maxInputLength}} characters</div>
+                        
+                      </div>
+                    </div>
+                    <div class="form-group row">
+                      <label class="col-2 col-form-label">Description</label>
+                      <div class="col-10">
+                        <textarea class="form-control" rows="3" name="description" [(ngModel)]="addRuleObj.description" formControlName="description"></textarea>
+                        <h6 style="margin-top: 10px;"><span style="color: #cc1313;">Note:</span> Rule names and descriptions may be treated as
+                          <a target="_blank" href="https://docs.python.org/dev/library/string.html#template-strings">Template strings</a> for some alerters.Valid placeholders may include column keys returned in query results and/or host attributes(i.e., host_identifier, enrolled_on).A missing placeholder will result in the original placeholder to appear in the resulting string intact.
+                        </h6>
+                      </div>
+                    </div>
+                    <div class="form-group row">
+                      <label class="col-2 col-form-label">Alerters</label>
+                      <div class="col-10">
+                        <angular2-multiselect [data]="dropdownAlertList" [(ngModel)]="selectedAlertItems" formControlName="alerters"
+                            [settings]="dropdownAlertSettings"
+                            (onSelect)="onItemSelect($event)"
+                            (onDeSelect)="OnItemDeSelect($event)"
+                            (onSelectAll)="onSelectAll($event)"
+                            (onDeSelectAll)="onDeSelectAll($event)">
+                        </angular2-multiselect>
+                        <!-- <select  class="browser-default custom-select" id="alerters"  name="alerters" [(ngModel)]="addRuleObj.alerters" formControlName="alerters">
+                          <option value="" selected="">Nothing Selected</option>
+                          <option value="Rsyslog">Rsyslog</option>
+                          <option value="Email">Email</option>
+                       </select> -->
+                      </div>
+                    </div>
+                    <div *ngIf="isEmailEnabled == true" class="form-group row">
+                      <label class="col-2 col-form-label">Add description in email</label>
+                      <div class="col-10">
+                           <input  id="status" class="checkboxClass mt-3" (change)="addDescriptionEmail($event)" name="status" type="checkbox" >
+                      </div>
+                    </div>
+                    <div class="form-group row required">
+                      <label class="col-2 col-form-label">Conditions</label>
+                      <div class="col-10">
+<!--                          <query-builder class="rules-group-container" [data]="query" [operatorMap]='OperatorMap' [config]='config' [classNames]='bootstrapClassNames' ></query-builder>-->
+                         <div id='query-builder'></div>
+                       <input id="rules-hidden" name="conditions" formControlName="conditions" type="hidden" value="">
+                       <div id="rules-error-message" class="invalid-feedback d-flex"></div>
+                      </div>
+                    </div>
+                    <div class="form-group row">
+                      <label class="col-2 col-form-label">Status</label>
+                      <div class="col-10">
+                        <select  class="browser-default custom-select" id="status"  placeholder="select  status" name="status"  formControlName="status" [(ngModel)]="addRuleObj.status">
+                          <option value="ACTIVE">ACTIVE</option>
+                          <option value="INACTIVE">INACTIVE</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group row">
+                      <label class="col-2 col-form-label">Severity</label>
+                      <div class="col-10">
+                        <select  class="browser-default custom-select" id="severity"  placeholder="select  severity" name="severity"  formControlName="severity" [(ngModel)]="addRuleObj.severity">
+                          <option value="INFO">INFO</option>
+                          <option value="LOW">LOW</option>
+                          <option value="MEDIUM">MEDIUM</option>
+                          <option value="HIGH">HIGH</option>
+                          <option value="CRITICAL">CRITICAL</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group row required">
+                      <label class="col-2 col-form-label" for="platform">Platform</label>
+                      <div class="col-10">
+
+                        <select  class="form-control r-selectpicker" id="platform" name="platform" placeholder="select platform" formControlName="platform" class="form-control" [(ngModel)]="addRuleObj.platform" >
+                          <option value="all">All</option>
+                          <option value="darwin">Darwin</option>
+                          <option value="linux">Linux</option>
+                          <option value="freebsd">FreeBSD</option>
+                          <option value="posix">POSIX Compatible</option>
+                          <option value="windows">Windows</option>
+                        </select>
+                        <!-- <div *ngIf="submitted && f.platform.errors" class="invalid-feedback">
+                          <div *ngIf="f.platform.errors.required">platform field is required</div>
+                        </div> -->
+                      </div>
+                    </div>
+                    <!-- <div class="form-group row">
+                      <label class="col-2 col-form-label">Type</label>
+                      <div class="col-10">
+                        <select  class="browser-default custom-select" id="type"  name="type" formControlName="type" [(ngModel)]="addRuleObj.type">
+                          <option value="MITRE">MITRE</option>
+                          <option value="DEFAULT">DEFAULT</option>
+                        </select>
+                      </div>
+                    </div> -->
+                    <!--begin:: Rule/type-->
+
+                    <div class="form-group row">
+                      <label class="col-2 col-form-label" for="rule_type">Type</label>
+                      <div class="col-10">
+                        <div class="kt-radio-inline">
+                          <label class="kt-radio">
+                            <input checked="" [(ngModel)]="type_selected" id="rule_type-1" type="radio" (change)="mitre_show = false" value="DEFAULT" name="rule_type" formControlName="rule_type">
+                            <label for="rule_type-1">Default</label>
+                            <span></span>
+                          </label>
+                          <label class="kt-radio">
+                            <input [(ngModel)]="type_selected" id="rule_type-0" type="radio" (change)="mitre_show = true" value="MITRE" name="rule_type" formControlName="rule_type">
+                            <label for="rule_type-0">MITRE</label>
+                            <span></span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="" *ngIf="mitre_show">
+                      <div class="form-group row">
+                        <label class="col-2 col-form-label">Technique Id</label>
+                        <div class="col-10" id="technique_id_loading">
+
+                          <input type= "text" class="form-control" name="technique_id" [(ngModel)]="addRuleObj.technique_id" (change)="onChangeTechniqueID($event.target.value)" formControlName="technique_id">
+                        </div>
+                      </div>
+                      <div class="form-group row">
+                        <label class="col-2 col-form-label">Tactics</label>
+                        <div class="col-10">
+                          <angular2-multiselect [data]="dropdownTacticsList" formControlName="tactics" [(ngModel)]="selectedTacticsItems"
+                            [settings]="dropdownTacticsSettings"
+                            (onSelect)="onItemSelect($event)"
+                            (onDeSelect)="OnItemDeSelect($event)"
+                            (onSelectAll)="onSelectAll($event)"
+                            (onDeSelectAll)="onDeSelectAll($event)">
+                        </angular2-multiselect>
+                        </div>
+                      </div>
+                    </div>
+                    <!--end:: Rule/type-->
+                  </div>
+                </div>
+                <div style="display: none">
+                  <div class="form-group">
+                    <label class="col-sm-12 control-label">Recon Queries</label>
+                  </div>
+                  <div class="form-group" style="display:none">
+                    <input type= "text"  name="recon_queries" >
+                  </div>
+                </div>
+              </div>
+              <div class="kt-portlet__foot">
+                <div class="mandary">
+                  <span class="" style="color: #e32;">*</span><span style="font-size: smaller;"> Mandatory Fields</span>
+                </div>
+                <div class="kt-form__actions kt-form__actions--center">
+                  <button type="submit" id="submit-button" class="btn btn-small" (click)="getErrors()">
+                    <i class="fa fa-plus"></i>Add Rule</button>
+
+                  <appbutton text="Clear" btnClass="btn-small-light" btnType="reset" (click)="clickreset()"></appbutton>
+                  <!-- <button type="reset" (click)="clickreset()" style="margin-left:5px;" class="btn btn-secondary">Clear</button> -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    <!--end::Portlet-->
+    </div>
+  </div>
+</div>
+<!--end::Portlet-->

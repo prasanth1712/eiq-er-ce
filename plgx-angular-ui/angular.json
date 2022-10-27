@@ -18,7 +18,6 @@
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
             "tsConfig": "tsconfig.app.json",
-            "aot": false,
             "assets": [
               "src/assets"
             ],
@@ -66,7 +65,8 @@
               "node_modules/bootstrap/dist/js/bootstrap.min.js",
               "node_modules/perfect-scrollbar/dist/perfect-scrollbar.min.js",
               "src/assets/demo/default/base/scripts.bundle.js",
-
+              "src/assets/js/patternfly/d3.min.js",
+              "src/assets/js/patternfly/patternfly.min.js",
               "src/assets/app/bundle/app.bundle.js",
               "src/assets/vendors/custom/datatables/datatables.bundle.js",
               "node_modules/jquery-extendext/jquery-extendext.js",
@@ -75,10 +75,17 @@
               "src/js/plugins.js",
               "node_modules/jsoneditor/dist/jsoneditor.min.js",
               "node_modules/xlsx/dist/xlsx.core.min.js",
-
+              "node_modules/ace-builds/src-min/ace.js",
+              "node_modules/ace-builds/src-min/mode-html.js",
                "src/assets/js/plugins.js",
               "src/js/util.js"
-            ]
+            ],
+            "vendorChunk": true,
+            "extractLicenses": false,
+            "buildOptimizer": false,
+            "sourceMap": true,
+            "optimization": false,
+            "namedChunks": true
           },
           "configurations": {
             "production": {
@@ -91,9 +98,7 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
-              "extractCss": true,
               "namedChunks": false,
-              "aot": true,
               "extractLicenses": true,
               "vendorChunk": false,
               "buildOptimizer": true,
@@ -147,19 +152,6 @@
             "scripts": []
           }
         },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "tsconfig.app.json",
-              "tsconfig.spec.json",
-              "e2e/tsconfig.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
-          }
-        },
         "e2e": {
           "builder": "@angular-devkit/build-angular:protractor",
           "options": {
@@ -189,7 +181,6 @@
             "main": "projects/interceptor/src/main.ts",
             "polyfills": "projects/interceptor/src/polyfills.ts",
             "tsConfig": "projects/interceptor/tsconfig.app.json",
-            "aot": false,
             "assets": [
               "projects/interceptor/src/favicon.ico",
               "projects/interceptor/src/assets"
@@ -197,7 +188,13 @@
             "styles": [
               "projects/interceptor/src/styles.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "vendorChunk": true,
+            "extractLicenses": false,
+            "buildOptimizer": false,
+            "sourceMap": true,
+            "optimization": false,
+            "namedChunks": true
           },
           "configurations": {
             "production": {
@@ -210,9 +207,7 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
-              "extractCss": true,
               "namedChunks": false,
-              "aot": true,
               "extractLicenses": true,
               "vendorChunk": false,
               "buildOptimizer": true,
@@ -263,19 +258,6 @@
               "projects/interceptor/src/styles.css"
             ],
             "scripts": []
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "projects/interceptor/tsconfig.app.json",
-              "projects/interceptor/tsconfig.spec.json",
-              "projects/interceptor/e2e/tsconfig.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
           }
         },
         "e2e": {

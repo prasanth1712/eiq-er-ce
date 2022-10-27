@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit,AfterViewInit } from '@angular/core';
 import { Router, NavigationEnd,ActivatedRoute } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 // import { AuthenticationService } from '../../dashboard/_services/authentication.service';
@@ -10,14 +10,17 @@ import { CommonVariableService } from '../../dashboard/_services/commonvariable.
 import { PlatformLocation } from '@angular/common';
 import {CommonapiService} from '../../dashboard/_services/commonapi.service';
 import { AuthorizationService } from '../../dashboard/_services/Authorization.service';
+import { AlertService } from '../../dashboard/_services/alert.service';
+import { AlertsComponent } from '../../widgets/alerts/alerts.component';
 
 @Component({
     selector: 'app-admin-aside',
     templateUrl: './admin-aside.component.html',
     styleUrls: ['./admin-aside.component.css']
 })
-export class AdminAsideComponent implements OnInit {
+export class AdminAsideComponent implements OnInit,AfterViewInit {
     // currentUser: User;
+    alertNavData:any = [];
     default_menu_name:any;
     id_for_links:any;
     Version=this.commonvariable.Version;
@@ -36,13 +39,13 @@ export class AdminAsideComponent implements OnInit {
         location: PlatformLocation,
         private commonapi: CommonapiService,
         private _Activatedroute: ActivatedRoute,
-        private AuthorizationService: AuthorizationService,
+        private AuthorizationService: AuthorizationService, private alertService: AlertService, private AlertsComponent: AlertsComponent,
     ) {
         // this.authenticationService.currentUser.subscribe(x => this.currentUser = x['roles'][0]);
         this.router.events.pipe(
             filter(event => event instanceof NavigationEnd)
           ).subscribe((event: NavigationEnd) => {
-            if(event.url.includes('live-queries')){
+            if(event.url.includes('live-query')){
                 this.id_for_links = 'live-queries';
             }
           });
@@ -50,7 +53,7 @@ export class AdminAsideComponent implements OnInit {
             this.router.events.pipe(
                 filter(event => event instanceof NavigationEnd)
               ).subscribe((event: NavigationEnd) => {
-                  if(event.url.includes('live-queries')){
+                  if(event.url.includes('live-query')){
                       this.id_for_links = 'live-queries';
                   }else{
                     this.id_for_links = 'id_for_links';
@@ -68,6 +71,12 @@ export class AdminAsideComponent implements OnInit {
         this.MenuName = MeueUrl[1];
         this.MenuName = this.capitalizeFirstLetter(this.MenuName);
       });
+        if(this.MenuName == 'Settings'){
+          this.MenuName = 'Management'
+        }
+        else if(this.MenuName == 'Hostconfiguration'){
+          this.MenuName = 'HostConfiguration'
+        }
         this.default_menu_name = localStorage.getItem('menu_name');
         var str = window.location.href;
         var page_name = str.substr(str.lastIndexOf('/') + 1);
@@ -75,11 +84,11 @@ export class AdminAsideComponent implements OnInit {
             this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Dashboard");
             this.MenuName = 'Dashboard';
         }
-        else if(page_name == "response-action" || this.MenuName == "response-action"){
+        else if(page_name == "response-action" || this.MenuName == "response-action" || this.MenuName == "Response-action"){
             this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Response action" );
             this.MenuName = 'Action';
         }
-        else if(page_name == "live-queries"){
+        else if(page_name == "live-query"){
           this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Live query" );
            this.MenuName = 'live-queries';
         }
@@ -97,7 +106,14 @@ export class AdminAsideComponent implements OnInit {
       // do something with this library
   }
     }
+    ngAfterViewInit(): void {
+      var str = window.location.href;
+      var page_name = window.location.href.substr(window.location.href.lastIndexOf('/') + 1);
 
+      if(this.MenuName == 'Management' || this.MenuName == 'HostConfiguration' || this.MenuName == 'Rules'){
+        document.getElementsByClassName('submenu-id-page_'+page_name)[0].classList.add('kt-aside-submenu--active');
+      }
+    }
    capitalizeFirstLetter(string) {
      return string.charAt(0).toUpperCase() + string.slice(1);
    }
@@ -109,52 +125,109 @@ export class AdminAsideComponent implements OnInit {
 
     // this function removed all localStorage key value data and redirect to login page
     logout() {
-        this.toastr.success('You have successfully logged out.');
-        localStorage.removeItem('reset_password');
-        localStorage.removeItem('roles');
-        localStorage.removeItem('all_roles');
-        localStorage.removeItem('token');
-        localStorage.removeItem('menu_name');
-        this.router.navigate(['/authentication/login']);
+      this.commonapi.logout().subscribe(res => {
+        this.toastr.success('You have been signed out.',"",{
+          positionClass:'toast-bottom-left',
+          messageClass:'toast-grey'
+        });
+      },
+      err=>{
+        this.toastr.error(err['message'],"",{
+          positionClass:'toast-bottom-left'
+        });
+      });
+
+      localStorage.removeItem('reset_password');
+      localStorage.removeItem('roles');
+      localStorage.removeItem('all_roles');
+      localStorage.removeItem('token');
+      localStorage.removeItem('menu_name');
+      this.router.navigate(['/authentication/login']);
 
     }
     OnNavChange(event, id, active, rel) {
+      var myDiv = document.getElementById('kt_aside_menu');
+      myDiv.scrollTop = 0;
       console.log(event, id, active, rel)
         this.id_for_links=id;
         localStorage.setItem("menu_name",id);
         this.router.events.pipe(
             filter(event => event instanceof NavigationEnd)
           ).subscribe((event: NavigationEnd) => {
-            if(event.url.includes('live-queries')){
+            if(event.url.includes('live-query')){
                 this.id_for_links = 'live-queries';
             }
           });
-          // if(id === 'live-queries'){
-          //     id = 'live-queries';
-          // }else if(id === 'Response-Action'){
-          //   id = 'Response-Action';
-          // }
-        // document.getElementById(default_menu_name).classList.add(active);
-        if(!(id.includes('live-queries'))){
-            this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+ id.replace('-', ' ') );
+         
+        if(id != 'live-queries' && id != 'Action')
+        {
+          this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+ id.replace('-', ' ') );
         }
 
         var elems = document.querySelectorAll("." + active);
         [].forEach.call(elems, function (el) { el.classList.remove(active); });
         event.target.parentElement.parentElement.classList.remove(rel);
         document.getElementById(id).classList.add(active);
+
         if(id !='Management'){
           //collapse Management sub page while click other page
           var div = document.getElementById("submenu");
       	  div.classList.remove("show");
         }
+        if(id !='Rules'){
+          //collapse Management sub page while click other page
+          var div = document.getElementById("Rulessubmenu");
+      	  div.classList.remove("show");
+        }
+        if(id !='HostConfiguration'){
+          //collapse Management sub page while click other page
+          var div = document.getElementById("Hostconfigsubmenu");
+      	  div.classList.remove("show");
+        }
+        if(id !='HostConfiguration' &&  id !='Rules' && id !='Management'){
+          this.removeSubmenuActive();
+        }
+    }
 
 
+    OnSubNavChange(event,parentId, id, active, rel) {
+     event.stopPropagation();
+     this.removeSubmenuActive()
+     var elems = document.querySelectorAll("." + active);
+     [].forEach.call(elems, function (el) { el?.classList?.remove(active); });
+     event.target.parentElement.parentElement?.classList?.remove(rel);
+     document.getElementById(id).classList?.add(active);
+     document.getElementById(id).classList?.remove('kt-menu__submenuitem--focus');
+     document.getElementById(parentId).classList?.add('kt-menu__submenuitem--focus');
+
+     var elems = document.querySelectorAll(".kt-menu__item--active");
+     [].forEach.call(elems, function (el) { el?.classList?.remove("kt-menu__item--active"); });
+    }
+
+    removeSubmenuActive(){
+      var elems = document.querySelectorAll(".kt-aside-submenu--active");
+      [].forEach.call(elems, function (el) { el?.classList?.remove("kt-aside-submenu--active"); });
+
+      var focusSubmenu= document.querySelectorAll(".kt-menu__submenuitem--focus");
+      [].forEach.call(focusSubmenu, function (el) { el?.classList?.remove("kt-menu__submenuitem--focus"); });
+
+      var activeSubmenu = document.querySelectorAll(".kt-menu__submenuitem--active");
+      [].forEach.call(activeSubmenu, function (el) { el?.classList?.remove("kt-menu__submenuitem--active"); });
     }
 
     collapsemanagementmenu(){
-      var div = document.getElementById("submenu");
-      div.classList.remove("show");
+      var divManage = document.getElementById("submenu");
+      divManage.classList.remove("show");
+      var divRules = document.getElementById("Rulessubmenu");
+      divRules.classList.remove("show");
+      var divConfg = document.getElementById("Hostconfigsubmenu");
+      divConfg.classList.remove("show");
+    }
+    resizeAlertGraph(){
+      if(this.router?.url?.includes('alerts')){
+        this.alertService.resData.subscribe(data => (this.alertNavData= data));
+        this.AlertsComponent.onResieNavMenu(this.alertNavData);
+      }
     }
 
 

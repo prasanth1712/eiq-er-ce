@@ -7,6 +7,7 @@ import { Title } from '@angular/platform-browser';
 import Swal from 'sweetalert2';
 import { ToastrService } from 'ngx-toastr';
 import { Messagehandler } from '../../../dashboard/_helpers/messagehandler';
+import { AuthorizationService } from '../../../dashboard/_services/Authorization.service';
 @Component({
   selector: 'app-alert-configuration',
   templateUrl: './alert-configuration.component.html',
@@ -15,6 +16,7 @@ import { Messagehandler } from '../../../dashboard/_helpers/messagehandler';
 export class AlertConfigurationComponent implements OnInit {
   alertConfigureSettings: FormGroup;
   submitted = false;
+  role={'adminAccess':this.authorizationService.adminLevelAccess,'userAccess':this.authorizationService.userLevelAccess}
   constructor(
     private fb: FormBuilder,
     private commonapi:CommonapiService,
@@ -23,10 +25,11 @@ export class AlertConfigurationComponent implements OnInit {
     private titleService: Title,
     private location: Location,
     private msgHandler:Messagehandler,
+    private authorizationService: AuthorizationService,
   ) { }
 
   ngOnInit() {
-    this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Alert configuration");
+    this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Alert Settings");
     this.alertConfigureSettings = this.fb.group({
       alertAggregationDuration: ['', [Validators.required, Validators.min(Number.MIN_VALUE)]],
     });

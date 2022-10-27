@@ -10,9 +10,9 @@ from polylogyx.utils.otx.is_malicious import is_hash_malicious, is_file_maliciou
 class TestOTX:
     intel_name = "alienvault"
     safe_ip = '100.0.0.1'
-    safe_host = 'http://foobar.com'
-    safe_domain = 'http://foobar.com'
-    safe_file_hash = 'FOOFOOBAR'
+    safe_host = 'foobar123.com'
+    safe_domain = 'foobar123.com'
+    safe_file_hash = '14758f1afd44c09b7992073ccf00b43d'  # md5sum of 'foobar'
 
     def test_init(self):
         otx_intel = OTXIntel(config={})

@@ -8,42 +8,29 @@ from sqlalchemy import or_
 
 from flask import Blueprint, g, request, abort, redirect, render_template
 from flask.json import jsonify
-from flask_restplus import Api
+from flask_restful import  Api
 from flask_httpauth import HTTPBasicAuth
 
-from polylogyx.models import User, HandlingToken, Role
+from polylogyx.models import User, AuthToken, Role
 from polylogyx.utils import require_api_key
 from polylogyx.blueprints.v1.utils import *
+from polylogyx.extensions import login_manager
 
 auth = HTTPBasicAuth()
 
 
 blueprint = Blueprint('external_api_v1', __name__)
-api = Api(blueprint, title='My Title', version='1.0', description='A description', 
-        decorators=[require_api_key]
-        )
 
-from polylogyx.blueprints.v1 import distributed, carves, queries, iocs, management, tags, dashboard, yara, rules, \
-    common, configs, hosts, packs, schema, alerts, email, users
+api=Api(blueprint,decorators=[require_api_key])
+
+from polylogyx.blueprints.v1 import \
+    hosts,alerts,carves,common,configs,dashboard,distributed,email,iocs,management,\
+    packs,queries,rules,schema,tags,users,yara
 
 
-api.add_namespace(hosts.ns)
-api.add_namespace(tags.ns)
-api.add_namespace(configs.ns)
-api.add_namespace(alerts.ns)
-api.add_namespace(packs.ns)
-api.add_namespace(queries.ns)
-api.add_namespace(schema.ns)
-api.add_namespace(rules.ns)
-api.add_namespace(carves.ns)
-api.add_namespace(yara.ns)
-api.add_namespace(iocs.ns)
-api.add_namespace(common.ns)
-api.add_namespace(distributed.ns)
-api.add_namespace(management.ns)
-api.add_namespace(email.ns)
-api.add_namespace(dashboard.ns)
-api.add_namespace(users.ns)
+@login_manager.user_loader
+def load_user(user_id):
+    return g
 
 
 def validate_json(f):
@@ -76,13 +63,13 @@ def index():
 @blueprint.route('/login', methods=['POST'])
 @auth.login_required
 def get_auth_token():
-    token = g.user.generate_auth_token()
-    # Stores token details into HandlingToken table
-    payload = jwt.decode(token, current_app.config['SECRET_KEY'])
+    token = load_user.user.generate_auth_token()
+    # Stores token details into AuthToken table
+    payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS512"])
     user = User.query.filter_by(id=payload['id']).first()
     all_roles = Role.query.all()
-    HandlingToken.create(token=token.decode("utf-8"), logged_in_at=dt.datetime.utcnow(), logged_out_at=None,
-                         user=user.username, token_expired=False)
+    AuthToken.create(token=token.decode("utf-8"), logged_in_at=dt.datetime.utcnow(), logged_out_at=None,
+                     user_id=user.id, token_expired=False)
     return jsonify({'first_name': user.first_name, 'last_name': user.last_name, 'token': token.decode('ascii'),
                     'reset_password': user.reset_password, 'reset_email': user.reset_email,
                     'roles': ','.join([role.name for role in user.roles]),
@@ -90,13 +77,13 @@ def get_auth_token():
 
 
 def generate_access_token():
-    token = g.user.generate_auth_token()
-    # Stores token details into HandlingToken table
-    payload = jwt.decode(token, current_app.config['SECRET_KEY'])
+    token = load_user.user.generate_auth_token()
+    # Stores token details into AuthToken table
+    payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS512"])
     user = User.query.filter_by(id=payload['id']).first()
     all_roles = Role.query.all()
-    HandlingToken.create(token=token.decode("utf-8"), logged_in_at=dt.datetime.utcnow(), logged_out_at=None,
-                         user=user.username, token_expired=False)
+    AuthToken.create(token=token.decode("utf-8"), logged_in_at=dt.datetime.utcnow(), logged_out_at=None,
+                     user_id=user.id, token_expired=False)
     return {'first_name': user.first_name, 'last_name': user.last_name, 'token': token.decode('ascii'),
             'roles': ','.join([role.name for role in user.roles]),
             'all_roles': ','.join([role.name for role in all_roles])}
@@ -106,8 +93,8 @@ def generate_access_token():
 @blueprint.route('/logout', methods=['POST'])
 def logout_method():
     # Stores the logout time and token_expired into InvalidateToken table
-    user_logged_in = HandlingToken.query\
-        .filter(HandlingToken.token == request.headers.environ.get('HTTP_X_ACCESS_TOKEN')).first()
+    user_logged_in = AuthToken.query\
+        .filter(AuthToken.token == request.headers.environ.get('HTTP_X_ACCESS_TOKEN')).first()
     if user_logged_in:
         user_logged_in.update(logged_out_at=dt.datetime.utcnow(), token_expired=True)
         return jsonify({'message': "user logged out successfully", 'status': "success"})
@@ -133,7 +120,7 @@ def verify_password(username, password):
                                  User.email == request_json.get('username'))).filter(User.status != False).first()
     if not user or not user.check_password(request_json.get('password')):
         raise werkzeug.exceptions.Unauthorized
-    g.user = user
+    load_user.user = user
     return True
 
 
@@ -234,14 +221,14 @@ def assertion_consumer_service():
     # Create a token here and send back to UI, may be a redirect
     _user = users_dao.get_user_by_mail_or_username(username)
     if not _user:
-        message = "No user found for the username/email received from IDP!"
+        message = "No active user found for the username/email received from IDP!"
         current_app.logger.info(message)
         return render_template('ssoOnFailure.html', url_to_redirect=login_url, error_message=message)
     if not _user.enable_sso:
         message = "User has not been assigned to use SSO for the username/email received from IDP!"
         current_app.logger.info(message)
         return render_template('ssoOnFailure.html', url_to_redirect=login_url, error_message=message)
-    g.user = _user
+    load_user.user = _user
     app_auth_response = generate_access_token()
     if 'RelayState' in request.form and request.form['RelayState']:
         url_to_redirect = request.form['RelayState']
@@ -275,7 +262,7 @@ def sso_login():
     req_id, info = saml_client.prepare_for_authenticate()
     saml_url = None
     for key, value in info['headers']:
-        if key is 'Location':
+        if key == 'Location':
             # On successful SSO SP config loading, request will be redirected to IDP SAML App
             saml_url = value
     response = redirect(saml_url, code=302)

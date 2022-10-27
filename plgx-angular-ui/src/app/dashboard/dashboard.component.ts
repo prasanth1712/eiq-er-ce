@@ -7,6 +7,7 @@ import swal from 'sweetalert';
 import { msg } from '../dashboard/_helpers/common.msg';
 import { CommonVariableService } from './../dashboard/_services/commonvariable.service';
 import {moment} from "vis-timeline";
+import { Router, ActivatedRoute, NavigationEnd, RoutesRecognized } from '@angular/router';
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
@@ -23,26 +24,30 @@ export class DashboardComponent implements OnInit {
   rulescolumn:any;
 
   alienvault_critical:any;
-  alienvault_warning:any;
+  alienvault_high:any;
+  alienvault_medium:any;
   alienvault_low:any;
   alienvault_info:any;
   otx_counter:any;
 
   ibmxforce_critical:any;
-  ibmxforce_warning:any;
+  ibmxforce_high:any;
+  ibmxforce_medium:any;
   ibmxforce_low:any;
   ibmxforce_info:any;
   ibm_counter:any;
 
   rule_critical:any;
-  rule_warning:any;
+  rule_high: any;
+  rule_medium:any;
   rule_low:any;
   rule_info:any;
   rule_counter:any;
   placholder:any;
 
   virustotal_critical:any;
-  virustotal_warning:any;
+  virustotal_high:any;
+  virustotal_medium:any;
   virustotal_low:any;
   virustotal_info:any;
   vt_counter:any;
@@ -52,13 +57,25 @@ export class DashboardComponent implements OnInit {
   purge_duration:any;
   project_name=this.commonvariable.APP_NAME
   ProductNameER=this.commonvariable.ProductNameER
+
+  windowsOnline:any;
+  windowsOffline:any;
+  windowsDisabled:any;
+  ubuntuOnline:any;
+  ubuntuOffline:any;
+  ubuntuDisabled:any;
+  darwinsOnline:any;
+  darwinsOffline:any;
+  darwinsDisabled:any;
+
   constructor(
     private commonapi: CommonapiService,
-    private commonvariable: CommonVariableService,
+    private commonvariable: CommonVariableService,private router: Router,
   ) {
    }
 
   ngOnInit() {
+    this.getHostsCount();
     this.draw_server_metrics();
     this.placholder = '';
     this.commonapi.Dashboard().pipe(first()).subscribe((res: any) => {
@@ -66,7 +83,8 @@ export class DashboardComponent implements OnInit {
         console.log(this.dashboardData.data.alert_data.source);
         this.purge_duration = res.data.purge_duration;
         this.alienvault_critical = this.dashboardData.data.alert_data.source.alienvault.CRITICAL;
-        this.alienvault_warning = this.dashboardData.data.alert_data.source.alienvault.WARNING;
+        this.alienvault_high = this.dashboardData.data.alert_data.source.alienvault.HIGH;
+        this.alienvault_medium = this.dashboardData.data.alert_data.source.alienvault.MEDIUM;
         this.alienvault_low = this.dashboardData.data.alert_data.source.alienvault.LOW;
         this.alienvault_info = this.dashboardData.data.alert_data.source.alienvault.INFO;
         this.otx_counter = this.dashboardData.data.alert_data.source.alienvault.TOTAL;
@@ -77,7 +95,8 @@ export class DashboardComponent implements OnInit {
         }
         //IBM X-IBMxForce
         this.ibmxforce_critical = this.dashboardData.data.alert_data.source.ibmxforce.CRITICAL;
-        this.ibmxforce_warning = this.dashboardData.data.alert_data.source.ibmxforce.WARNING;
+        this.ibmxforce_high = this.dashboardData.data.alert_data.source.ibmxforce.HIGH;
+        this.ibmxforce_medium = this.dashboardData.data.alert_data.source.ibmxforce.MEDIUM;
         this.ibmxforce_low = this.dashboardData.data.alert_data.source.ibmxforce.LOW;
         this.ibmxforce_info = this.dashboardData.data.alert_data.source.ibmxforce.INFO;
         this.ibm_counter = this.dashboardData.data.alert_data.source.ibmxforce.TOTAL;
@@ -88,7 +107,8 @@ export class DashboardComponent implements OnInit {
         }
         //rules
         this.rule_critical = this.dashboardData.data.alert_data.source.rule.CRITICAL;
-        this.rule_warning = this.dashboardData.data.alert_data.source.rule.WARNING;
+        this.rule_high = this.dashboardData.data.alert_data.source.rule.HIGH;
+        this.rule_medium = this.dashboardData.data.alert_data.source.rule.MEDIUM;
         this.rule_low = this.dashboardData.data.alert_data.source.rule.LOW;
         this.rule_info = this.dashboardData.data.alert_data.source.rule.INFO;
         this.rule_counter = this.dashboardData.data.alert_data.source.rule.TOTAL;
@@ -99,7 +119,8 @@ export class DashboardComponent implements OnInit {
         }
         //virus virustotal_warning
         this.virustotal_critical = this.dashboardData.data.alert_data.source.virustotal.CRITICAL;
-        this.virustotal_warning = this.dashboardData.data.alert_data.source.virustotal.WARNING;
+        this.virustotal_high = this.dashboardData.data.alert_data.source.virustotal.HIGH;
+        this.virustotal_medium = this.dashboardData.data.alert_data.source.virustotal.MEDIUM;
         this.virustotal_low = this.dashboardData.data.alert_data.source.virustotal.LOW;
         this.virustotal_info = this.dashboardData.data.alert_data.source.virustotal.INFO;
         this.vt_counter = this.dashboardData.data.alert_data.source.virustotal.TOTAL;
@@ -221,36 +242,6 @@ if(Host_status_data_count.length==0 ){
    $('.pie-chart-Host-status').show();
    $('.pie-chart-Host-canvas').hide();
 }
- var myChart1 = new Chart('pie-chart-Host-status-pie-chart', {
-      type: 'pie',
-      data: {
-          labels: Host_status_data,
-          datasets: [{
-              data: Host_status_data_count,
-              backgroundColor: backgrund_colour
-          }]
-      },
-      options: {
-      responsive: false,
-      maintainAspectRatio: false,
-      plugins: {
-        labels: {
-          render: 'percentage',
-          fontColor: 'white',
-          overlap: false,
-        }
-      },
-        legend: {
-          display: true,
-          position: 'right',
-          onClick: null ,
-          labels: {
-            fontColor: '#333',
-            usePointStyle:true
-        }
-        },
-      }
-  });
 // End host status chart
 // Start top 5 alerted hosts
 var top_5hosts = []
@@ -561,7 +552,10 @@ var top_5hosts_label=[];
      }
 
 
-
+     if(top5_hosts_graph_data.length==0){
+      $(document.getElementById('no-data-bar-chart-top_5_hosts')).append("No data");
+      $('.bar-graph-top5-hosts').hide();
+    }
      var top5_hosts= new Chart('top5_hosts_data_graph', {
        type: 'bar',
        data: {
@@ -674,7 +668,10 @@ console.log(avg_bytes_graph_data);
    });
 
 
-
+   if(disk_usage_graph_data.length==0){
+    $(document.getElementById('no-data-pie-Host-status-result-chart')).append("No data");
+    $('.pie-chart-Host-canvas').hide();
+  }
      var myChart1 = new Chart('disk_usage-pie-chart', {
        type: 'pie',
        data: {
@@ -695,14 +692,6 @@ console.log(avg_bytes_graph_data);
              overlap: false,
            }
          },
-         tooltips: {
-           callbacks: {
-
-             label: (tooltipItems, data) => {
-               return data.datasets[tooltipItems.datasetIndex].data[tooltipItems.index] + ' GB';
-             }
-           }
-           },
          legend: {
            display: true,
            position: 'right',
@@ -816,5 +805,40 @@ console.log(avg_bytes_graph_data);
           },
         },
       })
+    }
+
+    closeModal(modalId){
+      let modal = document.getElementById(modalId);
+      modal.style.display = "none";
+      $('.modal-backdrop').remove();
+    }
+    goToAlerts(value,alertType) {
+      this.router.navigate(['/alerts'],{queryParams: { 'id': '', 'from':value,'alertType':alertType }});
+    }
+
+    getHostsCount(){
+      this.commonapi.Hosts_count().subscribe((res:any) => {
+        this.windowsOnline = res.data.windows.online;
+        this.windowsOffline = res.data.windows.offline;
+        this.windowsDisabled = res.data.windows.removed;
+        if(this.windowsOnline !=='' || this.windowsOnline !==''){
+          $('.window_widget_body').show();
+          $('.window_widget_body2').hide();
+        }
+        this.ubuntuOnline = res.data.linux.online;
+        this.ubuntuOffline = res.data.linux.offline;
+        this.ubuntuDisabled = res.data.linux.removed;
+        if(this.ubuntuOnline !=='' || this.ubuntuOffline !==''){
+          $('.linux_widget_body').show();
+          $('.linux_widget_body2').hide();
+        }
+        this.darwinsOnline = res.data.darwin.online;
+        this.darwinsOffline = res.data.darwin.offline;
+        this.darwinsDisabled = res.data.darwin.removed;
+        if(this.darwinsOnline !=='' || this.darwinsOffline !==''){
+          $('.apple_widget_body').show();
+        $('.apple_widget_body2').hide();
+        }
+    });
     }
 }

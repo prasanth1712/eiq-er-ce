@@ -3,6 +3,7 @@ import json
 import logging
 import socket
 import os
+import string
 
 from flask import current_app
 
@@ -29,6 +30,10 @@ class RsyslogAlerter(AbstractAlerterPlugin):
         self.rsyslog_address = os.environ.get('RSYSLOG_ADDRESS', 'rsyslogf')
         self.rsyslog_port = int(os.environ.get('RSYSLOG_PORT', '514'))
 
+    @staticmethod
+    def template(match):
+        return string.Template("{name}\r\n\r\n{description}".format(name=match.rule['name'], description=match.rule['description'] or ""))
+
     def handle_alert(self, node, match, intel_match):
         import datetime as dt
 
@@ -37,7 +42,7 @@ class RsyslogAlerter(AbstractAlerterPlugin):
 
         if match:
             current_app.logger.log(logging.WARNING, "Triggered alert: {0!r}".format(match))
-            description = match.rule.template.safe_substitute(match.result["columns"], **node).rstrip()
+            description = self.template(match).safe_substitute(match.result["columns"], **node).rstrip()
 
             description = ":".join(description.split("\r\n\r\n", 1))
 
@@ -46,22 +51,20 @@ class RsyslogAlerter(AbstractAlerterPlugin):
                     node,
                     flatten_json(
                         {
-                            "event_type": "trigger",
-                            "service_key": self.service_key,
-                            "incident_key": key,
-                            "description": description,
-                            "host_identifier": node["host_identifier"],
-                            "client": "PolyLogyx",
-                            "client_url": self.client_url,
-                            "query_name": match.result["name"],
-                            "rule_name": match.rule.name,
-                            "rule_description": match.rule.description,
-                            "rule_status": match.rule.status,
-                            "severity": match.rule.severity,
-                            "alert_type": "Rule",
-                            "created_at": dt.datetime.utcnow(),
-                            "action": match.result["action"],
-                            "columns": match.result["columns"],
+
+                            '_version': 2,
+                            '_event_type': 'alert',
+                            '_host_identifier': node['host_identifier'],
+                            "_query_name": match.result['name'],
+                            '_rule_name': match.rule['name'],
+                            '_rule_description': match.rule['description'],
+                            '_severity': match.rule['severity'],
+                            '_alert_type': 'Rule',
+                            '_created': dt.datetime.utcnow(),
+                            '_action': match.result['action'],
+                            'columns': match.result['columns']
+
+
                         }
                     ),
                 ),
@@ -74,19 +77,19 @@ class RsyslogAlerter(AbstractAlerterPlugin):
                     node,
                     flatten_json(
                         {
-                            "event_type": "trigger",
-                            "service_key": self.service_key,
-                            "incident_key": key,
-                            "host_identifier": node["host_identifier"],
-                            "client": "PolyLogyx",
-                            "client_url": self.client_url,
-                            "alert_type": "Threat Intel",
-                            "query_name": intel_match.intel["query_name"],
-                            "source_data": intel_match.data,
-                            "source": intel_match.intel["source"],
-                            "severity": intel_match.intel["severity"],
-                            "created_at": dt.datetime.utcnow(),
-                            "columns": intel_match.result,
+
+                            '_version': 2,
+                            '_event_type': 'trigger',
+                            '_host_identifier': node['host_identifier'],
+                            '_alert_type': 'Threat Intel',
+                            "_query_name": intel_match.intel['query_name'],
+                            '_source_data': intel_match.data,
+                            '_source': intel_match.intel['source'],
+                            '_severity': intel_match.intel['severity'],
+                            '_created': dt.datetime.utcnow(),
+                            'columns': intel_match.result,
+
+
                         }
                     ),
                 ),

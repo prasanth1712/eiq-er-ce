@@ -1,7 +1,7 @@
 body {
   font-size: 10pt;
   color: #4d4d4d;
-  background: #f2f5f7;
+  background: #F7F7F7;
 }
 
 .timeline-frame {
@@ -27,7 +27,7 @@ body {
   border-top-style: solid;
   border-width: 1px;
   box-sizing: border-box;
-  background: #f2f5f7;
+  background: #F7F7F7;
 }
 
 .timeline-axis-grid {
@@ -83,38 +83,46 @@ body {
 }
 
 .timeline-event-dot {
-  background: url('img/info.svg') no-repeat;
+  background: url('../../assets/media/icons/info.svg') no-repeat;
   width: 30px !important;
   height: 30px !important;
   top: 66px !important;
 }
 .timeline-event-dot.yellow {
-  background: url('img/error.svg') no-repeat ;
+  background: url('../../assets/media/icons/critical.svg') no-repeat ;
+  cursor: pointer!important;
+}
+.timeline-event-dot.orange {
+  background: url('../../assets/media/icons/high.svg') no-repeat ;
   cursor: pointer!important;
 }
 .timeline-event-dot.green {
-  background: url('img/info.svg') no-repeat ;
+  background: url('../../assets/media/icons/low.svg') no-repeat ;
   cursor: pointer!important;
 }
 .timeline-event-dot.green-m {
-  background: url('img/warning.svg') no-repeat ;
+  background: url('../../assets/media/icons/medium.svg') no-repeat ;
   cursor: pointer!important;
 }
 .timeline-event.selected{
-  background: url('img/info-hover.svg') no-repeat ;
+  background: url('../../assets/media/icons/info.svg') no-repeat ;
   cursor: pointer!important;
 }
 .green.hovered,.green.selected{
-  background: url('img/info-hover.svg') no-repeat !important;
+  background: url('../../assets/media/icons/low.svg') no-repeat !important;
   cursor: pointer!important;
 }
 
 .yellow.hovered,.yellow.selected {
-  background: url('img/error-hover.svg') no-repeat !important;
+  background: url('../../assets/media/icons/critical.svg') no-repeat !important;
+  cursor: pointer!important;
+}
+.orange.hovered,.orange.selected {
+  background: url('../../assets/media/icons/high.svg') no-repeat !important;
   cursor: pointer!important;
 }
 .green-m.hovered,.green-m.selected{
-  background: url('img/warning-hover.svg') no-repeat !important;
+  background: url('../../assets/media/icons/medium.svg') no-repeat !important;
   cursor: pointer!important;
 }
 
@@ -194,7 +202,7 @@ body {
 }
 
 .timeline-controls-container {
-  background: #f2f5f7;
+  background: #F7F7F7;
   width: 88px;
   height: 125px;
   position: absolute;

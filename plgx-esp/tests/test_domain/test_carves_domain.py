@@ -1,4 +1,4 @@
-from polylogyx.db.models import CarveSession, CarvedBlock, DashboardData
+from polylogyx.db.models import CarveSession, CarvedBlock
 from polylogyx.domain.carves_domain import CarvesDomain
 
 session_data = {

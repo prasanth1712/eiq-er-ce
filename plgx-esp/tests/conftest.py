@@ -6,6 +6,7 @@ import datetime as dt
 import pytest
 from webtest import TestApp
 
+import manage
 from polylogyx.application import create_app
 from polylogyx.db.database import db as _db
 from polylogyx.db.models import NodeConfig,Config
@@ -19,7 +20,7 @@ from .factories import NodeFactory, RuleFactory, PackFactory, QueryFactory, TagF
 @pytest.fixture(scope="function")
 def app():
     """An application for the tests."""
-    _app = create_app(config=TestConfig)
+    _app = manage.app
     ctx = _app.test_request_context()
     ctx.push()
 
@@ -81,6 +82,18 @@ def db(app):
 
 
 @pytest.fixture(scope="function")
+def channel(app):
+    import pika, ssl
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=current_app.config['RABBITMQ_HOST'],
+                                                                   port=current_app.config['RABBITMQ_PORT'],
+                                                                   credentials=current_app.config['RABBIT_CREDS'],
+                                                                   ssl=current_app.config['RABBITMQ_USE_SSL'],
+                                                                   ssl_options={"cert_reqs": ssl.CERT_NONE}))
+    channel = connection.channel()
+    return channel
+
+
+@pytest.fixture(scope="function")
 def node(db):
     """A node for the tests."""
     node = NodeFactory(
@@ -122,8 +135,15 @@ def celery_app(app):
     # for use celery_worker fixture
     from celery.contrib.testing import tasks  # NOQA
     from polylogyx.extensions import make_celery
-    make_celery(app, celery)
+    celery = make_celery(app, celery)
     return celery
+
+
+@pytest.fixture(scope='function')
+def celery_worker(celery_app):
+    from celery.contrib.testing.worker import start_worker
+    celery_worker = start_worker(celery_app, perform_ping_check=False, concurrency=2)
+    return celery_worker
 
 
 @pytest.fixture(scope="function")
@@ -170,18 +190,6 @@ def distributed_query(db, node):
     task = DistributedQueryTaskFactory(node=node, distributed_query=query)
     db.session.commit()
     return query
-
-
-@pytest.fixture(scope="function")
-def options(db):
-    from polylogyx.constants import PolyLogyxServerDefaults
-    option = Options(
-        name=PolyLogyxServerDefaults.plgx_config_all_options,
-        option=json.dumps({'foo': "foobar"}),
-        created_at=dt.datetime.utcnow()
-    )
-    option.save()
-    return option
 
 
 @pytest.fixture(scope="function")

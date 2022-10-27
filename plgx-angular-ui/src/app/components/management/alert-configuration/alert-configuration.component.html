@@ -5,22 +5,23 @@
         <!-- start:: Content -->
         <div class="kt-portlet__head kt-portlet__head--lg">
             <div class="kt-portlet__head-label">
-              <span class="kt-portlet__head-icon">
-                <i class="kt-font-brand fab fa-whmcs"></i>
+              <span class="kt-portlet__head-icon custom-header-icon-container">
+                <i class="kt-font-brand fab fa-whmcs custom-header-icon"></i>
               </span>
-                <h3 class="kt-portlet__head-title">
-                    Alert Configuration
+                <h3 class="kt-portlet__head-title custom-header-title">
+                    Alert Settings
                   </h3>
 
             </div>
             <div class="kt-portlet__head-toolbar">
               <div class="kt-portlet__head-wrapper">
                 <div class="">
-                  <a  (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark"
+                  <!-- <a  (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark"
                     data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page" style="color:#93a2dd;">
                     <i class="fas fa-chevron-left"></i>
                     Back
-                  </a>
+                  </a> -->
+                  <appbutton (click)="goBack()" text="Back" icon="fa-chevron-left" btnClass="btn-small-light" btnType="button"></appbutton>
                 </div>
               </div>
             </div>
@@ -31,12 +32,13 @@
               <form class="kt-form" id="kt_form" [formGroup]="alertConfigureSettings" (ngSubmit)="onSubmit()">
                 <div class="row">
                     <div class="col-xl-12">
-                    <h3 class="col-form-label"  style="font-weight:bold;color: #646c9a;" >Alert Configuration :</h3>
+                    <h3 class="col-form-label"  style="font-weight:bold;color: #646c9a;" >Alert Settings :</h3>
                     <div class="kt-section__body">
                                 <div class="form-group row">
                                   <label class="col-3 col-form-label">Alert aggregation window :</label>
                                   <div class="col-6">
-                                    <input  type="number" id="interval" min="1"  name="alertAggregationDuration" class="form-control inputField" formControlName="alertAggregationDuration" [ngClass]="{ 'is-invalid': submitted && f.alertAggregationDuration.errors }"/>
+                                    <input *AppHasRole="role.adminAccess" type="number" id="interval" min="1"  name="alertAggregationDuration" class="form-control inputField" formControlName="alertAggregationDuration" [ngClass]="{ 'is-invalid': submitted && f.alertAggregationDuration.errors }"/>
+                                    <input *AppHasRole="role.userAccess" type="number"  name="alertAggregationDuration" (keydown.enter)="$event.preventDefault()" formControlName="alertAggregationDuration" class="form-control inputField" disabled=true/>
                                     <div *ngIf="submitted && f.alertAggregationDuration.errors" class="invalid-feedback">
                                       <div *ngIf="f.alertAggregationDuration.errors.required">Error On Aggregation Time Field</div>
                                       <div *ngIf="f.alertAggregationDuration.errors.min">Please select a positive value </div>
@@ -46,10 +48,11 @@
                                 </div>
                                 <div class="form-group row">
                                   <label class="col-3"></label>
-                                  <div class="col-6">
-                                    <button  style="width:100px" type="submit" class="btn btn-success"><i class="fa fa-sync-alt"></i>
+                                  <div class="col-6" *AppHasRole="role.adminAccess">
+                                    <!-- <button  style="width:100px" type="submit" class="btn btn-success"><i class="fa fa-sync-alt"></i>
                                       <span>Update</span>
-                                    </button>
+                                    </button> -->
+                                    <appbutton text="Update" btnClass="btn-small" btnType="submit" icon="fa-sync-alt"></appbutton>
                                   </div>
                                 </div>
                         </div>

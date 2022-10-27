@@ -5,10 +5,10 @@ import datetime as dt
 from operator import and_
 
 from flask import jsonify, current_app, request, abort
-from flask_restplus import reqparse
+from flask_restful import reqparse
 
-from polylogyx.models import Node, Settings, db, EmailRecipient, ResultLog
-from polylogyx.dao import nodes_dao as node_dao
+from polylogyx.models import Node, Settings, db, ResultLog
+from polylogyx.dao.v1 import hosts_dao as node_dao
 from polylogyx.search_rules import AndCondition, OrCondition, BaseCondition, OPERATOR_MAP
 
 """Common utils/ all methods used in blueprints folder will be defined here"""
@@ -28,101 +28,8 @@ def dump_datetime(value):
     """Deserialize datetime object into string form for JSON processing."""
     if value is None:
         return None
-    #return datetime.strptime(str(value), '%Y-%m-%d %H:%M:%S')
+    # return datetime.strptime(str(value), '%Y-%m-%d %H:%M:%S')
     return value.strftime("%Y-%m-%d") + ' ' + value.strftime("%H:%M:%S")
-
-
-class SearchParser:
-
-    def parse_condition(self, d):
-        from polylogyx.search_rules import OPERATOR_MAP
-
-        op = d['operator']
-        value = d['value']
-
-        # If this is a "column operator" - i.e. operating on a particular
-        # value in a column - then we need to give a custom extraction
-        # function that knows how to get this value from a query.
-        column_name = None
-        if d['field'] == 'column':
-            # Strip 'column_' prefix to get the 'real' operator.
-            if op.startswith('column_'):
-                op = op[7:]
-            if isinstance(value, six.string_types):
-                column_name = value
-            else:
-                # The 'value' array will look like ['column_name', 'actual value']
-                column_name, value = value
-        if not column_name:
-            column_name = d['field']
-        klass = OPERATOR_MAP.get(op)
-
-        if not klass:
-            raise ValueError("Unsupported operator: {0}".format(op))
-
-        inst = self.make_condition(klass, d['field'], value, column_name=column_name)
-        return inst
-
-    def parse_group(self, d):
-        from polylogyx.search_rules import AndCondition, OrCondition
-
-        if len(d['rules']) == 0:
-            raise ValueError("A group contains no rules")
-        upstreams = [self.parse(r) for r in d['rules']]
-        condition = d['condition']
-        if condition == 'AND' or condition == 'and':
-            return self.make_condition(AndCondition, upstreams)
-        elif condition == 'OR' or condition == 'or':
-            return self.make_condition(OrCondition, upstreams)
-
-        raise ValueError("Unknown condition: {0}".format(condition))
-
-    def parse(self, d):
-        if 'condition' in d:
-            return self.parse_group(d)
-        return self.parse_condition(d)
-
-    def make_condition(self, klass, *args, **kwargs):
-        from polylogyx.search_rules import BaseCondition
-
-        """
-        Memoizing constructor for conditions.  Uses the input config as the cache key.
-        """
-        conditions = {}
-
-        # Calculate the memoization key.  We do this by creating a 3-tuple of
-        # (condition class name, args, kwargs).  There is some nuance to this,
-        # though: we need to put args/kwargs in the right format.  We
-        # recursively iterate through lists/dicts and convert them to tuples,
-        # and extract the memoization key from instances of BaseCondition.
-        def tupleify(obj):
-            if isinstance(obj, BaseCondition):
-                return obj.__network_memo_key
-            elif isinstance(obj, tuple):
-                return tuple(tupleify(x) for x in obj)
-            elif isinstance(obj, list):
-                return tuple(tupleify(x) for x in obj)
-            elif isinstance(obj, dict):
-                items = ((tupleify(k), tupleify(v)) for k, v in obj.items())
-                return tuple(sorted(items))
-            else:
-                return obj
-
-        args_tuple = tupleify(args)
-        kwargs_tuple = tupleify(kwargs)
-
-        key = (klass.__name__, args_tuple, kwargs_tuple)
-        if key in conditions:
-            return conditions[key]
-
-        # Instantiate the condition class.  Also, save the memoization key on
-        # the class, so it can be retrieved (above).
-        inst = klass(*args, **kwargs)
-        inst.__network_memo_key = key
-
-        # Save the condition
-        conditions[key] = inst
-        return inst
 
 
 def validate_json(f):
@@ -146,6 +53,30 @@ def validate_json(f):
     return decorated_function
 
 
+def validate_command(request_data):
+    response = {}
+    types = ['file', 'process']
+    status = 'failure'
+    message = 'Invalid Data'
+
+    for type in types:
+        try:
+            if request_data.get('target').get(type):
+
+                node = Node.query.filter(
+                    Node.host_identifier == request_data.get('target').get(type).get(
+                        'device').get(
+                        'hostname')).first()
+                if node: return True, node
+        except:
+            status = 'failure'
+            message = 'Please provide a valid command'
+
+    response['status'] = status
+    response['message'] = message
+    return False, jsonify(response)
+
+
 def validate_ip(s):
     a = s.split('.')
     if len(a) != 4:
@@ -167,102 +98,41 @@ def save_or_update_setting(setting, v, k):
         Settings.create(name=k, setting=v)
 
 
-def save_email_recipients(emails):
-    emailListStr = None
-    emailRecipients = []
-    db.session.query(EmailRecipient).update({EmailRecipient.status: 'inactive'})
-    for email in emails:
-        emailRecipients.append(email)
-        try:
-            emailRecipient = db.session.query(EmailRecipient).filter(EmailRecipient.recipient == email).one()
-        except MultipleResultsFound:
-            emailRecipient = None
-        except NoResultFound:
-            emailRecipient = None
-
-        if (emailRecipient):
-            emailRecipient.status = 'active'
-            emailRecipient.updated_at = dt.datetime.utcnow()
-            # EmailRecipient.update(emailRecipient)
-
-        else:
-            emailRecipient = EmailRecipient()
-            emailRecipient.status = 'active'
-            emailRecipient.created_at = dt.datetime.now()
-            emailRecipient.recipient = email
-            emailRecipient.updated_at = dt.datetime.utcnow()
-            # EmailRecipient.create(emailRecipient)
-        db.session.add(emailRecipient)
-        if emailListStr:
-            emailListStr = emailListStr + ',' + email
-        else:
-            emailListStr = email
-    db.session.commit()
-    alerter_plugins = current_app.config.get('POLYLOGYX_ALERTER_PLUGINS', {})
-    if 'email' in alerter_plugins:
-        emailAlerter = alerter_plugins['email']
-        emailAlerter[1]['recipients'] = [
-            emailListStr,
-        ]
-        alerter_plugins['email'] = emailAlerter
-    current_app.config['POLYLOGYX_ALERTER_PLUGINS'] = alerter_plugins
-
-    current_app.config['EMAIL_RECIPIENTS'] = emailRecipients
-    response_json = {}
-    response_json['status'] = 'success'
-    response_json['message'] = 'Successfully configured email recipients'
-
 def json_serial(obj):
     if isinstance(obj, (dt.datetime, dt.date)):
         return obj.isoformat()
     raise TypeError("Type %s not serializable" % type(obj))
 
 
-#request parsing function
-def requestparse(args_to_add, type_list, help_list, required = None):
+# request parsing function
+def requestparse(args_to_add, type_list, help_list, required=None):
     """function which parse the request body data into dictionary"""
-    if not required:required = [True for i in args_to_add]
+    if not required: required = [True for i in args_to_add]
     parser = reqparse.RequestParser()
     if not 'file' in args_to_add:
         for i in range(len(args_to_add)):
             parser.add_argument(args_to_add[i], type=type_list[i], help=help_list[i], required=required[i])
     else:
         for i in range(len(args_to_add)):
-            if not args_to_add[i]=='file':
+            if not args_to_add[i] == 'file':
                 parser.add_argument(args_to_add[i], type=type_list[i], help=help_list[i], required=required[i])
             else:
-                parser.add_argument(args_to_add[i], type=type_list[i], help=help_list[i], required=required[i], location = 'files')
+                parser.add_argument(args_to_add[i], type=type_list[i], help=help_list[i], required=required[i],
+                                    location='files')
     return parser
 
 
-def prepare_response(message, status = None, data = None):
+def prepare_response(message, status=None, data=None):
     """returns a response dictionary needed to apply to wrappers"""
     if status and data:
-        return {'message':message, 'status':status, 'data':data}
+        return {'message': message, 'status': status, 'data': data}
     elif status:
         return {'message': message, 'status': status}
     else:
-        return {'message':message}
-
-def save_intel_alert( data, source,severity,query_name,uuid,columns,node_id):
-    from polylogyx.models import Alerts
-    from collections import namedtuple
-    IntelMatch = namedtuple('IntelMatch', ['intel', 'result', 'node'])
-
-    alertsObj = Alerts.create(message=columns, query_name=query_name, result_log_uid=uuid,
-                       node_id=node_id,
-                       rule_id=1, type=Alerts.THREAT_INTEL, source=source, source_data=data, recon_queries={},
-                       severity=severity)
-
-    intel = {'type': Alerts.THREAT_INTEL, 'source': source, 'severity': severity,'query_name':query_name}
-    intel_match = IntelMatch(intel=intel,
-                             result=columns,
-                             node=node_id)
-    node= db.session.query(Node).filter(Node.id==node_id).first().to_dict()
-    return send_alert(node, None, intel_match)
+        return {'message': message}
 
 
-def send_alert(node,rule_match,intel_match):
+def send_alert(node, rule_match, intel_match):
     from polylogyx.models import current_app as app
     from polylogyx.plugins import AbstractAlerterPlugin
     alerters = app.config.get('POLYLOGYX_ALERTER_PLUGINS', {})
@@ -289,14 +159,15 @@ def send_alert(node,rule_match,intel_match):
 
 
 def add_pack_through_json_data(args):
-
-    from polylogyx.dao import packs_dao, queries_dao
-    from polylogyx.wrappers import parent_wrappers
+    from polylogyx.dao.v1 import packs_dao, queries_dao
+    from polylogyx.wrappers.v1 import parent_wrappers
     from polylogyx.utils import create_tags, validate_osquery_query
-    from flask_restplus import marshal
+    from flask_restful import marshal
 
-    if 'tags' in args: tags = args['tags'].split(',')
-    else: tags=[]
+    if 'tags' in args:
+        tags = args['tags'].split(',')
+    else:
+        tags = []
     name = args['name']
     queries = args['queries']
     pack = packs_dao.get_pack_by_name(name)
@@ -342,10 +213,12 @@ def get_node_id_by_host_id(host_identifier):
     if node:
         return node.id
 
+
 def get_host_id_by_node_id(node_id):
     node = node_dao.get_node_by_id(node_id)
     if node:
         return node.host_identifier
+
 
 def get_queries_or_packs_of_node(node_id):
     return db.session.query(
@@ -354,7 +227,7 @@ def get_queries_or_packs_of_node(node_id):
         all()
 
 
-def get_results_by_query(startPage, perPageRecords, node_id, name, args = None):
+def get_results_by_query(startPage, perPageRecords, node_id, name, args=None):
     searchTerm = None
     columns = []
     columnsDefined = False
@@ -371,7 +244,6 @@ def get_results_by_query(startPage, perPageRecords, node_id, name, args = None):
     count = db.session.query(ResultLog).filter(
         and_(ResultLog.name == name, and_(ResultLog.node_id == node_id, ResultLog.action != 'removed'))).count()
     countFiltered = count
-    
 
     if searchTerm:
         queryCountStr = "select count(distinct id) from result_log join jsonb_each_text(result_log.columns) e on true where  node_id='" + str(
@@ -399,26 +271,27 @@ def get_results_by_query(startPage, perPageRecords, node_id, name, args = None):
         if results:
             firstRecord = results[0]
 
-            TO_CAPTURE_COlUMNS=[]
+            TO_CAPTURE_COlUMNS = []
             if 'action' in firstRecord:
                 if 'PROC_' in firstRecord['action']:
-                    TO_CAPTURE_COlUMNS=['utc_time', 'action', 'path' ,'parent_path']
-                elif 'Close' in firstRecord['action'] or 'Accept' in firstRecord['action']  or 'Connect' in firstRecord['action'] :
-                    TO_CAPTURE_COlUMNS=['utc_time','action' ,'process_name', 'protocol' ,'local_address' ,'local_port' ,'remote_address' 'remote_port']
+                    TO_CAPTURE_COlUMNS = ['utc_time', 'action', 'path', 'parent_path']
+                elif 'Close' in firstRecord['action'] or 'Accept' in firstRecord['action'] or 'Connect' in firstRecord[
+                    'action']:
+                    TO_CAPTURE_COlUMNS = ['utc_time', 'action', 'process_name', 'protocol', 'local_address',
+                                          'local_port', 'remote_address' 'remote_port']
                 elif 'DELETE' in firstRecord['action'] or 'READ' in firstRecord['action'] or 'WRITE' in firstRecord[
                     'action']:
-                    TO_CAPTURE_COlUMNS = ['utc_time','action', 'process_name', 'md5', 'target_path']
+                    TO_CAPTURE_COlUMNS = ['utc_time', 'action', 'process_name', 'md5', 'target_path']
 
             elif 'event_type' in firstRecord:
-                    if 'dns_req' ==firstRecord['event_type'] or 'dns_res'==firstRecord['event_type']:
-                        TO_CAPTURE_COlUMNS = ['domain_name', 'resolved_ip' ,'utc_time' ,'request_type' ,'request_class']
-                    elif  'http_req' ==firstRecord['event_type']:
-                        TO_CAPTURE_COlUMNS=['utc_time', 'url' ,'remote_port', 'process_name']
+                if 'dns_req' == firstRecord['event_type'] or 'dns_res' == firstRecord['event_type']:
+                    TO_CAPTURE_COlUMNS = ['domain_name', 'resolved_ip', 'utc_time', 'request_type', 'request_class']
+                elif 'http_req' == firstRecord['event_type']:
+                    TO_CAPTURE_COlUMNS = ['utc_time', 'url', 'remote_port', 'process_name']
 
-
-            if len(TO_CAPTURE_COlUMNS)==0:
+            if len(TO_CAPTURE_COlUMNS) == 0:
                 for key in firstRecord.keys():
-                        columns.append({'data': key, 'title': key})
+                    columns.append({'data': key, 'title': key})
             else:
                 columns.append({"className": 'details-control',
                                 "orderable": False,
@@ -427,7 +300,6 @@ def get_results_by_query(startPage, perPageRecords, node_id, name, args = None):
                 for key in firstRecord.keys():
                     if key in TO_CAPTURE_COlUMNS:
                         columns.append({'data': key, 'title': key})
-
 
     output = {}
     try:
@@ -535,25 +407,13 @@ def make_condition(klass, *args, **kwargs):
     conditions[key] = inst
     return inst
 
-def get_tags_list_to_add(tags):
-    from polylogyx.models import Tag
-    from polylogyx.dao import tags_dao
-    all_tags = [tag.to_dict() for tag in tags_dao.get_all_tags()]
-    obj_list = []
-    for tag in tags:
-        if tag not in all_tags:
-            obj = Tag.create(value=tag)
-            obj_list.append(obj)
-        else:
-            obj = Tag.query.filter(Tag.value==tag).first()
-            obj_list.append(obj)
-    return obj_list
-
 
 def add_rule_name_to_alerts_response(dictionary_list_data):
-    from polylogyx.dao import rules_dao
+    from polylogyx.dao.v1 import rules_dao
     for dict_item in dictionary_list_data:
-        if dict_item['type']=='rule':
+        if dict_item['type'] == 'rule':
             if 'rule_name' not in dict_item:
-                dict_item['rule_name']=rules_dao.get_rule_name_by_id(dict_item['rule_id'])
-    return dictionary_list_data
+                rule = rules_dao.get_rule_name_by_id(dict_item['rule_id'])
+                if rule:
+                    dict_item['rule_name'] = rule.name
+            return dictionary_list_data

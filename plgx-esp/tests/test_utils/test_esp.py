@@ -79,8 +79,10 @@ class Testesp:
     
     def test_update_system_info_no_capture_info(self,node):
         sys_info = {"mac":"Test"}
-        current_app.config["POLYLOGYX_CAPTURE_NODE_INFO"]=[]
+        old_config = current_app.config.get("POLYLOGYX_CAPTURE_NODE_INFO", [])
+        current_app.config["POLYLOGYX_CAPTURE_NODE_INFO"] = []
         assert esp.update_system_info(node,sys_info) is None
+        current_app.config["POLYLOGYX_CAPTURE_NODE_INFO"] = old_config
 
     def test_update_system_info_no_node_info(self,node):
         sys_info = {"mac":"Test"}

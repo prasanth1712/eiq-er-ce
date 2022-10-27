@@ -1,15 +1,15 @@
 import re
-
-from flask_restplus import Namespace, Resource, inputs
+from flask import abort
+from flask_restful import Resource, inputs
 from flask import json
-
+from polylogyx.blueprints.v1.external_api import api
 from polylogyx.blueprints.v1.utils import *
 from polylogyx.util.mitre import MitreApi
 from polylogyx.dao.v1 import rules_dao
 from polylogyx.wrappers.v1 import rule_wrappers, parent_wrappers
 from polylogyx.authorize import admin_required
-
-ns = Namespace('rules', description='rules related operations')
+from polylogyx.cache import refresh_cached_rules
+from polylogyx.db.signals import bulk_insert_to_pa
 
 
 def validate_technique_id(technique_id):
@@ -19,21 +19,33 @@ def validate_technique_id(technique_id):
     return True
 
 
-@ns.route('', endpoint="list rules")
+@api.resource('/rules', endpoint="list rules")
 class RuleList(Resource):
     """
         Lists all Rules
     """
-    parser = requestparse(["start", "limit", "searchterm", 'alerts_count'], [int, int, str, inputs.boolean],
-                          ["start", "limit", "searchterm", 'alerts_count(true/false)'], [False, False, False, False],
-                          [None, None, None, None], [None, None, '', True])
 
-    @ns.expect(parser)
-    @ns.marshal_with(parent_wrappers.common_response_wrapper)
+    parser = requestparse(["start", "limit", "searchterm", 'alerts_count','column','order_by','status'], [int, int, str, inputs.boolean,str,str, inputs.boolean],
+                          ["start", "limit", "searchterm", 'alerts_count(true/false)','coumn to sort','order to sort','status(true/false)'], [False, False, False, False,False,False,False],
+                          [None, None, None, None,['created_at','name','alert_count'],['asc','Asc','ASC','Desc','DESC','desc'],None], [None, None, '', True,None,None,None])
+
+    def get(self):
+        query_set = rules_dao.get_rule_name_rule_ids()
+        data = []
+        for rule in query_set:
+            rule_dict = {}
+            rule_dict['name'] = rule.name
+            rule_dict['id'] = rule.id
+            rule_dict['status'] = rule.status
+            data.append(rule_dict)
+        message = "Successfully fetched the rules info"
+        status = "success"
+        return prepare_response(message, status, data)
+
     def post(self):
         args = self.parser.parse_args()
-        query_set = rules_dao.get_all_rules(args['searchterm'], args['alerts_count']).offset(args['start'])\
-            .limit(args['limit']).all()
+
+        query_set = rules_dao.get_all_rules(args['searchterm'], args['alerts_count'],args['status'],args['column'],args['order_by']).offset(args['start']).limit(args['limit']).all()
         data = []
         for rule_alerts_count_pair in query_set:
             if args['alerts_count']:
@@ -46,13 +58,13 @@ class RuleList(Resource):
             data.append(rule_dict)
         message = "Successfully fetched the rules info"
         status = "success"
-        response = {'count': rules_dao.get_all_rules(args['searchterm'], args['alerts_count']).count(),
-                    'total_count': rules_dao.get_total_count(), 'results': data,
+        response = {'count': rules_dao.get_all_rules(args['searchterm'], args['alerts_count'], args['status']).count(),
+                    'total_count': rules_dao.get_total_count(args['status']), 'results': data,
                     'total_alerts': rules_dao.get_rule_alerts_count()}
         return prepare_response(message, status, response)
 
 
-@ns.route('/<int:rule_id>', endpoint="list rule by id")
+@api.resource('/rules/<int:rule_id>',  endpoint="list rule by id")
 class GetRuleById(Resource):
     """
         Lists the rule by its ID
@@ -71,26 +83,25 @@ class GetRuleById(Resource):
         return marshal(prepare_response(message), parent_wrappers.failure_response_parent)
 
 
-@ns.route('/<int:rule_id>', endpoint="edit rule by id")
+@api.resource('/rules/<int:rule_id>',  endpoint="edit rule by id")
 class ModifyRuleById(Resource):
     """
         Modifies the rule data for the passed rule_id
     """
-    parser = requestparse(['alerters', 'name', 'description', 'conditions', 'recon_queries', 'severity', 'status',
+    parser = requestparse(['alerters', 'name', 'description', 'conditions', 'severity', 'status',
                            'type', 'tactics', 'technique_id', 'platform', 'alert_description'],
-                          [str, str, str, dict, list, str, str, str, str, str, str, inputs.boolean],
-                          ["alerters", "name of the rule", "description of the rule", "conditions", "recon_queries",
+                           [str,str,str,dict,str,str,str,str,str,str,inputs.boolean],
+                          ["alerters", "name of the rule", "description of the rule", "conditions",
                            "severity", 'status', 'type', 'tactics', 'technique_id', 'platform', 'alert_description'],
-                          [False, True, False, True, False, False, False, False, False, False, False, False],
-                          [None, None, None, None, None, ["WARNING", "INFO", "CRITICAL"],
+                          [False, True, False, True, False, False, False, False, False, False, False],
+                          [None, None, None, None, ["MEDIUM", "INFO", "CRITICAL","HIGH","LOW"],
                            None, None, None, None, None, None],
-                          [None, None, None, None, None, None, None, None, None, None, 'all', False])
+                          [None, None, None, None, None, None, None, None, None, 'all', False])
 
     @admin_required
-    @ns.expect(parser)
     def post(self, rule_id):
         args = self.parser.parse_args()
-
+        print(type(args['alert_description']))
         if rule_id:
             rule = rules_dao.get_rule_by_id(rule_id)
             if rule:
@@ -100,7 +111,6 @@ class ModifyRuleById(Resource):
                 name = args['name']
                 description = args['description']
                 conditions = args['conditions']
-                recon_queries = args['recon_queries']
                 severity = args['severity']
                 type_ip = args['type']
                 tactics = args['tactics']
@@ -135,7 +145,7 @@ class ModifyRuleById(Resource):
                         return marshal(prepare_response(str(e), "failure"), parent_wrappers.failure_response_parent)
 
                     rule = rules_dao.edit_rule_by_id(rule_id, name, alerters, description, conditions, rule_status,
-                                                     dt.datetime.utcnow(), json.dumps(recon_queries), severity, type_ip,
+                                                     dt.datetime.utcnow(), severity, type_ip,
                                                      tactics, args['technique_id'], platform, args['alert_description'])
                     current_app.logger.info("Rule '{0}' has been updated with given payload".format(rule))
                     return prepare_response("Successfully modified the rules info", "success",
@@ -147,23 +157,22 @@ class ModifyRuleById(Resource):
         return marshal(prepare_response(message), parent_wrappers.failure_response_parent)
 
 
-@ns.route('/add', endpoint="add rule")
+@api.resource('/rules/add',  endpoint="add rule")
 class AddRule(Resource):
     """
         Adds and returns the API response if there is any existed data for the passed rule_id
     """
-    parser = requestparse(['alerters', 'name', 'description', 'conditions', 'recon_queries', 'severity', 'status',
+    parser = requestparse(['alerters', 'name', 'description', 'conditions', 'severity', 'status',
                            'type', 'tactics', 'technique_id', 'platform', 'alert_description'],
-                          [str, str, str, dict, list, str, str, str, str, str, str, inputs.boolean],
-                          ["alerters", "name of the rule", "description of the rule", "conditions", "recon_queries",
+                          [str, str, str, dict, str, str, str, str, str, str,inputs.boolean],
+                          ["alerters", "name of the rule", "description of the rule", "conditions",
                            "severity", 'status', 'type', 'tactics', 'technique_id', 'platform', 'alert_description'],
-                          [False, True, False, True, False, False, False, False, False, False, False, False],
-                          [None, None, None, None, None, ["WARNING", "INFO", "CRITICAL"], None,
+                          [False, True, False, True, False, False, False, False, False, False, False],
+                          [None, None, None, None, ["MEDIUM", "INFO", "CRITICAL","HIGH","LOW","WARNING"], None,
                            None, None, None, None, None],
-                          [None, None, None, None, None, None, None, None, None, None, 'all', False])
+                          [None, None, None, None, None, None, None, None, None, 'all', False])
 
     @admin_required
-    @ns.expect(parser)
     def post(self):
         from polylogyx.models import Rule
         args = self.parser.parse_args()
@@ -173,13 +182,13 @@ class AddRule(Resource):
         name = args['name']
         description = args['description']
         conditions = args['conditions']
-        recon_queries = args['recon_queries']
         severity = args['severity']
         platform = args['platform']
 
         if not severity:
             severity = Rule.INFO
-
+        if severity == 'WARNING':
+            severity = Rule.MEDIUM
         type_ip = args['type']
         tactics = args['tactics']
         if tactics:
@@ -211,7 +220,7 @@ class AddRule(Resource):
             if 'debug' not in alerters:
                 alerters.append('debug')
             rule = rules_dao.create_rule_object(name, alerters, description, conditions, status, type_ip, tactics,
-                                                args['technique_id'], json.dumps(recon_queries),
+                                                args['technique_id'],
                                                 severity, platform, args['alert_description'])
             rule.save()
             current_app.logger.info("A new Rule '{0}' has been added with given payload".format(rule))
@@ -220,14 +229,13 @@ class AddRule(Resource):
         return marshal(prepare_response(message), parent_wrappers.failure_response_parent)
 
 
-@ns.route('/tactics', endpoint="get tactics by technique ids")
+@api.resource('/rules/tactics',  endpoint="get tactics by technique ids")
 class GetTactics(Resource):
     """
         Gets tactics for technique id
     """
     parser = requestparse(['technique_ids'], [str], ["technique_ids"], [True])
 
-    @ns.expect(parser)
     def post(self):
         args = self.parser.parse_args()
         mitre_api = MitreApi()
@@ -235,3 +243,58 @@ class GetTactics(Resource):
         tactics_with_description = mitre_api.get_tactics_by_technique_id(technique_id.split(","))
         return marshal(prepare_response("Tactics are fetched successfully from technique ids", "success",
                                         tactics_with_description), parent_wrappers.common_response_wrapper)
+
+
+@api.resource('/rules/disable', endpoint="set inactive by ids")
+class GetTactics(Resource):
+
+    """
+        Bulk disable rules
+    """
+    parser = requestparse(['rule_ids'], [list], ["rule_ids"], [True])
+
+    def post(self):
+        args = self.parser.parse_args()
+        rule_ids = args['rule_ids']
+        rule_ids = [rule.id for rule in rules_dao.get_rules_by_ids(rule_ids)]
+        if not rule_ids:
+            return abort(400, {'message': "No rule(s) are present with give id!"})
+        current_app.logger.info("Rule with '{0}' are requested disable ".format(rule_ids))
+        rules_dao.disable_rule_by_ids(rule_ids)
+        bulk_insert_to_pa(db.session, 'updated', Rule, rule_ids)
+        db.session.commit()
+        refresh_cached_rules()
+        return prepare_response("Successfully modified the rules status", "success")
+
+    def delete(self):
+        args = self.parser.parse_args()
+        rule_ids=args['rule_ids']
+        rule_ids = [rule.id for rule in rules_dao.get_rules_by_ids(rule_ids)]
+        if not rule_ids:
+            return abort(400, {'message': "No rule(s) are present with give id!"})
+        current_app.logger.info("Rule with '{0}' are requested deletion ".format(rule_ids))
+        rules_dao.delete_rule_by_ids(rule_ids)
+        bulk_insert_to_pa(db.session, 'deleted', Rule, rule_ids)
+        db.session.commit()
+        return prepare_response("Successfully deleted the rules", "success")
+
+
+@api.resource('/rules/enable', endpoint="set active by ids")
+class GetTactics(Resource):
+    """
+        Bulk enable rules
+    """
+    parser = requestparse(['rule_ids'], [list], ["rule_ids"], [True])
+
+    def post(self):
+        args = self.parser.parse_args()
+        rule_ids = args['rule_ids']
+        rule_ids = [rule.id for rule in rules_dao.get_rules_by_ids(rule_ids)]
+        if not rule_ids:
+            return abort(400, {'message': "No rules are present with give id"})
+        current_app.logger.info("Rule with '{0}' are requested enable ".format(rule_ids))
+        rules_dao.enable_rule_by_ids(rule_ids)
+        bulk_insert_to_pa(db.session, 'updated', Rule, rule_ids)
+        db.session.commit()
+        refresh_cached_rules()
+        return prepare_response("Successfully modified the rules status", "success")

@@ -5,10 +5,10 @@
         <!-- start:: Content -->
         <div class="kt-portlet__head kt-portlet__head--lg">
             <div class="kt-portlet__head-label">
-              <span class="kt-portlet__head-icon">
-                <i class="kt-font-brand fab fa-whmcs"></i>
+              <span class="kt-portlet__head-icon custom-header-icon-container">
+                <i class="kt-font-brand fab fa-whmcs custom-header-icon"></i>
               </span>
-                <h3 class="kt-portlet__head-title">
+                <h3 class="kt-portlet__head-title custom-header-title">
                     Troubleshooting
                   </h3>
 
@@ -16,11 +16,12 @@
             <div class="kt-portlet__head-toolbar">
               <div class="kt-portlet__head-wrapper">
                 <div class="">
-                  <a  (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark"
+                  <!-- <a  (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark"
                     data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page" style="color:#93a2dd;">
                     <i class="fas fa-chevron-left"></i>
                     Back
-                  </a>
+                  </a> -->
+                  <appbutton (click)="goBack()" text="Back" icon="fa-chevron-left" btnClass="btn-small-light" btnType="button"></appbutton>
                 </div>
               </div>
             </div>
@@ -36,31 +37,21 @@
                         <div class="form-group row">
                           <label class="col-3 col-form-label">ER log level</label>
                           <div class="col-6">
-                            <select  class="form-control"  style="cursor: pointer;" (change)="onChangeESP($event.target.value)" >
-                              <option value="WARNING" [selected]="erLog == 'WARNING'">WARNING</option>
-                              <option value="INFO" [selected]="erLog == 'INFO'">INFO</option>
-                              <option value="DEBUG" [selected]="erLog == 'DEBUG'">DEBUG</option>
-                            </select>
+                            <dropdown label="" [options]="ERLogLevelOptions" dropdownDivClass="full-width" dropdownSelectClass="full-width label-no-show" [formControl]="ERLogLevelSelectControl"  (change)="onChangeESP($event.target.value)" [(ngModel)]="erLog"></dropdown>
                           </div>
                         </div>
-                                <div class="form-group row">
-                                  <label class="col-3 col-form-label">ER-UI log level</label>
-                                  <div class="col-6">
-                                    <select  class="form-control" style="cursor: pointer;" (change)="onChangeESPUI($event.target.value)" >
-                                      <option value="WARNING" [selected]="erUILog == 'WARNING'">WARNING</option>
-                                      <option value="INFO" [selected]="erUILog == 'INFO'">INFO</option>
-                                      <option value="DEBUG" [selected]="erUILog == 'DEBUG'">DEBUG</option>
-                                    </select>
-                                  </div>
-                                </div>
-                                <div class="form-group row">
-                                  <label class="col-3"></label>
-                                  <div class="col-6">
-                                    <button  style="width:100px"  (click)="UpdateLogServer()" class="btn btn-success"><i class="fa fa-sync-alt"></i>
-                                      <span>Update</span>
-                                    </button>
-                                  </div>
-                                </div>
+                        <div class="form-group row">
+                          <label class="col-3 col-form-label">ER-UI log level</label>
+                          <div class="col-6">
+                            <dropdown label="" [options]="ERUILogLevelOptions" dropdownDivClass="full-width" dropdownSelectClass="full-width label-no-show" [formControl]="ERUILogLevelSelectControl"  (change)="onChangeESPUI($event.target.value)" [(ngModel)]="erUILog"></dropdown>
+                          </div>
+                        </div>
+                        <div class="form-group row">
+                          <label class="col-3"></label>
+                          <div class="col-6">
+                            <appbutton text="Update" btnClass="btn-small" btnType="submit" icon="fa-sync-alt" (click)="UpdateLogServer()"></appbutton>
+                          </div>
+                        </div>
                         </div>
                         </div>
                 </div>
@@ -77,26 +68,22 @@
                         <div class="form-group row">
                           <label class="col-3 col-form-label">Container name</label>
                           <div class="col-6">
-                            <select  class="form-control" style="cursor: pointer;" (change)="onChangeLog($event.target.value)" >
-                              <option value="ER">ER</option>
-                              <option value="ER-UI">ER-UI</option>
-                            </select>
+                            <dropdown label="" [options]="ContainerNameOptions" dropdownDivClass="full-width" dropdownSelectClass="full-width label-no-show" [formControl]="ContainerNameSelectControl"  (change)="onChangeLog($event.target.value)" [(ngModel)]="containerName"></dropdown>
                           </div>
                         </div>
                         <div class="form-group row">
                           <label class="col-3 col-form-label">Available log files</label>
                           <div class="col-6">
-                            <select  class="form-control" [ngModel]="logFile" (ngModelChange)="selectLogFileItem($event)">
-                               <option [value]="value" *ngFor="let value of logFileList">{{value}}</option>
-                            </select>
+                            <dropdown label="" [options]="logFileOptions" dropdownDivClass="full-width" dropdownSelectClass="full-width label-no-show" [formControl]="LogFileSelectControl"  (change)="selectLogFileItem($event.target.value)" [(ngModel)]="logFile"></dropdown>
                           </div>
                         </div>
                         <div class="form-group row">
                           <label class="col-3"></label>
                           <div class="col-6">
-                            <button  (click)="submitDownloadLogs()" class="btn btn-success" style="width:100px">
+                            <!-- <button  (click)="submitDownloadLogs()" class="btn btn-success" style="width:100px">
                               <span>Download</span>
-                            </button>
+                            </button> -->
+                            <appbutton text="Download" btnClass="btn-small" (click)="submitDownloadLogs()"></appbutton>
                           </div>
                         </div>
                         </div>

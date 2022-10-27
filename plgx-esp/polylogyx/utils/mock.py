@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
+import os
 import sqlite3
 import threading
 from collections import namedtuple
-from os.path import join
+from os.path import join, dirname
 
 import pkg_resources
 from flask import current_app
@@ -11,14 +12,23 @@ from flask import current_app
 Field = namedtuple("Field", ["name", "action", "columns", "timestamp", "uuid"])
 
 # Read DDL statements from our package
-schema = pkg_resources.resource_string("polylogyx", join("resources", "osquery_schema.sql"))
-schema = schema.decode("utf-8")
-schema = [x for x in schema.strip().split("\n") if not x.startswith("--")]
+schema = ''
+extension_schema = ''
 
+if os.environ.get('FLASK_ENV') and (os.environ.get('FLASK_ENV') == 'development' or os.environ.get('FLASK_ENV') == 'dev'):
+    common_resources_path = join(dirname(dirname(dirname(__file__))), "common")
+else:
+    common_resources_path = join(dirname(dirname(__file__)), "common")  # This path should be taken from app config
 
-extension_schema = pkg_resources.resource_string("polylogyx", join("resources", "extension_schema.sql"))
-extension_schema = extension_schema.decode("utf-8")
-extension_schema = [x for x in extension_schema.strip().split("\n") if not x.startswith("--")]
+with open(join(common_resources_path, 'osquery_schema.sql'), 'r') as schema_file:
+    schema = schema_file.read()
+
+schema = [x for x in schema.strip().split('\n') if not x.startswith('--')]
+
+with open(join(common_resources_path, 'extension_schema.sql'), 'r') as schema_file:
+    extension_schema = schema_file.read()
+
+extension_schema = [x for x in extension_schema.strip().split('\n') if not x.startswith('--')]
 
 # SQLite in Python will complain if you try to use it from multiple threads.
 # We create a threadlocal variable that contains the DB, lazily initialized.

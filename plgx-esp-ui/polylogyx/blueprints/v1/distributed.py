@@ -1,14 +1,14 @@
-from flask_restplus import Namespace, Resource
-
+from flask_restful import Resource
+from polylogyx.blueprints.v1.external_api import api
 from polylogyx.blueprints.v1.utils import *
 from polylogyx.utils import validate_osquery_query
 from polylogyx.dao.v1 import distributed_dao, hosts_dao
 from polylogyx.wrappers.v1 import parent_wrappers
 
-ns = Namespace('distributed', description='distributed query related operations')
 
 
-@ns.route('/add', endpoint='distributed_add')
+
+@api.resource('/distributed/add', endpoint='distributed_add')
 class DistributedQueryClass(Resource):
     """
         Adds distributed query.
@@ -20,7 +20,7 @@ class DistributedQueryClass(Resource):
                            'nodes list by comma separated', 'list of os names', 'description'],
                           [True, False, False, False, False])
 
-    @ns.expect(parser)
+
     def post(self):
         from manage import declare_queue
         from polylogyx.utils import check_for_rabbitmq_status
@@ -29,8 +29,8 @@ class DistributedQueryClass(Resource):
         hosts_array = []
         sql = args['query']
         if not args['nodes'] and not args['tags'] and not args['os_name']:
-            message = "At least one of Nodes/tags/Os name is required!"
-            current_app.logger.info("At least one of Nodes/tags/Os name is required!")
+            message = "At least one of hosts/tags/Os name is required!"
+            current_app.logger.info("At least one of hosts/tags/Os name is required!")
         elif not validate_osquery_query(sql):
             message = "Field must contain valid SQL to be run against OSQuery tables!"
             current_app.logger.info("Field must contain valid SQL to be run against OSQuery tables!")
@@ -49,7 +49,7 @@ class DistributedQueryClass(Resource):
             else:
                 node_key_list = []
             if args['os_name']:
-                nodes.extend([node for node in hosts_dao.get_hosts_from_os_names(args['os_name'])])
+                nodes.extend([node for node in hosts_dao.get_active_hosts_from_os_names(args['os_name'])])
 
             if node_key_list:
                 for node in hosts_dao.extend_nodes_by_node_key_list(node_key_list):
@@ -73,8 +73,8 @@ class DistributedQueryClass(Resource):
                     db.session.commit()
             declare_queue(query.id)
             if online_nodes == 0:
-                current_app.logger.info('No active node present from the list of nodes selected for distributed query')
-                message = 'No active node present'
+                current_app.logger.info('No active host present from the list of hosts selected for distributed query')
+                message = 'No active host present'
             else:
                 current_app.logger.info("Distributed Query {0} is added to the hosts {1}".format(query.id,
                                         [host['host_identifier'] for host in hosts_array]))

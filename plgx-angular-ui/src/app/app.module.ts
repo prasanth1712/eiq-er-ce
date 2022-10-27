@@ -14,11 +14,13 @@ import { LogoutComponent } from './logout/logout.component';
 import { ToastrModule } from 'ngx-toastr';
 import { PagenotfoundComponent } from './components/pagenotfound/pagenotfound.component';
 import {NgxMaterialTimepickerModule} from 'ngx-material-timepicker';
+import { RulesComponent } from './components/rules/rules.component';
 @NgModule({
   declarations: [
     AppComponent,
     GlobalComponent,
     LogoutComponent,
+    RulesComponent,
     // PagenotfoundComponent
   ],
   imports: [
@@ -31,7 +33,7 @@ import {NgxMaterialTimepickerModule} from 'ngx-material-timepicker';
     LayoutModule,
     ToastrModule.forRoot(),
     NgxMaterialTimepickerModule,
-   
+
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }

@@ -88,6 +88,7 @@ DEFAULT_PROCESS_GRAPH_QUERIES = {
         "win_registry_events": '13',
         "win_socket_events": '10',
         "win_ssl_events": '9',
-        "win_defender_events": '18'
+        "win_defender_events": '18',
+        "win_named_pipe_events": '19'
 }
 

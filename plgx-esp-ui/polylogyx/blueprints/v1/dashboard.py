@@ -1,17 +1,16 @@
-from flask_restplus import Namespace, Resource
-
+from flask_restful import  Resource
+from polylogyx.blueprints.v1.external_api import api
 from polylogyx.wrappers.v1 import parent_wrappers
 from polylogyx.blueprints.v1.utils import *
 
-ns = Namespace('dashboard', description='dashboard data related operation')
 
 
-@ns.route('', endpoint='dashboard_data')
+
+@api.resource('/dashboard', endpoint='dashboard_data')
 class Dashboard(Resource):
     """
         Getting the Index Data
     """
-    @ns.marshal_with(parent_wrappers.common_response_wrapper)
     def get(self):
         alert_data = fetch_alert_node_query_status()
         distribution_and_status = fetch_dashboard_data()
@@ -26,7 +25,7 @@ class Dashboard(Resource):
         message = 'Data is fetched successfully'
 
         return marshal(prepare_response(message, status, chart_data),
-                       parent_wrappers.common_response_wrapper, skip_none=True)
+                       parent_wrappers.common_response_wrapper)
 
 
 def count(distribution_and_status):

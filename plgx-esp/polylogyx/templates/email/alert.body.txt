@@ -1,19 +1,19 @@
-An EclecticIQ-ER alert was triggered: {{ match.rule.name }}
+An EclecticIQ-ER alert with {{ match.rule['severity']}}  severity was triggered: {{ match.rule['name'] }} on {{ node['display_name'] }} host
 
 Timestamp: {{ timestamp }}
-Action: {{ match.result.action }}
+Action: {{ match.result['action'] }}
 Content:
-{%- for key, value in match.result.columns | dictsort %}
+{%- for key, value in match.result['columns'] | dictsort %}
             {{ key }}: {{ value }}
 {%- endfor %}
 
-{%- if match.rule.description and match.rule.alert_description %}
-Rule Description: {{ match.rule.description }}
+{%- if match.rule['description'] and match.rule['alert_description'] %}
+Rule Description: {{ match.rule['description'] }}
 {%- endif %}
 
-Review most recent activity for {{ node.display_name }} at https://{{server_url}}/hosts/{{node.id}}/activity.
-This rule's configuration may be reviewed at https://{{server_url}}/rules/{{match.rule.id}}/edit.
-This alert details may be reviewed at https://{{server_url}}/alerts/{{match.alert_id}}/alert-data.
+Review most recent activity for {{ node['display_name'] }} at https://{{server_url}}/hosts/{{node['id']}}/activity.
+This rule's configuration may be reviewed at https://{{server_url}}/rules/er-rules/{{match.rule['id']}}/edit.
+This alert details may be reviewed at https://{{server_url}}/alerts/{{match.alert_id}}.
 
 ---END EclecticIQ-ER notification
 

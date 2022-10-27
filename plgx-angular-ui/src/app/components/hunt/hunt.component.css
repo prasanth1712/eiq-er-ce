@@ -87,3 +87,38 @@ table.dataTable thead th, table.dataTable thead td {
   overflow: visible_1;
   height: auto;
 }
+.container-body{
+  height: calc(100vh - 72px);
+  padding-bottom: 0px !important;
+}
+::ng-deep #hunt_table_wrapper{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.flex-flow-col{
+  flex-flow: column;
+}
+.flex-2{
+  flex: 2;
+}
+.mt-auto {
+  margin-top: auto;
+}
+.mb-auto{
+  margin-bottom: auto;
+}
+.mr-10{
+  margin-right: 10px;
+}
+.font-grey{
+  color: #646c9a;
+}
+
+::ng-deep .dataTables_wrapper .dataTable{
+  width: 100% !important;
+  text-align: left !important;
+}
+::ng-deep .pure-checkbox.select-all{
+  display: none;
+}

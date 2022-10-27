@@ -3,84 +3,105 @@
     <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
       <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
         <!--begin::Portlet-->
-        <div class="kt-portlet kt-portlet--last kt-portlet--responsive-mobile" id="kt_page_portlet">
+        <div class="kt-portlet kt-portlet--last kt-portlet--responsive-mobile " id="kt_page_portlet">
           <div class="kt-portlet__head kt-portlet__head--lg">
-            <div class="kt-portlet__head-label">
-              <span class="kt-portlet__head-icon">
-                <i class="fas fa-user host_name fnt-green"></i>
+            <div class="kt-portlet__head-label" *ngIf="!viewChangePassword">
+              <span class="kt-portlet__head-icon custom-header-icon-container">
+                <i class="fas fa-user host_name fnt-dark-black custom-header-icon"></i>
               </span>
-              <h3 class="kt-portlet__head-title">
-               User Profile
+              <h3 class="kt-portlet__head-title fnt-dark-black custom-header-title">
+               Profile
+              </h3>
+            </div>
+            <div class="kt-portlet__head-label" *ngIf="viewChangePassword">
+              <span class="kt-portlet__head-icon custom-header-icon-container">
+                <i class="kt-font-brand fa fa-user-shield fnt-dark-black custom-header-icon"></i>
+              </span>
+              <h3 class="kt-portlet__head-title fnt-dark-black custom-header-title">
+               Change Password
               </h3>
             </div>
             <div class="kt-portlet__head-toolbar">
               <div class="kt-portlet__head-wrapper">
-                <a href="javascript:void(0);" (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark"
+                <!-- <a href="javascript:void(0);" (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark"
                   data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page">
                   <i class="fas fa-chevron-left back_icon_align"></i>
                   Back
-                </a>
+                </a> -->
+                <appbutton (click)="goBack()" text="Back" icon="fa-chevron-left" btnClass="btn-small-light" btnType="button"></appbutton>
               </div>
             </div>
           </div>
-          <div class="kt-portlet__body" >
-            <div class="kt-portlet">
-  <!-- Begin:: editUserInformationForm -->
-    <div  class="kt-portlet__body py-2">
-      <form class="kt-form mt-3" id="kt_form" [formGroup]="editUserInformationForm" (ngSubmit)="editUserInformation()">
-        <div class="row">
-          <div class="col-xl-11">
-            <div class="kt-section kt-section--first">
-              <div class="kt-section__body">
-                  <div class="form-group row required">
-                      <label class="col-sm-2 col-form-label form--label">User Name</label>
-                      <div class="col-8" style="padding-top:0.65rem;padding-left:15px;">
-                        {{userName}}
-                      </div>
-                    </div>
-                   <div class="form-group row required">
-                      <label class="col-sm-2 col-form-label form--label">First Name</label>
-                      <div class="col-8">
-                        <input  type="text" placeholder="First Name"  name="firstName"formControlName="firstName" class="form-control" [ngClass]="{ 'is-invalid': submitted && k.firstName.errors }"/>
-                        <div *ngIf="submitted && k.firstName.errors" class="invalid-feedback">
-                          <div *ngIf="k.firstName.errors.maxlength">First Name can be max 25 characters long</div>
-                          <div *ngIf="k.firstName.errors.required">First Name is required </div>
-                       </div>
-                      </div>
-                    </div>
-                    <div class="form-group row required">
-                      <label class="col-sm-2 col-form-label form--label">Last Name</label>
-                      <div class="col-8">
-                        <input  type="text" placeholder="Last Name"  name="lastName" formControlName="lastName" class="form-control"/>
-                      </div>
-                    </div>
-                    <div class="form-group row required">
-                        <label class="col-sm-2 col-form-label form--label">Email</label>
-                        <div class="col-8" style="padding-top:0.65rem;padding-left:15px;">
-                          {{email}}
+          <div class="kt-portlet__body tbl-bg full-height" >
+            <!-- <div class=""> -->
+            <!-- Begin:: editUserInformationForm -->
+              <div  class="kt-portlet__body bg-white width-60">
+                <ng-container *ngIf="!viewChangePassword">
+                  <form class="kt-form" id="kt_form" [formGroup]="editUserInformationForm" (ngSubmit)="editUserInformation()">
+                    <div class="row">
+                      <div class="col-xl-12">
+                        <div class="kt-section kt-section--first">
+                          <div class="kt-section__body">
+                              <div class="form-group row required">
+                                  <label class="col-sm-2 col-form-label form--label">User Name</label>
+                                  <div class="col-5" style="padding-top:0.65rem;padding-left:15px;">
+                                    {{userName}}
+                                  </div>
+                                </div>
+                              <div class="form-group row required">
+                                  <label class="col-sm-2 col-form-label form--label">First Name</label>
+                                  <div class="col-5">
+                                    <input  type="text" placeholder="First Name" (keypress)="onChange($event)"  name="firstName"formControlName="firstName" class="form-control" [ngClass]="{ 'is-invalid': submitted && k.firstName.errors }"/>
+                                    <div *ngIf="submitted && k.firstName.errors" class="invalid-feedback">
+                                      <div *ngIf="k.firstName.errors.maxlength">First Name can be max 25 characters long</div>
+                                      <div *ngIf="k.firstName.errors.required">First Name is required </div>
+                                  </div>
+                                  </div>
+                                </div>
+                                <div class="form-group row required">
+                                  <label class="col-sm-2 col-form-label form--label">Last Name</label>
+                                  <div class="col-5">
+                                    <input  type="text" placeholder="Last Name" (keypress)="onChange($event)"  name="lastName" formControlName="lastName" class="form-control"/>
+                                  </div>
+                                </div>
+                                <div class="form-group row required">
+                                    <label class="col-sm-2 col-form-label form--label">Email</label>
+                                    <div class="col-5" style="padding-top:0.65rem;padding-left:15px;">
+                                      {{email}}
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                  <label class="col-sm-2 col-form-label form--label">Role</label>
+                                  <div class="col-5" style="padding-top:0.65rem;padding-left:15px;">{{role}}</div>
+                                </div>
+                                <div class="form-group row">
+                                  <label class="col-sm-2 col-form-label form--label d-flex element-align-center">Password</label>
+                                  <div class="col-5 element-align-center">
+                                    <appbutton text="Change Password"  btnClass="btn-small-light btn-long button-no-pad-left button-no-mar-left button-no-mar-top button-no-mar-bottom button-padding-user-profile" btnType="button" (click)="viewChangePassword=true"></appbutton>
+                                  </div>
+                                </div>
+                          </div>
                         </div>
+
+                      </div>
                     </div>
-                    <div class="form-group row">
-                      <label class="col-sm-2 col-form-label form--label">Role</label>
-                      <div class="col-8" style="padding-top:0.65rem;padding-left:15px;">{{role}}</div>
+                  <div class="kt-portlet__foot text-center element-right no-border">
+                    <appbutton btnType="submit" text="Update Profile" btnClass="btn-small btn-long" ></appbutton>
                   </div>
+                  </form>
+                </ng-container>
+
+                <ng-container *ngIf="viewChangePassword">
+                  <app-change-user-password [insideUserProfile]="true" (viewParent)="toggleViewChangePassword()"></app-change-user-password>
+                </ng-container>
+
               </div>
-            </div>
-
-          </div>
-        </div>
-       <div class="kt-portlet__foot text-center">
-        <button type="submit"class="btn btn-primary mr-2" >Update</button>
-          <button type="button"(click)="resetData()" class="btn btn-secondary" >Clear</button>
-      </div>
-      </form>
-
-    </div>
-  <!-- End:: editUserInformationForm -->
-
-        </div>
+            <!-- End:: editUserInformationForm -->
+            <!-- </div> -->
         <!--end::Portlet-->
       </div>
     </div>
   </div>
+
+
   <!-- end:: Content -->

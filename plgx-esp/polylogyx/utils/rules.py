@@ -395,11 +395,6 @@ class NotMatchesRegexCondition(LogicCondition):
             return False
 
 
-class MatchesPhishTankCondition(LogicCondition):
-    def compare(self, value):
-        return False
-
-
 class MatchesWildCardCondition(LogicCondition):
     def compare(self, value):
         try:
@@ -440,7 +435,6 @@ OPERATOR_MAP = {
     "matches_regex": MatchesRegexCondition,
     "not_matches_regex": NotMatchesRegexCondition,
     "is_ascii": IsAsciiCondition,
-    "matches_phish_tank": MatchesPhishTankCondition,
     "matches_wildcard": MatchesWildCardCondition,
     "not_matches_wildcard": NotMatchesWildCardCondition,
 }

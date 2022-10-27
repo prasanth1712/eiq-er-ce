@@ -1,4 +1,4 @@
-An EclecticIQ-ER alert was triggered: Threat Intel : {{intel_match.intel['source'] }}
+An EclecticIQ-ER alert with {{intel_match.intel['severity']}} severity was triggered: Threat Intel : {{intel_match.intel['source'] }} on '{{ node.display_name }}' host
 
 Timestamp: {{ timestamp }}
 Content:
@@ -12,6 +12,6 @@ Raw Data:
 {%- endif %}
 
 Review most recent activity for {{ node.display_name }} at https://{{server_url}}/hosts/{{node.id}}/activity.
-This alert information may be reviewed at https://{{server_url}}/alerts/{{intel_match.alert_id}}/alert-data.
+This alert information may be reviewed at https://{{server_url}}/alerts/{{intel_match.alert_id}}.
 
 ---END EclecticIQ-ER notification

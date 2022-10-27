@@ -14,9 +14,10 @@ class CarvesDomain:
         self.node = node
 
     def upload_file(self, remote_addr, data):
+        from polylogyx.utils.cache import update_cached_host
         sid = "".join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
         CarveSession.create(
-            node_id=self.node.id,
+            node_id=self.node['id'],
             session_id=sid,
             carve_guid=data["carve_id"],
             status=CarveSession.StatusInProgress,
@@ -25,9 +26,8 @@ class CarvesDomain:
             block_count=data["block_count"],
             request_id=data["request_id"],
         )
-        self.node.update(last_checkin=dt.datetime.utcnow(), last_ip=remote_addr)
-        db.session.add(self.node)
-        db.session.commit()
+        to_update = {'last_checkin': dt.datetime.utcnow(), 'last_ip': remote_addr}
+        update_cached_host(self.node['node_key'], to_update)
         return sid
 
     def upload_blocks(data):

@@ -40,7 +40,6 @@ class TestRsyslogAlerter:
              query_name="",
              node_id=1,
              rule_id=None,
-             recon_queries="",
              result_log_uid="",
              type="",
              source="",

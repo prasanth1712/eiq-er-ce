@@ -143,5 +143,5 @@ class TestibmxforceIntel:
        alert = Alerts.query.all()[0]
        assert pmock.called
        assert alert.source == 'ibmxforce'
-       assert alert.source_data == result_log_scan.reputations['ibmxforce']
        assert alert.node_id == node.id
+       assert alert.source_data == result_log_scan.reputations['ibmxforce']

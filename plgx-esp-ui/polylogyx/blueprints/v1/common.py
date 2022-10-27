@@ -1,6 +1,6 @@
-from flask_restplus import Namespace, Resource
+from flask_restful import  Resource
 from flask import abort
-
+from polylogyx.blueprints.v1.external_api import api
 from polylogyx.dao.v1 import common_dao
 from polylogyx.blueprints.v1.utils import *
 from polylogyx.constants import PolyLogyxServerDefaults
@@ -9,10 +9,8 @@ from polylogyx.authorize import admin_required
 
 import json
 
-ns = Namespace('common_api', description='all general purpose apis operations', path='/')
 
-
-@ns.route('/hunt-upload', endpoint="hunt_file_upload")
+@api.resource('/hunt-upload', endpoint="hunt_file_upload")
 class HuntFileUpload(Resource):
     """
         Hunting through the file uploaded
@@ -27,7 +25,7 @@ class HuntFileUpload(Resource):
                           [None, PolyLogyxServerDefaults.search_supporting_columns, None, None, None, None],
                           [None, None, None, None, 0, 100])
 
-    @ns.expect(parser)
+    @validate_file_size
     def post(self):
         args = self.parser.parse_args()
         data = None
@@ -43,7 +41,7 @@ class HuntFileUpload(Resource):
         limit = args['limit']
 
         try:
-            lines = [line.decode('utf-8').replace('\n', '').replace('\r', '') for line in file.readlines()]
+            lines = [line.decode('utf-8').replace('\n', '').replace('\r', '') for line in file.readlines() if line.decode('utf-8').replace('\n', '').replace('\r', '')]
         except Exception as e:
             message = "We are unable to read this file with this format!"
             current_app.logger.error("Unable to read file of this format - {0}".format(str(e)))
@@ -51,8 +49,7 @@ class HuntFileUpload(Resource):
             results = hunt_through_indicators(lines, indicator_type, host_identifier, query_name, start, limit)
         else:
             results = [message, status, data]
-        return marshal(prepare_response(results[0], results[1], results[2]), parent_wrappers.common_response_wrapper,
-                       skip_none=True)
+        return marshal(prepare_response(results[0], results[1], results[2]), parent_wrappers.common_response_wrapper)
 
 
 def hunt_through_indicators(lines, indicator_type, host_identifier, query_name, start, limit):
@@ -105,7 +102,7 @@ def hunt_through_indicators(lines, indicator_type, host_identifier, query_name, 
     return [message, status, data]
 
 
-@ns.route('/indicators/hunt', endpoint="hunt_indicators")
+@api.resource('/indicators/hunt', endpoint="hunt_indicators")
 class IndicatorHunt(Resource):
     """
         Hunting through the indicators given
@@ -119,23 +116,22 @@ class IndicatorHunt(Resource):
                           [None, PolyLogyxServerDefaults.search_supporting_columns, None, None, None, None],
                           [None, None, None, None, 0, 100])
 
-    @ns.expect(parser)
+    
     def post(self):
         args = self.parser.parse_args()
 
         indicator_type = args['type']
-        indicators = args['indicators'].split(',')
+        indicators = [indicator for indicator in args['indicators'].strip().split(',') if indicator]
         query_name = args['query_name']
         host_identifier = args['host_identifier']
         start = args['start']
         limit = args['limit']
 
         results = hunt_through_indicators(indicators, indicator_type, host_identifier, query_name, start, limit)
-        return marshal(prepare_response(results[0], results[1], results[2]), parent_wrappers.common_response_wrapper,
-                       skip_none=True)
+        return marshal(prepare_response(results[0], results[1], results[2]), parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/hunt-upload/export', endpoint="export_hunt_file_upload")
+@api.resource('/hunt-upload/export', endpoint="export_hunt_file_upload")
 class ExportHuntFileUpload(Resource):
     """
         Export Hunt results through the file uploaded
@@ -150,7 +146,7 @@ class ExportHuntFileUpload(Resource):
                           [None, PolyLogyxServerDefaults.search_supporting_columns, None, None],
                           [None, None, None, None])
 
-    @ns.expect(parser)
+    @validate_file_size
     def post(self):
         args = self.parser.parse_args()
         data = None
@@ -165,7 +161,7 @@ class ExportHuntFileUpload(Resource):
         nodes = get_nodes_for_host_id(host_identifier)
 
         try:
-            lines = [line.decode('utf-8').replace('\n', '').replace('\r', '') for line in file.readlines()]
+            lines = [line.decode('utf-8').replace('\n', '').replace('\r', '') for line in file.readlines() if line.decode('utf-8').replace('\n', '').replace('\r', '')]
         except Exception as e:
             message = "We are unable to read this file with this format!"
             current_app.logger.error("Unable to read file of this format - {0}".format(str(e)))
@@ -173,27 +169,26 @@ class ExportHuntFileUpload(Resource):
             if nodes:
                 try:
                     results = common_dao.result_log_query_for_export(lines, indicator_type, [node.id for node in nodes],
-                                                                     query_name)
+                                                                        query_name)
                     results = [r for r, in results]
                     bio = result_log_columns_export_using_query_set(results)
                     file_data = send_file(
-                      bio,
-                      mimetype='text/csv',
-                      as_attachment=True,
-                      attachment_filename='hunt_query_results.csv'
+                        bio,
+                        mimetype='text/csv',
+                        as_attachment=True,
+                        attachment_filename='hunt_query_results.csv'
                     )
                     return file_data
                 except Exception as e:
                     data = []
                     message = str(e)
-
             else:
                 message = "Host identifier given is wrong!"
 
-        return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/search', endpoint="search")
+@api.resource('/search', endpoint="search")
 class Search(Resource):
     """
         Searches in result log table for the payload given
@@ -203,9 +198,9 @@ class Search(Resource):
                           ["conditions to search for", 'host_identifier of the node', 'query name', 'start', 'limit'],
                           [True, False, False, False, False])
 
-    @ns.expect(parser)
+    
     def post(self):
-        from polylogyx.blueprints.utils import SearchParser as SearchConditionsParser
+        from polylogyx.blueprints.v1.utils import SearchParserOld as SearchConditionsParser
         args = self.parser.parse_args()
         host_identifier = args['host_identifier']
         query_name = args['query_name']
@@ -226,14 +221,14 @@ class Search(Resource):
         except Exception as e:
             message = str(e)
             return marshal(prepare_response(message, status),
-                           parent_wrappers.common_response_wrapper, skip_none=True)
+                           parent_wrappers.common_response_wrapper)
 
         try:
             query_filter = root.run('', [], 'result_log')
         except Exception as e:
             return marshal(prepare_response("Conditions passed are not correct! Please check once and try again! -- {}"
                                             .format(str(e)), status),
-                           parent_wrappers.common_response_wrapper, skip_none=True)
+                           parent_wrappers.common_response_wrapper)
 
         if not host_identifier:
             search_results = common_dao.result_log_search_results_count(query_filter)
@@ -270,10 +265,10 @@ class Search(Resource):
                 message = "Successfully fetched the data through the payload given"
                 status = "success"
 
-        return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/indicators/upload', endpoint="indicators_file_upload")
+@api.resource('/indicators/upload', endpoint="indicators_file_upload")
 class IndicatorsUpload(Resource):
     """
         Hunting Indicators uploaded
@@ -290,7 +285,7 @@ class IndicatorsUpload(Resource):
                            [1, 2, 3, 4], [1, 2], None],
                           [None, None, None, None, 0, 100, 3, 2, dt.datetime.utcnow().strftime('%Y-%m-%d')])
 
-    @ns.expect(parser)
+    @validate_file_size
     def post(self):
         args = self.parser.parse_args()
         data = None
@@ -306,13 +301,13 @@ class IndicatorsUpload(Resource):
         limit = args['limit']
 
         try:
-            start_date, end_date = get_start_dat_end_date(args)
+            start_date, end_date = get_start_date_end_date(args)
         except Exception as e:
             current_app.logger.error('Date format passed is invalid! - {}'.format(str(e)))
             return abort(400, {'message': 'Date format passed is invalid!'})
 
         try:
-            lines = [line.decode('utf-8').replace('\n', '').replace('\r', '') for line in file.readlines()]
+            lines = [line.decode('utf-8').replace('\n', '').replace('\r', '') for line in file.readlines() if line.decode('utf-8').replace('\n', '').replace('\r', '')]
         except Exception as e:
             message = "We are unable to read this file with this format! - {}".format(str(e))
             current_app.logger.error("Unable to read file of this format - {0}".format(str(e)))
@@ -321,7 +316,7 @@ class IndicatorsUpload(Resource):
                                                         limit, start_date, end_date)
         else:
             results = {"message": message, "status": status, "data": data}
-        return marshal(results, parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(results, parent_wrappers.common_response_wrapper)
 
 
 def filter_results_through_indicators(lines, indicator_type, host_identifier, query_name, start, limit, start_date,
@@ -342,7 +337,7 @@ def filter_results_through_indicators(lines, indicator_type, host_identifier, qu
     return {"message": message, "status": status, "data": data}
 
 
-@ns.route('/indicators/upload/export', endpoint="export_result_for_indicators_uploaded")
+@api.resource('/indicators/upload/export', endpoint="export_result_for_indicators_uploaded")
 class ExportIndicatorsUpload(Resource):
     """
         Exports results of Hunting Indicators uploaded
@@ -358,7 +353,7 @@ class ExportIndicatorsUpload(Resource):
                            [1, 2, 3, 4], [1, 2], None],
                           [None, None, None, None, 3, 2, dt.datetime.utcnow().strftime('%Y-%m-%d')])
 
-    @ns.expect(parser)
+    @validate_file_size
     def post(self):
         args = self.parser.parse_args()
         data = None
@@ -372,12 +367,12 @@ class ExportIndicatorsUpload(Resource):
         host_identifier = args['host_identifier']
         nodes = get_nodes_for_host_id(host_identifier)
         try:
-            start_date, end_date = get_start_dat_end_date(args)
+            start_date, end_date = get_start_date_end_date(args)
         except Exception as e:
             current_app.logger.error('Date format passed is invalid! - {}'.format(str(e)))
             return abort(400, {'message': 'Date format passed is invalid!'})
         try:
-            lines = [line.decode('utf-8').replace('\n', '').replace('\r', '') for line in file.readlines()]
+            lines = [line.decode('utf-8').replace('\n', '').replace('\r', '') for line in file.readlines() if line.decode('utf-8').replace('\n', '').replace('\r', '')]
         except Exception as e:
             message = "We are unable to read this file with this format! - {}".format(str(e))
             current_app.logger.error("Unable to read file of this format - {0}".format(str(e)))
@@ -399,10 +394,10 @@ class ExportIndicatorsUpload(Resource):
                 data = []
                 message = "Unable to export results for given indicators - {}".format(str(e))
 
-        return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/activity/search', endpoint="results_search")
+@api.resource('/activity/search', endpoint="results_search")
 class ActivitySearch(Resource):
     """
         Searches in result log table for the payload given
@@ -414,8 +409,7 @@ class ActivitySearch(Resource):
                           [True, False, False, False, False, False, False, False],
                           [None, None, None, None, None, [1, 2, 3, 4], [1, 2], None],
                           [None, None, None, 0, 100, 3, 2, dt.datetime.utcnow().strftime('%Y-%m-%d')])
-
-    @ns.expect(parser)
+    
     def post(self):
         args = self.parser.parse_args()
         host_identifier = args['host_identifier']
@@ -427,7 +421,7 @@ class ActivitySearch(Resource):
         status = "failure"
 
         try:
-            start_date, end_date = get_start_dat_end_date(args)
+            start_date, end_date = get_start_date_end_date(args)
         except Exception as e:
             current_app.logger.error('Date format passed is invalid! - {}'.format(str(e)))
             return abort(400, {'message': 'Date format passed is invalid!'})
@@ -437,11 +431,11 @@ class ActivitySearch(Resource):
             root = search_rules.parse_group(conditions)
         except UnSupportedSearchColumn as e:
             return marshal(prepare_response(str(e), status),
-                           parent_wrappers.common_response_wrapper, skip_none=True)
+                           parent_wrappers.common_response_wrapper)
         except Exception as e:
             message = str(e)
             return marshal(prepare_response(message, status),
-                           parent_wrappers.common_response_wrapper, skip_none=True)
+                           parent_wrappers.common_response_wrapper)
 
         try:
             query_filter = root.run('', [], 'result_log')
@@ -449,8 +443,8 @@ class ActivitySearch(Resource):
             current_app.logger.error(
                 "Conditions passed are not correct! Please check once and try again! - {}".format(str(e)))
             return marshal(prepare_response("Conditions passed are not correct! Please check once and try again! - {}"
-                                            .format(str(e)), status), parent_wrappers.common_response_wrapper,
-                           skip_none=True)
+                                            .format(str(e)), status), parent_wrappers.common_response_wrapper
+                          )
 
         data = common_dao.result_log_search_query(query_filter,
                                                   [node.id for node in get_nodes_for_host_id(host_identifier)],
@@ -458,10 +452,10 @@ class ActivitySearch(Resource):
         message = "Successfully fetched the data through the payload given"
         status = "success"
 
-        return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper, skip_none=True)
+        return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/queryresult/delete', endpoint="delete_queryresult")
+@api.resource('/queryresult/delete', endpoint="delete_queryresult")
 class DeleteQueryResult(Resource):
     """
         Deleting the scheduled query result for the no.of days given will be done here
@@ -474,15 +468,14 @@ class DeleteQueryResult(Resource):
                    Please check the REST API documentation for more information about the new APIs")
 
 
-@ns.route('/schedule_query/export', endpoint="schedule_query_export")
+@api.resource('/schedule_query/export', endpoint="schedule_query_export")
 class ExportScheduleQueryCSV(Resource):
     """
         Exports schedule query results into a csv file
     """
     parser = requestparse(['query_name', 'host_identifier'], [str, str],
                           ["name of the query", "host identifier of the node"], [True, True])
-
-    @ns.expect(parser)
+    
     def post(self):
         all_args = self.parser.parse_args()
 
@@ -506,10 +499,10 @@ class ExportScheduleQueryCSV(Resource):
                 )
                 return file_data
         return marshal(prepare_response(message, "failure"),
-                       parent_wrappers.common_response_wrapper, skip_none=True)
+                       parent_wrappers.common_response_wrapper)
 
 
-@ns.route('/options/add', endpoint="add_options")
+@api.resource('/options/add', endpoint="add_options")
 class AddOption(Resource):
     """
         Add Options Used by PolyLogyx server
@@ -517,41 +510,21 @@ class AddOption(Resource):
     parser = requestparse(['option'], [dict], ["option data"], [True])
 
     @admin_required
-    @ns.expect(parser)
     def post(self):
-        args = self.parser.parse_args()
-        existing_option = common_dao.options_query()
-        options = args['option']
-
-        for k, v in options.items():
-            option = common_dao.options_filter_by_key(k)
-            if option:
-                option.option = v
-                option.update(option)
-            else:
-                common_dao.create_option(k, v)
-        if existing_option:
-            existing_option.option = json.dumps(args['option'])
-            existing_option.update(options)
-            data = json.loads(existing_option.option)
-        else:
-            data = common_dao.create_option_by_option(json.dumps(args['option'])).option
-        current_app.logger.info("Options are added/updated")
-        message = "Options are updated successfully"
-        status = "success"
-        return marshal(prepare_response(message, status, data), parent_wrappers.common_response_wrapper, skip_none=True)
+        # Deprecated and is no longer supported
+        current_app.logger.info("This api has been removed")
+        abort(410, "This api has been removed, \
+                   Please check the REST API documentation for more information about the new APIs")
 
 
-@ns.route('/options', endpoint="_options")
+@api.resource('/options', endpoint="_options")
 class GetOption(Resource):
     """
         Get Options Used by PolyLogyx server
     """
 
     def get(self):
-        existing_option = json.loads(common_dao.options_query().option)
-        message = "Options are fetched successfully"
-        status = "success"
-        return marshal(prepare_response(message, status, existing_option), parent_wrappers.common_response_wrapper,
-                       skip_none=True)
-
+        # Deprecated and is no longer supported
+        current_app.logger.info("This api has been removed")
+        abort(410, "This api has been removed, \
+                   Please check the REST API documentation for more information about the new APIs")

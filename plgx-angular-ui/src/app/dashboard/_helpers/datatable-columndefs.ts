@@ -53,7 +53,8 @@ export class Datatablecolumndefs {
             return '<div class="text-wrap width">' + '<a target="_blank" style="color:blue" href="https://www.virustotal.com/#/file/' + data + '/detection' + '" ;>' + data + "</a></div>";
           }
         },
-        targets: column_postition_md5
+        targets: column_postition_md5,
+        sortable: false
       });
     }
 

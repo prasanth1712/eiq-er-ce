@@ -1,0 +1,192 @@
+:host ::ng-deep .dropdown-list{
+    top: 20px !important;
+    left: -44px !important;
+    padding: 3px;
+    gap: 3px;
+    width: 200px !important;
+    left: 0px;
+    top: 0px;
+    /* Neutral/white */
+    background: #FFFFFF;
+    /* LM/shadow2 */
+    box-shadow: 6px 6px 12px 1px rgba(0, 0, 0, 0.12), 0px 3px 6px rgba(0, 0, 0, 0.12);
+    border-radius: 6px
+   }
+   :host ::ng-deep .multiselect-item-checkbox input[type=checkbox]:checked + div:before{
+    background: #30B0A4 !important;
+    border: 2px solid #30B0A4 !important;
+   }
+   :host ::ng-deep .multiselect-item-checkbox input[type=checkbox]:checked + div:after{
+    background: #30B0A4 !important;
+   }
+   :host ::ng-deep .multiselect-item-checkbox input[type=checkbox] + div:before{
+    border: 2px solid #B8B8B8 !important;
+   }
+   :host ::ng-deep .dropdown-list ul li{
+    border-bottom: 0 !important;
+   }
+   :host ::ng-deep .multiselect-dropdown{
+    position: relative;
+    font-size: inherit;
+    font-family: inherit;
+    top: 0px;
+    max-width: 120px !important;
+   }
+   :host ::ng-deep .multiselect-dropdown .dropdown-btn{
+    height: 14px;
+   /* Body 3 */
+    display: contents !important;
+    font-family: 'Roboto';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 14px;
+    /* identical to box height, or 117% */
+    display: flex;
+    align-items: center;
+    /* Neutral/grey-elephant */
+    border: 0 !important;
+    color: #666666;
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+   }
+   /* :host ::ng-deep .multiselect-dropdown .dropdown-btn>span{
+   padding-right: 10.5px !important;
+   } */
+   :host ::ng-deep .multiselect-dropdown .dropdown-btn>span:nth-child(2){
+    padding-right: 0px !important;
+    padding-left: 10.5px !important;
+  }
+   :host ::ng-deep .multiselect-dropdown .dropdown-btn .dropdown-multiselect__caret{
+    display: contents !important;
+   }
+   :host ::ng-deep .multiselect-dropdown .dropdown-btn .dropdown-multiselect__caret::before{
+    background-image: url('../../../assets/media/icons/icon_down.svg');
+    filter: invert(35%) sepia(10%) saturate(0%) hue-rotate(241deg) brightness(104%) contrast(80%);
+    color: #666666 !important;
+    border-width: 6px 5px 0 !important;
+    height: 9px;
+    width: 4.5px;
+    top: 10.75px !important;
+   }
+   :host ::ng-deep .multiselect-dropdown .dropdown-btn .selected-item-container{
+    width: 60px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left: 0px !important;
+   }
+   :host ::ng-deep .multiselect-dropdown .dropdown-btn .selected-item-container .selected-item{
+    border: 0;
+    margin-right: 0px !important;
+    border: 0 !important;
+    padding: 2px 0px 0px 0px !important;
+    /* padding: 0 5px; */
+    /* color: #fff; */
+    border-radius: 2px;
+    float: left;
+    color: #22776E !important;
+    background: 0 !important;
+    font-family: 'Roboto';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    width: 50px;
+    line-height: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+   }
+   .single-select-filter-label{
+    height: 14px;
+    font-family: Roboto;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0px;
+    text-align: left;
+    margin-bottom: 0px;
+    font-family: 'Roboto';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 14px;
+    display: flex;
+    align-items: center;
+    color: #666666;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+  }
+  .single-select-filter{
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 11px 15.75px 11px 9px ;
+    gap: 6px;
+    height: 36px;
+    margin-right:14px;
+    /* margin-bottom: 14px; */
+    background: #FFFFFF;
+    border: 1px solid #EBEBEB;
+    border-radius: 4px;
+    flex: none;
+    order: 0;
+    flex-grow: 0
+  }
+  .single-select-filter-dropdown{
+    height: 14px;
+    font-family: 'Roboto';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 14px;
+    /* identical to box height, or 117% */
+    display: flex;
+    align-items: center;
+    /* Neutral/grey-elephant */
+    color: #666666;
+    border: 0px !important;
+    /* Inside auto layout */
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+  }
+  .row-selected {
+    background-color:#EDF7F6;
+   }
+   ::ng-deep.selected-item ::ng-deep a{
+    display: none;
+   }
+   ::ng-deep.multiselect-dropdown ::ng-deep.dropdown-btn ::ng-deep.selected-item:hover {
+    box-shadow: none !important;
+  }
+  .single-select-filter-dropdown{
+    border: 0px !important;
+  }
+  ::ng-deep.multiselect-item-checkbox:hover{
+    background-color: #edf7f6 !important;
+    border-radius: 4px;
+  }
+
+  ::ng-deep.multiselect-item-checkbox{
+    padding: 0px !important;
+  }
+  ::ng-deep.multiselect-item-checkbox>::ng-deep input[type=checkbox]:checked+div{
+    background: #D5ECEA !important;
+  }
+  ::ng-deep.no-checkbox ::ng-deep.multiselect-item-checkbox>::ng-deep input[type=checkbox]+div{
+    padding: 12px 10px !important;
+    color: #171717 !important;
+    border-radius: 4px;
+  }
+  ::ng-deep.no-checkbox ::ng-deep.multiselect-item-checkbox>::ng-deep input[type=checkbox]+div::after{
+    content: none !important;
+  }
+  ::ng-deep.no-checkbox ::ng-deep.multiselect-item-checkbox>::ng-deep input[type=checkbox]+div::before{
+    content: none !important;
+  }
+  ::ng-deep.multiselect-dropdown ::ng-deep ul>li:not(:first-child){
+    margin-top: 3px;
+  }

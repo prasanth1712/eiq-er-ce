@@ -22,12 +22,12 @@ export class CommonapiService {
       return this.http.get(environment.api_url+"/hosts/count").pipe(catchError(this.handler.handleError));
   }
 
-  public alerts_graph_api(source,duration,type,date){
-    return this.http.get(environment.api_url+"/alerts/graph?source="+source+"&duration="+duration+"&type="+type+"&date="+date).pipe(catchError(this.handler.handleError));
-}
-public alerts_graph_api_filter_with_Host_identifier(source,duration,type,date,host_identifier){
-  return this.http.get(environment.api_url+"/alerts/graph?source="+source+"&duration="+duration+"&type="+type+"&date="+date+"&host_identifier="+host_identifier).pipe(catchError(this.handler.handleError));
-}
+  public alerts_graph_api(source,host_identifier,rule_id,severity,verdict,startDate,endDate,search){
+    return this.http.get(environment.api_url+"/alerts/graph?source="+source+"&host_identifier="+host_identifier+"&rule_id="+rule_id+"&severity="+severity+"&verdict="+verdict+"&start_date="+startDate+"&end_date="+endDate+"&search="+search).pipe(catchError(this.handler.handleError));
+  }
+  public alerts_graph_api_filter_with_Host_identifier(source,host_identifier,rule_id,severity,verdict,startDate,endDate,search){
+    return this.http.get(environment.api_url+"/alerts/graph?source="+source+"&host_identifier="+host_identifier+"&rule_id="+rule_id+"&severity="+severity+"&verdict="+verdict+"&start_date="+startDate+"&end_date="+endDate+"&search="+search).pipe(catchError(this.handler.handleError));
+  }
   public alerts_source_count_api(){
     return this.http.get(environment.api_url+"/alerts/count_by_source").pipe(catchError(this.handler.handleError));
   }
@@ -46,7 +46,6 @@ public alerts_graph_api_filter_with_Host_identifier(source,duration,type,date,ho
   public hosts_filter(status, platform){
     return this.http.post(environment.api_url+"/hosts", {'status': status, 'platform':platform}).pipe(catchError(this.handler.handleError));
   }
-
   public host_name_api(node_id){
       let urlop = environment.api_url+"/hosts/";
       return this.http.get(urlop + node_id).pipe(catchError(this.handler.handleError));
@@ -56,11 +55,10 @@ public alerts_graph_api_filter_with_Host_identifier(source,duration,type,date,ho
   }
   public view_config_api(node_id){
     return this.http.post(environment.api_url+"/hosts/config", {'node_id' : node_id}).pipe(catchError(this.handler.handleError));
-}
+  }
   public recent_activity_count_api(id){
       return this.http.post(environment.api_url+"/hosts/recent_activity/count", {'node_id' : id}).pipe(catchError(this.handler.handleError));
   }
-
   public recent_activity_data_api(query_name, query_id){
       let param3 = localStorage.getItem('activity_nodekey');
       return this.http.post(environment.api_url+"/hosts/recent_activity", {'node_id' : param3, 'query_name': query_name, 'start': 0, 'limit':query_id}).pipe(catchError(this.handler.handleError));
@@ -68,10 +66,12 @@ public alerts_graph_api_filter_with_Host_identifier(source,duration,type,date,ho
   public iocs_api(){
       return this.http.get(environment.api_url+"/iocs").pipe(catchError(this.handler.handleError));
   }
-
   public rules_api(){
       return this.http.post(environment.api_url+"/rules",{}).pipe(catchError(this.handler.handleError));
   }
+  public get_rules_api(){
+    return this.http.get(environment.api_url+"/rules").pipe(catchError(this.handler.handleError));
+}
   public edit_rule_api(rules_id,object){
     let rule_url = environment.api_url+"/rules/";
     return this.http.post(rule_url + rules_id,object).pipe(catchError(this.handler.handleError));
@@ -85,11 +85,10 @@ public alerts_graph_api_filter_with_Host_identifier(source,duration,type,date,ho
   }
   public rule_alerts_export(object){
   return this.http.post(environment.api_url+"/alerts/alert_source/export",object,{ responseType: "blob",headers: { 'Content-Type': 'application/json' }}).pipe(catchError(this.handler.handleError));
-}
+  }
   public packs_api(){
       return this.http.post(environment.api_url+"/packs",{}).pipe(catchError(this.handler.handleError));
   }
-
   public update_queries_in_pack_api(queries_id,object){
     let urlop = environment.api_url+"/queries/";
     return this.http.post(urlop + queries_id,object,{ headers: { 'Content-Type': 'application/json' }}).pipe(catchError(this.handler.handleError));
@@ -97,7 +96,6 @@ public alerts_graph_api_filter_with_Host_identifier(source,duration,type,date,ho
   public queries_api(){
       return this.http.post(environment.api_url+"/queries",{}).pipe(catchError(this.handler.handleError));
   }
-
   public queriesadd_api(object){
       return this.http.post(environment.api_url+"/queries/add",object).pipe(catchError(this.handler.handleError));
   }
@@ -116,32 +114,27 @@ public alerts_graph_api_filter_with_Host_identifier(source,duration,type,date,ho
   public getNotes_api(alert_id){
     let urlop = environment.api_url+"/alerts/";
     return this.http.get(urlop + alert_id +"/analyst/notes").pipe(catchError(this.handler.handleError));
-}
-public editNote_api(notes, note_id, alert_id){
-  let urlop = environment.api_url+"/alerts/";
-  return this.http.put(urlop + alert_id +"/analyst/notes", {"notes": notes, "note_id":note_id}).pipe(catchError(this.handler.handleError));
-}
-public deleteNote_api(note_id, alert_id){
-  let urlop = environment.api_url+"/alerts/";
-  const options = {
-    headers: new HttpHeaders({
-      'Content-Type': 'application/json',
-    }),
-    body: {
-      "note_id":note_id
-    }
-  };
-  return this.http.delete(urlop + alert_id +"/analyst/notes", options).pipe(catchError(this.handler.handleError));
-}
-
+  }
+  public editNote_api(notes, note_id, alert_id){
+    let urlop = environment.api_url+"/alerts/";
+    return this.http.put(urlop + alert_id +"/analyst/notes", {"notes": notes, "note_id":note_id}).pipe(catchError(this.handler.handleError));
+  }
+  public deleteNote_api(note_id, alert_id){
+    let urlop = environment.api_url+"/alerts/";
+    const options = {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+      }),
+      body: {
+        "note_id":note_id
+      }
+    };
+    return this.http.delete(urlop + alert_id +"/analyst/notes", options).pipe(catchError(this.handler.handleError));
+  }
   public Alert_system_events_and_state_data(alert_id){
     let urlop = environment.api_url+"/alerts/"+alert_id+"/events";
     return this.http.get(urlop).pipe(catchError(this.handler.handleError));
   }
-  // public get_alerts_aggregated_data(alert_id){
-  //   let urlop = environment.api_url+"/alerts/"+alert_id+"/alerted_events";
-  //   return this.http.get(urlop);
-  // }
   public get_alerts_aggregated_data(alert_id){
     let urlop = environment.api_url+"/alerts/"+alert_id+"/alerted_events";
     return this.http.post(urlop,null).pipe(catchError(this.handler.handleError));
@@ -150,7 +143,6 @@ public deleteNote_api(note_id, alert_id){
     let urlop = environment.api_url+"/alerts/"+alert_id+"/state";
     return this.http.get(urlop).pipe(catchError(this.handler.handleError));
   }
-
   public Alerts(alertName, alertCount){
       return this.http.post(environment.api_url+"/alerts", {'source': alertName, 'startPage': 0, 'perPageRecords': alertCount }).pipe(catchError(this.handler.handleError));
   }
@@ -271,6 +263,9 @@ public yara_add_api(file_data: File, platform_val){
 }
 public yara_view_api(event_type,platform_val){
     return this.http.post(environment.api_url+"/yara/view", {"file_name": event_type, "platform":platform_val}).pipe(catchError(this.handler.handleError));
+}
+public yara_edit_api(file_name,platform_val){
+    return this.http.put(environment.api_url+"/yara/update", {"file_name": file_name, "platform":platform_val}).pipe(catchError(this.handler.handleError));
 }
 public yara_delete_api(yara_name,platform_val){
     return this.http.post(environment.api_url+"/yara/delete", {"file_name": yara_name, "platform":platform_val}).pipe(catchError(this.handler.handleError));
@@ -665,6 +660,9 @@ return this.http.post(environment.api_url+"/queries/packed", body).pipe(catchErr
   public alertedEventsExport(id,queryName){
     return this.http.get(environment.api_url+"/alerts/"+id+"/alerted_events/export?query_name="+queryName,{responseType: "blob", headers: {'Accept': 'application/csv'}}).pipe(catchError(this.handler.handleError));
   }
+  public responseStatus(){
+    return this.http.get(environment.api_url+"/response/status/all");
+  }
   public tagsBulkAssignApi(body,tagName){
     return this.http.put(environment.api_url+"/tags/"+tagName ,body).pipe(catchError(this.handler.handleError));
   }
@@ -697,6 +695,9 @@ return this.http.post(environment.api_url+"/queries/packed", body).pipe(catchErr
   public getSSOLoginURL(){
     return environment.api_url+"/sso/login";
   }
+  public logout(){
+    return this.http.post(environment.api_url+"/logout",{}).pipe(catchError(this.handler.handleError));
+  }
 
   public getSSOStatus(){
     return this.http.get(environment.api_url+"/index",{}).pipe(catchError(this.handler.handleError));
@@ -717,5 +718,44 @@ return this.http.post(environment.api_url+"/queries/packed", body).pipe(catchErr
   }
   public downloadLog(object){
     return this.http.post(environment.api_url+"/management/download_log",object,{responseType: "blob", headers: {'Accept': 'application/csv'}}).pipe(catchError(this.handler.handleError));
+  }
+  public bulkDisableHost(object){
+    return this.http.put(environment.api_url+"/hosts/delete", object).pipe(catchError(this.handler.handleError));
+  }
+  public bulkRestoreHost(object){
+    return this.http.post(environment.api_url+"/hosts/enable", object).pipe(catchError(this.handler.handleError));
+  }
+  public bulkDeleteHost(object){
+    const payload = {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+      }),
+      body: object
+    };
+    return this.http.delete(environment.api_url+"/hosts/delete", payload).pipe(catchError(this.handler.handleError));
+  }
+  public bulkDeleteResponse(object){
+    const payload = {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+      }),
+      body: object
+    };
+    return this.http.delete(environment.api_url+"/response/delete", payload).pipe(catchError(this.handler.handleError));
+  }
+  public bulkDisableRules(object){
+    return this.http.post(environment.api_url+"/rules/disable", object).pipe(catchError(this.handler.handleError));
+  }
+  public enableRules(object){
+    return this.http.post(environment.api_url+"/rules/enable", object).pipe(catchError(this.handler.handleError));
+  }
+  public bulkDeleteRules(object){
+    const payload = {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+      }),
+      body: object
+    };
+    return this.http.delete(environment.api_url+"/rules/disable", payload).pipe(catchError(this.handler.handleError));
   }
 }

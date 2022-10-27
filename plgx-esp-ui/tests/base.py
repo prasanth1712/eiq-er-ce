@@ -142,7 +142,7 @@ class TestUtils:
         return list(db.session.query(Query.sql).all())
 
     def get_an_existing_alert_input_data(self):
-        data = db.session.query(Alerts.query_name, Alerts.node_id, Alerts.rule_id, Alerts.id).filter(Alerts.type=='rule').first()
+        data = db.session.query(Alerts.query_name, Alerts.node_id, Alerts.rule_id, Alerts.id).filter(Alerts.source=='rule').first()
         if data: return {'query_name':data[0], 'host_identifier':get_host_id_by_node_id(data[1]), 'rule_id':data[2], 'id':data[3], 'rule_name': rules_dao.get_rule_name_by_id(data[2])}
         else: return False
 

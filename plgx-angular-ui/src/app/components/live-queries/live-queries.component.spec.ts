@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { LiveQueriesComponent } from './live-queries.component';
 
@@ -6,7 +6,7 @@ describe('LiveQueriesComponent', () => {
   let component: LiveQueriesComponent;
   let fixture: ComponentFixture<LiveQueriesComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ LiveQueriesComponent ]
     })

@@ -62,9 +62,9 @@ def get_tagged_queries(tag_names):
 def edit_query_by_id(query, args):
     from polylogyx.dao.v1 import packs_dao
     tags = create_tags(*args['tags'])
-    packs=[]
+    packs = []
     if args['packs']:
-        packs=args['packs'].split(',')
+        packs = args['packs'].split(',')
     packs_list = []
     for pack_name in packs:
         pack = packs_dao.get_pack_by_name(pack_name)

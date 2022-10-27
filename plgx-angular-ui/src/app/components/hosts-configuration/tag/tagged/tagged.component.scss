@@ -1,0 +1,262 @@
+.right-content-conf {
+  border-left: 0px dotted lightgray;
+}
+
+.txt-clr {
+  color: indianred;
+  text-align: center;
+  /* margin-bottom: 0px; */
+  font-weight: 400;
+}
+
+.kt-notification .conf-div .active {
+  background-color: #f7f8fa;
+}
+
+.no-mar-botom {
+  margin-bottom: 0px;
+}
+
+.desc-background-query {
+  font-size: 100%;
+  color: #e83e8c;
+  word-break: break-word;
+  font-family: Roboto;
+}
+
+.head-table {
+  font-weight: 600 !important;
+}
+
+.portlet-body_align_pack {
+  height: 705px;
+  margin-bottom: 0px;
+  border: 15px solid #ebedf2;
+  padding: 10px;
+}
+
+.portlet-body_align {
+  height: 680px;
+  margin-bottom: 0px;
+  border: 15px solid #ebedf2;
+  padding: 10px;
+}
+
+.portlet-body_align__table {
+  margin-bottom: 0px;
+  border: 15px solid #ebedf2;
+}
+
+.style-accordion-background {
+  padding: 15px;
+  cursor: pointer;
+  font-size: 15px;
+  font-family: Roboto;
+}
+
+.desc-background_packs {
+  font-size: 100%;
+  color: #e83e8c;
+  word-break: break-word;
+  font-family: Roboto;
+}
+
+.txt-fmly {
+  font-family: Roboto;
+}
+
+table {
+  border-top-width: 1px;
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+  -webkit-border-horizontal-spacing: 10px;
+  -webkit-border-vertical-spacing: 10px;
+  border-collapse: collapse;
+  white-space: normal;
+  line-height: normal;
+  font-weight: normal;
+  font-size: medium;
+  font-style: normal;
+  color: -internal-quirk-inherit;
+  text-align: start;
+  font-variant: normal;
+  display: table;
+  border-color: grey;
+}
+
+.back_icon_align {
+  vertical-align: unset !important;
+}
+
+.kt-portlet h2:hover {
+  color: #518c24;
+}
+
+.kt-portlet .kt-portlet__head .kt-portlet__head-label .kt-portlet__head-title {
+  margin: 0;
+  padding: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #464457;
+}
+  @import "~node_modules/ngx-chips/core/styles/core/_core.scss";
+  $foundation-default: #666666;
+  $foundation-primary: #52B2A8;
+$foundation-primary-dark: darken($foundation-primary, 10%);
+$font-family: "Roboto", Roboto !important;
+
+// this is the container's theme
+$foundation-theme: (
+    font-family: $font-family,
+    container-border-bottom: 1px solid $foundation-primary
+);
+
+// this is the tag's theme
+$foundation-tag-theme: (
+font-family: $font-family,
+background: $foundation-default,
+background-focused: $foundation-primary-dark,
+background-active: $foundation-primary-dark,
+background-hover: $foundation-primary-dark,
+color: #fff,
+color-hover: #cdcdcd,
+border-radius: 12px,
+height: 24px,
+line-height: 2.1,
+font-size: 10px,
+font-weight: 900,
+padding-left:10px,
+);
+
+// this is the delete icon's theme
+$foundation-icon-theme: (
+    fill: #fff,
+    fill-focus: #eee,
+    transition: all 0.35s
+);
+
+// apply theme to the container
+::ng-deep tag-input .ng2-tag-input.foundation-theme {
+
+    @include tag-input-theme($foundation-theme);
+
+}
+
+// apply theme to the tags
+::ng-deep tag-input .ng2-tag-input.foundation-theme tag {
+    @include tag-theme($foundation-tag-theme);
+    padding-left: 12px;
+}
+::ng-deep tag-input{
+    margin-left:8px;
+}
+::ng-deep tag-input .ng2-tag-input__text-input{
+  height: 10px;
+  vertical-align: middle;
+  border: 1px solid #D1D1D1 !important;
+}
+// apply theme to the delete icon
+::ng-deep tag-input .ng2-tag-input.foundation-theme tag delete-icon {
+    @include icon-theme($foundation-icon-theme);
+}
+
+::ng-deep tag-input .ng2-tag-input.foundation-theme tag delete-icon svg, ::ng-deep tag-input .ng2-tag-input.foundation-theme tag delete-icon svg:hover {
+  height: 11px;
+  vertical-align: middle !important;
+}
+::ng-deep tag-input .ng2-tag-input.foundation-theme{
+  border-bottom: 2px solid  #fff;
+}
+
+.active {
+  background-color: #f7f8fa;
+  }
+  .lbl-pack{
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer !important;
+    word-break: break-word;
+  }
+.width-100{
+  width: 100% !important;
+}
+.max-width-100{
+  max-width: 100% !important;
+}
+.width-100-custom{
+  width: calc(100% - 50px);
+}
+.max-width-5{
+  max-width: 5%;
+}
+.max-width-95{
+  max-width: 95%;
+}
+.packs-table{
+  table-layout: fixed;
+}
+.packs-table td{
+  width: 25%;
+}
+.packs-table td+td{
+  width: 75%;
+}
+.packs-table td>*{
+  word-wrap: break-word;
+  word-break: break-all;
+}
+.queries-table{
+  table-layout: fixed;
+}
+.queries-table td{
+  width: 25%;
+}
+.queries-table td+td{
+  width: 75%;
+}
+.queries-table td>*{
+  word-wrap: break-word;
+  word-break: break-all;
+}
+.label_pack {
+  display: inline;
+  padding: .2em .6em .3em;
+      padding-top: 0.2em;
+      padding-right: 0.6em;
+      padding-bottom: 0.3em;
+      padding-left: 0.6em;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 2.5;
+  color: #fff;
+  text-align: center;
+  // white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: .25em;
+  word-break: break-word;
+}
+.pack-spacing{
+  color:#6371df;font-size: 12px;font-weight: 700;cursor: pointer;word-break: break-word;
+}
+.tagged_pack{
+  height: 575px;
+  overflow-x: auto !important;
+  margin-bottom:25px;
+}
+.tagged_query{
+  height: 528px; overflow-x:auto !important;
+  padding:1.25rem;
+  margin-bottom:20px;
+}
+.tagged_list_query{
+  height: 565px;
+  overflow-x:auto !important;
+  margin-bottom:25px;
+}
+.tagged_query_name{
+  height: 565px;
+  overflow-x:auto !important;
+  margin-bottom:25px;
+  padding: 1.25rem;
+}

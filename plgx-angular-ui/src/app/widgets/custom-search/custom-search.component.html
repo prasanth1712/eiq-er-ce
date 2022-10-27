@@ -1,0 +1,3 @@
+<input id="customsearch" class="form-control custom-search" type="text" name="search" autocomplete="off" placeholder="Search" (keyup.enter)="emitEvent($event.target.value)" [(ngModel)]="textInput">
+<i class="fa fa-search" (click)="emitEvent" (click)="valueChanged()"></i>
+<img class="fa-times" (click)="clearSearch()" (click)="valueChanged()" alt='Reset Search' src='./assets/media/icons/icon-close.svg' height="9" width="9"/>

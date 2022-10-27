@@ -21,13 +21,17 @@
     <button class="kt-aside-close " id="kt_aside_close_btn"><i class="la la-close"></i></button>
     <div class="kt-aside  kt-aside--fixed  kt-grid__item kt-grid kt-grid--desktop kt-grid--hor-desktop" id="kt_aside">      <!-- begin:: Aside -->
       <div class="kt-aside__brand kt-grid__item kt-logo-div" id="kt_aside_brand">
-        <div class="kt-aside__brand-logo mt-2">
+        <!-- <div class="kt-aside__brand-logo mt-2"> -->
+          <div class="kt-aside__brand-logo">
           <a [routerLink]="['/dashboard']" class="fnt-white" style="width:170px">
-            <img alt="Logo" src="/assets/media/eiq-img/EclecticIQ-ER-Logo.svg" width="160px" onerror="this.onerror=null;this.src='/assets/media/eiq-img/eclecticiq_logo.png';"/><label> </label>
+            <img alt="Logo" src="/assets/media/eiq-img/EclecticIQ-ER-Logo.svg" width="160px" onerror="this.onerror=null;this.src='/assets/media/eiq-img/eclecticiq_logo.png';" /><label> </label>
+          </a>
+          <a [routerLink]="['/dashboard']" class="fnt-white" style="width: 100%;height: 100%;">
+            <img class="logo-small" alt="EIQ-letter-Logo" src="/assets/media/eiq-img/eclecticiq_Logo_Letter-E.svg" width="32px" onerror="this.onerror=null;this.src='/assets/media/eiq-img/eclecticiq_logo.png';" style="height: 17.87px;width: 12.73px;padding: 0px;"/><label> </label>
           </a>
         </div>
         <div class="kt-aside__brand-tools">
-          <button class="kt-aside__brand-aside-toggler" (click)="collapsemanagementmenu()"  id="kt_aside_toggler">
+          <button class="kt-aside__brand-aside-toggler" (click)="collapsemanagementmenu();resizeAlertGraph();"  id="kt_aside_toggler">
             <span><svg  width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
                 <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
                   <polygon id="Shape" points="0 0 24 0 24 24 0 24" />
@@ -35,7 +39,7 @@
                   <!-- <path d="M10.7071009,15.7071068 C10.3165766,16.0976311 9.68341162,16.0976311 9.29288733,15.7071068 C8.90236304,15.3165825 8.90236304,14.6834175 9.29288733,14.2928932 L15.2928873,8.29289322 C15.6714663,7.91431428 16.2810527,7.90106866 16.6757187,8.26284586 L22.6757187,13.7628459 C23.0828377,14.1360383 23.1103407,14.7686056 22.7371482,15.1757246 C22.3639558,15.5828436 21.7313885,15.6103465 21.3242695,15.2371541 L16.0300699,10.3841378 L10.7071009,15.7071068 Z" id="Path-94" fill="#000000" fill-rule="nonzero" opacity="0.3" transform="translate(15.999997, 11.999999) scale(-1, 1) rotate(-270.000000) translate(-15.999997, -11.999999) " /> -->
                 </g>
               </svg></span>
-            <span style="margin-top: 4px;"><svg  width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
+            <span style="margin-top: 2px;"><svg  width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
                 <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
                   <polygon id="Shape" points="0 0 24 0 24 24 0 24" />
                   <path d="M12.2928955,6.70710318 C11.9023712,6.31657888 11.9023712,5.68341391 12.2928955,5.29288961 C12.6834198,4.90236532 13.3165848,4.90236532 13.7071091,5.29288961 L19.7071091,11.2928896 C20.085688,11.6714686 20.0989336,12.281055 19.7371564,12.675721 L14.2371564,18.675721 C13.863964,19.08284 13.2313966,19.1103429 12.8242777,18.7371505 C12.4171587,18.3639581 12.3896557,17.7313908 12.7628481,17.3242718 L17.6158645,12.0300721 L12.2928955,6.70710318 Z" id="Path-94" fill="#000000" fill-rule="nonzero" />
@@ -53,7 +57,7 @@
       <!-- begin:: Aside Menu -->
       <div class="kt-aside-menu-wrapper kt-grid__item kt-grid__item--fluid mt-2" id="kt_aside_menu_wrapper" >
         <div id="kt_aside_menu" class="kt-aside-menu" style="margin: 0px 0;" data-ktmenu-vertical="1" data-ktmenu-scroll="1" data-ktmenu-dropdown-timeout="500">
-          <ul class="kt-menu__nav ">
+          <ul class="kt-menu__nav" id="main-menu-ul">
             <li class="kt-menu__item kt-menu__item--rel" (click)="OnNavChange($event,'Dashboard','kt-menu__item--active','kt-menu__item--rel')" id="Dashboard" aria-haspopup="true">
               <a [routerLink]="['/dashboard']"  class="kt-menu__link " ><span class="kt-menu__link-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
@@ -79,51 +83,10 @@
                 <span class="kt-menu__link-text">Hosts</span>
               </a>
             </li>
-            <li class="kt-menu__item  kt-menu__item--submenu kt-menu__item--rel nav-header" (click)="OnNavChange($event,'Management','kt-menu__item--active','kt-menu__item--rel')" id="Management"   data-toggle="collapse" data-target="#submenu"  aria-haspopup="true" data-ktmenu-submenu-toggle="hover"><a  class="kt-menu__link kt-menu__toggle"><span class="kt-menu__link-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
-                <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                    <rect id="bound" x="0" y="0" width="24" height="24"/>
-                    <path d="M5,2 L19,2 C20.1045695,2 21,2.8954305 21,4 L21,6 C21,7.1045695 20.1045695,8 19,8 L5,8 C3.8954305,8 3,7.1045695 3,6 L3,4 C3,2.8954305 3.8954305,2 5,2 Z M11,4 C10.4477153,4 10,4.44771525 10,5 C10,5.55228475 10.4477153,6 11,6 L16,6 C16.5522847,6 17,5.55228475 17,5 C17,4.44771525 16.5522847,4 16,4 L11,4 Z M7,6 C7.55228475,6 8,5.55228475 8,5 C8,4.44771525 7.55228475,4 7,4 C6.44771525,4 6,4.44771525 6,5 C6,5.55228475 6.44771525,6 7,6 Z" id="Combined-Shape" fill="#000000" opacity="0.3"/>
-                    <path d="M5,9 L19,9 C20.1045695,9 21,9.8954305 21,11 L21,13 C21,14.1045695 20.1045695,15 19,15 L5,15 C3.8954305,15 3,14.1045695 3,13 L3,11 C3,9.8954305 3.8954305,9 5,9 Z M11,11 C10.4477153,11 10,11.4477153 10,12 C10,12.5522847 10.4477153,13 11,13 L16,13 C16.5522847,13 17,12.5522847 17,12 C17,11.4477153 16.5522847,11 16,11 L11,11 Z M7,13 C7.55228475,13 8,12.5522847 8,12 C8,11.4477153 7.55228475,11 7,11 C6.44771525,11 6,11.4477153 6,12 C6,12.5522847 6.44771525,13 7,13 Z" id="Combined-Shape-Copy" fill="#000000"/>
-                    <path d="M5,16 L19,16 C20.1045695,16 21,16.8954305 21,18 L21,20 C21,21.1045695 20.1045695,22 19,22 L5,22 C3.8954305,22 3,21.1045695 3,20 L3,18 C3,16.8954305 3.8954305,16 5,16 Z M11,18 C10.4477153,18 10,18.4477153 10,19 C10,19.5522847 10.4477153,20 11,20 L16,20 C16.5522847,20 17,19.5522847 17,19 C17,18.4477153 16.5522847,18 16,18 L11,18 Z M7,20 C7.55228475,20 8,19.5522847 8,19 C8,18.4477153 7.55228475,18 7,18 C6.44771525,18 6,18.4477153 6,19 C6,19.5522847 6.44771525,20 7,20 Z" id="Combined-Shape-Copy-2" fill="#000000"/>
-                </g>
-            </svg>
-              </span><span class="kt-menu__link-text">Management</span><i class="kt-menu__ver-arrow la la-angle-down" ></i></a>
-              <div><span class="kt-menu__arrow"></span>
-                <ul class="nav nav-list collapse" id="submenu" style="padding-left:44px;">
-                  <li id ="management_drop" class="dropdown" (click)="action($event)" class="kt-menu__item kt-menu__item--rel " aria-haspopup="true"><a class="dropdown-toggle" [routerLink]="['/management/change-password']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">Change Password</span></a></li>
-                  <li id ="management_drop" (click)="action($event)" class="kt-menu__item kt-menu__item--rel " aria-haspopup="true"><a [routerLink]="['/management/configure-email']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">Configure Email</span></a></li>
-                  <li id ="management_drop" (click)="action($event)" class="kt-menu__item kt-menu__item--rel " aria-haspopup="true"><a [routerLink]="['/management/threat-intel-keys']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">Threat Intel Keys</span></a></li>
-                  <li id ="management_drop" (click)="action($event)" class="kt-menu__item kt-menu__item--rel " aria-haspopup="true"><a [routerLink]="['/management/removed-hosts']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">Removed Hosts</span></a></li>
-                  <li id ="management_drop" (click)="action($event)" class="kt-menu__item kt-menu__item--rel " aria-haspopup="true"><a [routerLink]="['/management/resolved-alerts']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">Resolved Alerts</span></a></li>
-                  <!-- <li id ="management_drop" (click)="action($event)" class="kt-menu__item kt-menu__item--rel " aria-haspopup="true"><a [routerLink]="['/management/configuration']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu" >Configuration</span></a></li> -->
-                  <li id ="management_drop" (click)="action($event)" class="kt-menu__item kt-menu__item--rel " aria-haspopup="true"><a [routerLink]="['/management/alert-configuration']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu" >Alert Configuration</span></a></li>
-                  <li *ngIf="hasAcess" id ="management_drop" (click)="action($event)" class="kt-menu__item kt-menu__item--rel " aria-haspopup="true"><a [routerLink]="['/management/troubleshooting']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu" >Troubleshooting</span></a></li>
-                  <li *ngIf="hasAcess" id ="management_drop" (click)="action($event)" class="kt-menu__item kt-menu__item--rel " aria-haspopup="true"><a [routerLink]="['/management/sso-configuration']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu" >SSO Configuration</span></a></li>
-                  <li id ="management_drop" (click)="action($event)" class="kt-menu__item kt-menu__item--rel " aria-haspopup="true"><a [routerLink]="['/management/data-purge']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu" >Data Purge</span></a></li>
-                  <li id ="management_drop" (click)="action($event)" class="kt-menu__item kt-menu__item--rel " aria-haspopup="true"><a [routerLink]="['/management/vt-configuration']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">VT Configuration</span></a></li>
-                  <li *ngIf="hasAcess" id ="management_drop" (click)="action($event)" class="kt-menu__item kt-menu__item--rel " aria-haspopup="true"><a [routerLink]="['/management/UserAdministration']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">User Management</span></a></li>
-                </ul>
-                <!-- <ul class="nav nav-list">
-                  <li class="nav-header"  data-toggle="collapse" data-target="#test">
-                    <span class="kt-menu__link-text">Management</span>
-
-                      <ul class="nav nav-list collapse" id="test">
-                          <li>
-                            <a href="/ticket_list.cfm" title="Show list of tickets">Open Tickets</a>
-                          </li>
-                          <li><a href="/account/" title="Edit user accounts">Accounts / Community</a>
-                          </li>
-                      </ul>
-                    </li>
-                </ul> -->
-              </div>
-            </li>
-
 
            <!-- <li> -->
 
-            <div class="separator-menu"></div>
+
             <li class="kt-menu__item kt-menu__item--rel"(click)="OnNavChange($event,'Alerts','kt-menu__item--active','kt-menu__item--rel')" id="Alerts" aria-haspopup="true">
               <a [routerLink]="['/alerts']"  class="kt-menu__link ">
                 <span class="kt-menu__link-icon">
@@ -139,82 +102,34 @@
                 <span class="kt-menu__link-text">Alerts</span>
               </a>
             </li>
-            <li class="kt-menu__item kt-menu__item--rel"(click)="OnNavChange($event,'live-queries','kt-menu__item--active','kt-menu__item--rel')" id="live-queries" aria-haspopup="true">
-              <a [routerLink]="['/live-queries']"  class="kt-menu__link ">
-                <span class="kt-menu__link-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
-                    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                        <rect id="bound" x="0" y="0" width="24" height="24"/>
-                        <path d="M17.2718029,8.68536757 C16.8932864,8.28319382 16.9124644,7.65031935 17.3146382,7.27180288 C17.7168119,6.89328641 18.3496864,6.91246442 18.7282029,7.31463817 L22.7282029,11.5646382 C23.0906029,11.9496882 23.0906029,12.5503176 22.7282029,12.9353676 L18.7282029,17.1853676 C18.3496864,17.5875413 17.7168119,17.6067193 17.3146382,17.2282029 C16.9124644,16.8496864 16.8932864,16.2168119 17.2718029,15.8146382 L20.6267538,12.2500029 L17.2718029,8.68536757 Z M6.72819712,8.6853647 L3.37324625,12.25 L6.72819712,15.8146353 C7.10671359,16.2168091 7.08753558,16.8496835 6.68536183,17.2282 C6.28318808,17.6067165 5.65031361,17.5875384 5.27179713,17.1853647 L1.27179713,12.9353647 C0.909397125,12.5503147 0.909397125,11.9496853 1.27179713,11.5646353 L5.27179713,7.3146353 C5.65031361,6.91246155 6.28318808,6.89328354 6.68536183,7.27180001 C7.08753558,7.65031648 7.10671359,8.28319095 6.72819712,8.6853647 Z" id="Combined-Shape" fill="#000000" fill-rule="nonzero"/>
-                        <rect id="Rectangle-28" fill="#000000" opacity="0.3" transform="translate(12.000000, 12.000000) rotate(-345.000000) translate(-12.000000, -12.000000) " x="11" y="4" width="2" height="16" rx="1"/>
-                    </g>
-                </svg>
-                </span>
-                <span class="kt-menu__link-text">Live Query</span>
-              </a>
-            </li>
-            <li class="kt-menu__item kt-menu__item--rel"(click)="OnNavChange($event,'Rules','kt-menu__item--active','kt-menu__item--rel')" id="Rules" aria-haspopup="true">
-              <a [routerLink]="['/rules']"  class="kt-menu__link ">
-                <span class="kt-menu__link-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
-                  <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                    <rect id="bound" x="0" y="0" width="24" height="24" />
-                    <path
-                      d="M8,3 L8,3.5 C8,4.32842712 8.67157288,5 9.5,5 L14.5,5 C15.3284271,5 16,4.32842712 16,3.5 L16,3 L18,3 C19.1045695,3 20,3.8954305 20,5 L20,21 C20,22.1045695 19.1045695,23 18,23 L6,23 C4.8954305,23 4,22.1045695 4,21 L4,5 C4,3.8954305 4.8954305,3 6,3 L8,3 Z"
-                      id="Combined-Shape" fill="#000000" opacity="0.3" />
-                    <path
-                      d="M11,2 C11,1.44771525 11.4477153,1 12,1 C12.5522847,1 13,1.44771525 13,2 L14.5,2 C14.7761424,2 15,2.22385763 15,2.5 L15,3.5 C15,3.77614237 14.7761424,4 14.5,4 L9.5,4 C9.22385763,4 9,3.77614237 9,3.5 L9,2.5 C9,2.22385763 9.22385763,2 9.5,2 L11,2 Z"
-                      id="Combined-Shape" fill="#000000" />
-                    <rect id="Rectangle-152" fill="#000000" opacity="0.3" x="10" y="9" width="7" height="2" rx="1" />
-                    <rect id="Rectangle-152-Copy-2" fill="#000000" opacity="0.3" x="7" y="9" width="2" height="2" rx="1" />
-                    <rect id="Rectangle-152-Copy-3" fill="#000000" opacity="0.3" x="7" y="13" width="2" height="2" rx="1" />
-                    <rect id="Rectangle-152-Copy" fill="#000000" opacity="0.3" x="10" y="13" width="7" height="2" rx="1" />
-                    <rect id="Rectangle-152-Copy-5" fill="#000000" opacity="0.3" x="7" y="17" width="2" height="2" rx="1" />
-                    <rect id="Rectangle-152-Copy-4" fill="#000000" opacity="0.3" x="10" y="17" width="7" height="2" rx="1" />
-                  </g>
-                </svg>
-                </span>
-                <span class="kt-menu__link-text">Rules</span>
-              </a>
-            </li>
-            <li class="kt-menu__item kt-menu__item--rel"(click)="OnNavChange($event,'Ioc','kt-menu__item--active','kt-menu__item--rel')" id="Ioc" aria-haspopup="true">
-              <a [routerLink]="['/ioc']"  class="kt-menu__link ">
-                <span class="kt-menu__link-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
-                  <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                    <rect id="bound" x="0" y="0" width="24" height="24" />
-                    <path
-                      d="M7,3 L17,3 C19.209139,3 21,4.790861 21,7 C21,9.209139 19.209139,11 17,11 L7,11 C4.790861,11 3,9.209139 3,7 C3,4.790861 4.790861,3 7,3 Z M7,9 C8.1045695,9 9,8.1045695 9,7 C9,5.8954305 8.1045695,5 7,5 C5.8954305,5 5,5.8954305 5,7 C5,8.1045695 5.8954305,9 7,9 Z"
-                      id="Combined-Shape" fill="#000000" />
-                    <path
-                      d="M7,13 L17,13 C19.209139,13 21,14.790861 21,17 C21,19.209139 19.209139,21 17,21 L7,21 C4.790861,21 3,19.209139 3,17 C3,14.790861 4.790861,13 7,13 Z M17,19 C18.1045695,19 19,18.1045695 19,17 C19,15.8954305 18.1045695,15 17,15 C15.8954305,15 15,15.8954305 15,17 C15,18.1045695 15.8954305,19 17,19 Z"
-                      id="Combined-Shape" fill="#000000" opacity="0.3" />
-                  </g>
-                </svg>
-                </span>
-                <span class="kt-menu__link-text">IOC</span>
-              </a>
+            <li class="kt-menu__item  kt-menu__item--submenu kt-menu__item--rel nav-header" (click)="OnNavChange($event,'Rules','kt-menu__submenuitem--active','kt-menu__item--rel')" id="Rules"   data-toggle="collapse" data-target="#Rulessubmenu"  aria-haspopup="true" data-ktmenu-submenu-toggle="hover"><a  class="kt-menu__link kt-menu__toggle"><span class="kt-menu__link-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
+              <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                <rect id="bound" x="0" y="0" width="24" height="24" />
+                <path
+                  d="M8,3 L8,3.5 C8,4.32842712 8.67157288,5 9.5,5 L14.5,5 C15.3284271,5 16,4.32842712 16,3.5 L16,3 L18,3 C19.1045695,3 20,3.8954305 20,5 L20,21 C20,22.1045695 19.1045695,23 18,23 L6,23 C4.8954305,23 4,22.1045695 4,21 L4,5 C4,3.8954305 4.8954305,3 6,3 L8,3 Z"
+                  id="Combined-Shape" fill="#000000" opacity="0.3" />
+                <path
+                  d="M11,2 C11,1.44771525 11.4477153,1 12,1 C12.5522847,1 13,1.44771525 13,2 L14.5,2 C14.7761424,2 15,2.22385763 15,2.5 L15,3.5 C15,3.77614237 14.7761424,4 14.5,4 L9.5,4 C9.22385763,4 9,3.77614237 9,3.5 L9,2.5 C9,2.22385763 9.22385763,2 9.5,2 L11,2 Z"
+                  id="Combined-Shape" fill="#000000" />
+                <rect id="Rectangle-152" fill="#000000" opacity="0.3" x="10" y="9" width="7" height="2" rx="1" />
+                <rect id="Rectangle-152-Copy-2" fill="#000000" opacity="0.3" x="7" y="9" width="2" height="2" rx="1" />
+                <rect id="Rectangle-152-Copy-3" fill="#000000" opacity="0.3" x="7" y="13" width="2" height="2" rx="1" />
+                <rect id="Rectangle-152-Copy" fill="#000000" opacity="0.3" x="10" y="13" width="7" height="2" rx="1" />
+                <rect id="Rectangle-152-Copy-5" fill="#000000" opacity="0.3" x="7" y="17" width="2" height="2" rx="1" />
+                <rect id="Rectangle-152-Copy-4" fill="#000000" opacity="0.3" x="10" y="17" width="7" height="2" rx="1" />
+              </g>
+            </svg>
+              </span><span class="kt-menu__link-text">Rules</span><i class="kt-menu__ver-arrow la la-angle-down" ></i></a>
+              <div><span class="kt-menu__arrow"></span>
+                <ul class="nav nav-list collapse" id="Rulessubmenu" style="padding-left:44px;">
+                  <li style="width:200px" id ="ERRules" class="dropdown" (click)="OnSubNavChange($event,'Rules','ERRules','kt-aside-submenu--active','kt-menu__item--rel')" class="kt-menu__item kt-menu__item--rel submenu-id-page_er-rules" aria-haspopup="true"><a class="dropdown-toggle" [routerLink]="['rules/er-rules']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">ER Rules</span></a></li>
+                 <li style="width:200px" id ="IocRules" class="dropdown" (click)="OnSubNavChange($event,'Rules','IocRules','kt-aside-submenu--active','kt-menu__item--rel')" class="kt-menu__item kt-menu__item--rel submenu-id-page_ioc-rules" aria-haspopup="true"><a class="dropdown-toggle" [routerLink]="['rules/ioc-rules']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">IOC Rules</span></a></li>
+                 <li style="width:200px" id ="Yara" (click)="OnSubNavChange($event,'Rules','Yara','kt-aside-submenu--active','kt-menu__item--rel')" class="kt-menu__item kt-menu__item--rel submenu-id-page_yara" aria-haspopup="true"><a [routerLink]="['rules/yara']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">YARA</span></a></li>
+                </ul>
+              </div>
             </li>
 
-            <li class="kt-menu__item kt-menu__item--rel"(click)="OnNavChange($event,'Tags','kt-menu__item--active','kt-menu__item--rel')" id="Tags" aria-haspopup="true">
-              <a [routerLink]="['/tags']"  class="kt-menu__link ">
-                <span class="kt-menu__link-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
-                    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                      <rect id="bound" x="0" y="0" width="24" height="24" />
-                      <g id="Group" transform="translate(12.500000, 12.000000) rotate(-315.000000) translate(-12.500000, -12.000000) translate(6.000000, 1.000000)" fill="#000000" opacity="0.3">
-                        <path
-                          d="M0.353553391,7.14644661 L3.35355339,7.14644661 C3.4100716,7.14644661 3.46549471,7.14175791 3.51945496,7.13274826 C3.92739876,8.3050906 5.04222146,9.14644661 6.35355339,9.14644661 C8.01040764,9.14644661 9.35355339,7.80330086 9.35355339,6.14644661 C9.35355339,4.48959236 8.01040764,3.14644661 6.35355339,3.14644661 C5.04222146,3.14644661 3.92739876,3.98780262 3.51945496,5.16014496 C3.46549471,5.15113531 3.4100716,5.14644661 3.35355339,5.14644661 L0.436511831,5.14644661 C0.912589923,2.30873327 3.3805571,0.146446609 6.35355339,0.146446609 C9.66726189,0.146446609 12.3535534,2.83273811 12.3535534,6.14644661 L12.3535534,19.1464466 C12.3535534,20.2510161 11.4581229,21.1464466 10.3535534,21.1464466 L2.35355339,21.1464466 C1.24898389,21.1464466 0.353553391,20.2510161 0.353553391,19.1464466 L0.353553391,7.14644661 Z"
-                          id="Combined-Shape" transform="translate(6.353553, 10.646447) rotate(-360.000000) translate(-6.353553, -10.646447) " />
-                        <rect id="Rectangle" x="2.35355339" y="13.1464466" width="8" height="2" rx="1" />
-                        <rect id="Rectangle-Copy" x="3.35355339" y="17.1464466" width="6" height="2" rx="1" />
-                      </g>
-                    </g>
-                  </svg>
-                </span>
-                <span class="kt-menu__link-text">Tags</span>
-              </a>
-            </li>
             <li class="kt-menu__item kt-menu__item--rel"(click)="OnNavChange($event,'Carves','kt-menu__item--active','kt-menu__item--rel')" id="Carves" aria-haspopup="true">
               <a [routerLink]="['/carves']"  class="kt-menu__link ">
                 <span class="kt-menu__link-icon">
@@ -230,32 +145,18 @@
                 <span class="kt-menu__link-text">Carves</span>
               </a>
             </li>
-            <li class="kt-menu__item kt-menu__item--rel"(click)="OnNavChange($event,'Yara','kt-menu__item--active','kt-menu__item--rel')" id="Yara" aria-haspopup="true">
-              <a [routerLink]="['/yara']"  class="kt-menu__link ">
+            <li class="kt-menu__item kt-menu__item--rel"(click)="OnNavChange($event,'live-queries','kt-menu__item--active','kt-menu__item--rel')" id="live-queries" aria-haspopup="true">
+              <a [routerLink]="['/live-query']"  class="kt-menu__link ">
                 <span class="kt-menu__link-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
                     <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                        <polygon id="Shape" points="0 0 24 0 24 24 0 24"/>
-                        <path d="M4.85714286,1 L11.7364114,1 C12.0910962,1 12.4343066,1.12568431 12.7051108,1.35473959 L17.4686994,5.3839416 C17.8056532,5.66894833 18,6.08787823 18,6.52920201 L18,19.0833333 C18,20.8738751 17.9795521,21 16.1428571,21 L4.85714286,21 C3.02044787,21 3,20.8738751 3,19.0833333 L3,2.91666667 C3,1.12612489 3.02044787,1 4.85714286,1 Z M8,12 C7.44771525,12 7,12.4477153 7,13 C7,13.5522847 7.44771525,14 8,14 L15,14 C15.5522847,14 16,13.5522847 16,13 C16,12.4477153 15.5522847,12 15,12 L8,12 Z M8,16 C7.44771525,16 7,16.4477153 7,17 C7,17.5522847 7.44771525,18 8,18 L11,18 C11.5522847,18 12,17.5522847 12,17 C12,16.4477153 11.5522847,16 11,16 L8,16 Z" id="Combined-Shape-Copy" fill="#000000" fill-rule="nonzero" opacity="0.3"/>
-                        <path d="M6.85714286,3 L14.7364114,3 C15.0910962,3 15.4343066,3.12568431 15.7051108,3.35473959 L20.4686994,7.3839416 C20.8056532,7.66894833 21,8.08787823 21,8.52920201 L21,21.0833333 C21,22.8738751 20.9795521,23 19.1428571,23 L6.85714286,23 C5.02044787,23 5,22.8738751 5,21.0833333 L5,4.91666667 C5,3.12612489 5.02044787,3 6.85714286,3 Z M8,12 C7.44771525,12 7,12.4477153 7,13 C7,13.5522847 7.44771525,14 8,14 L15,14 C15.5522847,14 16,13.5522847 16,13 C16,12.4477153 15.5522847,12 15,12 L8,12 Z M8,16 C7.44771525,16 7,16.4477153 7,17 C7,17.5522847 7.44771525,18 8,18 L11,18 C11.5522847,18 12,17.5522847 12,17 C12,16.4477153 11.5522847,16 11,16 L8,16 Z" id="Combined-Shape" fill="#000000" fill-rule="nonzero"/>
+                        <rect id="bound" x="0" y="0" width="24" height="24"/>
+                        <path d="M17.2718029,8.68536757 C16.8932864,8.28319382 16.9124644,7.65031935 17.3146382,7.27180288 C17.7168119,6.89328641 18.3496864,6.91246442 18.7282029,7.31463817 L22.7282029,11.5646382 C23.0906029,11.9496882 23.0906029,12.5503176 22.7282029,12.9353676 L18.7282029,17.1853676 C18.3496864,17.5875413 17.7168119,17.6067193 17.3146382,17.2282029 C16.9124644,16.8496864 16.8932864,16.2168119 17.2718029,15.8146382 L20.6267538,12.2500029 L17.2718029,8.68536757 Z M6.72819712,8.6853647 L3.37324625,12.25 L6.72819712,15.8146353 C7.10671359,16.2168091 7.08753558,16.8496835 6.68536183,17.2282 C6.28318808,17.6067165 5.65031361,17.5875384 5.27179713,17.1853647 L1.27179713,12.9353647 C0.909397125,12.5503147 0.909397125,11.9496853 1.27179713,11.5646353 L5.27179713,7.3146353 C5.65031361,6.91246155 6.28318808,6.89328354 6.68536183,7.27180001 C7.08753558,7.65031648 7.10671359,8.28319095 6.72819712,8.6853647 Z" id="Combined-Shape" fill="#000000" fill-rule="nonzero"/>
+                        <rect id="Rectangle-28" fill="#000000" opacity="0.3" transform="translate(12.000000, 12.000000) rotate(-345.000000) translate(-12.000000, -12.000000) " x="11" y="4" width="2" height="16" rx="1"/>
                     </g>
-                  </svg>
+                </svg>
                 </span>
-                <span class="kt-menu__link-text">YARA</span>
-              </a>
-            </li>
-            <li class="kt-menu__item kt-menu__item--rel"(click)="OnNavChange($event,'Hunt','kt-menu__item--active','kt-menu__item--rel')" id="Hunt" aria-haspopup="true">
-              <a [routerLink]="['/hunt']"  class="kt-menu__link ">
-                <span class="kt-menu__link-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
-                    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                      <rect id="bound" x="0" y="0" width="24" height="24"/>
-                      <path d="M19,11 L21,11 C21.5522847,11 22,11.4477153 22,12 C22,12.5522847 21.5522847,13 21,13 L19,13 C18.4477153,13 18,12.5522847 18,12 C18,11.4477153 18.4477153,11 19,11 Z M3,11 L5,11 C5.55228475,11 6,11.4477153 6,12 C6,12.5522847 5.55228475,13 5,13 L3,13 C2.44771525,13 2,12.5522847 2,12 C2,11.4477153 2.44771525,11 3,11 Z M12,2 C12.5522847,2 13,2.44771525 13,3 L13,5 C13,5.55228475 12.5522847,6 12,6 C11.4477153,6 11,5.55228475 11,5 L11,3 C11,2.44771525 11.4477153,2 12,2 Z M12,18 C12.5522847,18 13,18.4477153 13,19 L13,21 C13,21.5522847 12.5522847,22 12,22 C11.4477153,22 11,21.5522847 11,21 L11,19 C11,18.4477153 11.4477153,18 12,18 Z" id="Oval" fill="#000000" fill-rule="nonzero" opacity="0.3"/>
-                      <circle id="Path" fill="#000000" cx="12" cy="12" r="3"/>
-                    </g>
-                  </svg>
-                </span>
-                <span class="kt-menu__link-text">Hunt</span>
+                <span class="kt-menu__link-text">Live Query</span>
               </a>
             </li>
             <li class="kt-menu__item kt-menu__item--rel"(click)="OnNavChange($event,'Search','kt-menu__item--active','kt-menu__item--rel')" id="Search" aria-haspopup="true">
@@ -272,98 +173,102 @@
                 <span class="kt-menu__link-text">Search</span>
               </a>
             </li>
+            <li class="kt-menu__item kt-menu__item--rel"(click)="OnNavChange($event,'Hunt','kt-menu__item--active','kt-menu__item--rel')" id="Hunt" aria-haspopup="true">
+              <a [routerLink]="['/hunt']"  class="kt-menu__link ">
+                <span class="kt-menu__link-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
+                    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                      <rect id="bound" x="0" y="0" width="24" height="24"/>
+                      <path d="M19,11 L21,11 C21.5522847,11 22,11.4477153 22,12 C22,12.5522847 21.5522847,13 21,13 L19,13 C18.4477153,13 18,12.5522847 18,12 C18,11.4477153 18.4477153,11 19,11 Z M3,11 L5,11 C5.55228475,11 6,11.4477153 6,12 C6,12.5522847 5.55228475,13 5,13 L3,13 C2.44771525,13 2,12.5522847 2,12 C2,11.4477153 2.44771525,11 3,11 Z M12,2 C12.5522847,2 13,2.44771525 13,3 L13,5 C13,5.55228475 12.5522847,6 12,6 C11.4477153,6 11,5.55228475 11,5 L11,3 C11,2.44771525 11.4477153,2 12,2 Z M12,18 C12.5522847,18 13,18.4477153 13,19 L13,21 C13,21.5522847 12.5522847,22 12,22 C11.4477153,22 11,21.5522847 11,21 L11,19 C11,18.4477153 11.4477153,18 12,18 Z" id="Oval" fill="#000000" fill-rule="nonzero" opacity="0.3"/>
+                      <circle id="Path" fill="#000000" cx="12" cy="12" r="3"/>
+                    </g>
+                  </svg>
+                </span>
+                <span class="kt-menu__link-text">Hunt</span>
+              </a>
+            </li>
+
             <div class="separator-menu"></div>
-            <li class="kt-menu__section" style="margin: -15px 0 0 0;">
-              <h4 class="kt-menu__section-text">Config Management</h4>
-              <i class="kt-menu__section-icon flaticon-more-v2"></i>
+            <li class="kt-menu__item  kt-menu__item--submenu kt-menu__item--rel nav-header" (click)="OnNavChange($event,'HostConfiguration','kt-menu__submenuitem--active','kt-menu__item--rel')" id="HostConfiguration"   data-toggle="collapse" data-target="#Hostconfigsubmenu"  aria-haspopup="true" data-ktmenu-submenu-toggle="hover"><a  class="kt-menu__link kt-menu__toggle"><span class="kt-menu__link-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
+                <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                  <rect id="Bound" opacity="0.200000003" x="0" y="0" width="24" height="24" />
+                  <path
+                    d="M4.5,7 L9.5,7 C10.3284271,7 11,7.67157288 11,8.5 C11,9.32842712 10.3284271,10 9.5,10 L4.5,10 C3.67157288,10 3,9.32842712 3,8.5 C3,7.67157288 3.67157288,7 4.5,7 Z M13.5,15 L18.5,15 C19.3284271,15 20,15.6715729 20,16.5 C20,17.3284271 19.3284271,18 18.5,18 L13.5,18 C12.6715729,18 12,17.3284271 12,16.5 C12,15.6715729 12.6715729,15 13.5,15 Z"
+                    id="Combined-Shape" fill="#000000" opacity="0.3" />
+                  <path
+                    d="M17,11 C15.3431458,11 14,9.65685425 14,8 C14,6.34314575 15.3431458,5 17,5 C18.6568542,5 20,6.34314575 20,8 C20,9.65685425 18.6568542,11 17,11 Z M6,19 C4.34314575,19 3,17.6568542 3,16 C3,14.3431458 4.34314575,13 6,13 C7.65685425,13 9,14.3431458 9,16 C9,17.6568542 7.65685425,19 6,19 Z"
+                    id="Combined-Shape" fill="#000000" />
+                </g>
+              </svg>
+              </span><span class="kt-menu__link-text">Host Configuration</span><i class="kt-menu__ver-arrow la la-angle-down" ></i></a>
+              <div><span class="kt-menu__arrow"></span>
+                <ul class="nav nav-list collapse" id="Hostconfigsubmenu" style="padding-left:44px;">
+                  <li style="width:200px" id ="configurations" class="dropdown" (click)="OnSubNavChange($event,'HostConfiguration','configurations','kt-aside-submenu--active','kt-menu__item--rel')" class="kt-menu__item kt-menu__item--rel submenu-id-page_configurations" aria-haspopup="true"><a class="dropdown-toggle" [routerLink]="['hostconfiguration/configurations']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">Configurations</span></a></li>
+                  <li style="width:200px" id ="queries" (click)="OnSubNavChange($event,'HostConfiguration','queries','kt-aside-submenu--active','kt-menu__item--rel')" class="kt-menu__item kt-menu__item--rel submenu-id-page_queries" aria-haspopup="true"><a [routerLink]="['/hostconfiguration/queries']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">Queries</span></a></li>
+                    <li style="width:200px" id ="pack" (click)="OnSubNavChange($event,'HostConfiguration','pack','kt-aside-submenu--active','kt-menu__item--rel')" class="kt-menu__item kt-menu__item--rel submenu-id-page_packs" aria-haspopup="true"><a [routerLink]="['/hostconfiguration/packs']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">Packs</span></a></li>
+                    <li style="width:200px" id ="tags" (click)="OnSubNavChange($event,'HostConfiguration','tags','kt-aside-submenu--active','kt-menu__item--rel')" class="kt-menu__item kt-menu__item--rel submenu-id-page_tags" aria-haspopup="true"><a [routerLink]="['/hostconfiguration/tags']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">Tags</span></a></li>
+                </ul>
+              </div>
+
+
             </li>
-            <li class="kt-menu__item kt-menu__item--rel"(click)="OnNavChange($event,'Config','kt-menu__item--active','kt-menu__item--rel')" id="Config" aria-haspopup="true">
-              <a [routerLink]="['/config']"  class="kt-menu__link ">
-                <span class="kt-menu__link-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
-                    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                      <rect id="Bound" opacity="0.200000003" x="0" y="0" width="24" height="24" />
-                      <path
-                        d="M4.5,7 L9.5,7 C10.3284271,7 11,7.67157288 11,8.5 C11,9.32842712 10.3284271,10 9.5,10 L4.5,10 C3.67157288,10 3,9.32842712 3,8.5 C3,7.67157288 3.67157288,7 4.5,7 Z M13.5,15 L18.5,15 C19.3284271,15 20,15.6715729 20,16.5 C20,17.3284271 19.3284271,18 18.5,18 L13.5,18 C12.6715729,18 12,17.3284271 12,16.5 C12,15.6715729 12.6715729,15 13.5,15 Z"
-                        id="Combined-Shape" fill="#000000" opacity="0.3" />
-                      <path
-                        d="M17,11 C15.3431458,11 14,9.65685425 14,8 C14,6.34314575 15.3431458,5 17,5 C18.6568542,5 20,6.34314575 20,8 C20,9.65685425 18.6568542,11 17,11 Z M6,19 C4.34314575,19 3,17.6568542 3,16 C3,14.3431458 4.34314575,13 6,13 C7.65685425,13 9,14.3431458 9,16 C9,17.6568542 7.65685425,19 6,19 Z"
-                        id="Combined-Shape" fill="#000000" />
-                    </g>
-                  </svg>
-                </span>
-                <span class="kt-menu__link-text">Config</span>
-              </a>
+            <li class="kt-menu__item  kt-menu__item--submenu kt-menu__item--rel nav-header" (click)="OnNavChange($event,'Management','kt-menu__submenuitem--active','kt-menu__item--rel')" id="Management"   data-toggle="collapse" data-target="#submenu"  aria-haspopup="true" data-ktmenu-submenu-toggle="hover"><a  class="kt-menu__link kt-menu__toggle"><span class="kt-menu__link-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
+                <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                    <rect id="bound" x="0" y="0" width="24" height="24"/>
+                    <path d="M5,2 L19,2 C20.1045695,2 21,2.8954305 21,4 L21,6 C21,7.1045695 20.1045695,8 19,8 L5,8 C3.8954305,8 3,7.1045695 3,6 L3,4 C3,2.8954305 3.8954305,2 5,2 Z M11,4 C10.4477153,4 10,4.44771525 10,5 C10,5.55228475 10.4477153,6 11,6 L16,6 C16.5522847,6 17,5.55228475 17,5 C17,4.44771525 16.5522847,4 16,4 L11,4 Z M7,6 C7.55228475,6 8,5.55228475 8,5 C8,4.44771525 7.55228475,4 7,4 C6.44771525,4 6,4.44771525 6,5 C6,5.55228475 6.44771525,6 7,6 Z" id="Combined-Shape" fill="#000000" opacity="0.3"/>
+                    <path d="M5,9 L19,9 C20.1045695,9 21,9.8954305 21,11 L21,13 C21,14.1045695 20.1045695,15 19,15 L5,15 C3.8954305,15 3,14.1045695 3,13 L3,11 C3,9.8954305 3.8954305,9 5,9 Z M11,11 C10.4477153,11 10,11.4477153 10,12 C10,12.5522847 10.4477153,13 11,13 L16,13 C16.5522847,13 17,12.5522847 17,12 C17,11.4477153 16.5522847,11 16,11 L11,11 Z M7,13 C7.55228475,13 8,12.5522847 8,12 C8,11.4477153 7.55228475,11 7,11 C6.44771525,11 6,11.4477153 6,12 C6,12.5522847 6.44771525,13 7,13 Z" id="Combined-Shape-Copy" fill="#000000"/>
+                    <path d="M5,16 L19,16 C20.1045695,16 21,16.8954305 21,18 L21,20 C21,21.1045695 20.1045695,22 19,22 L5,22 C3.8954305,22 3,21.1045695 3,20 L3,18 C3,16.8954305 3.8954305,16 5,16 Z M11,18 C10.4477153,18 10,18.4477153 10,19 C10,19.5522847 10.4477153,20 11,20 L16,20 C16.5522847,20 17,19.5522847 17,19 C17,18.4477153 16.5522847,18 16,18 L11,18 Z M7,20 C7.55228475,20 8,19.5522847 8,19 C8,18.4477153 7.55228475,18 7,18 C6.44771525,18 6,18.4477153 6,19 C6,19.5522847 6.44771525,20 7,20 Z" id="Combined-Shape-Copy-2" fill="#000000"/>
+                </g>
+            </svg>
+              </span><span class="kt-menu__link-text">Settings</span><i class="kt-menu__ver-arrow la la-angle-down" ></i></a>
+              <div><span class="kt-menu__arrow"></span>
+                <ul class="nav nav-list collapse" id="submenu" style="padding-left:44px;">
+                  <!-- <li id ="management_drop" class="dropdown" (click)="action($event)" class="kt-menu__item kt-menu__item--rel " aria-haspopup="true"><a class="dropdown-toggle" [routerLink]="['/management/change-password']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">Change Password</span></a></li> -->
+                  <li id ="Email" (click)="OnSubNavChange($event,'Management','Email','kt-aside-submenu--active','kt-menu__item--rel')" class="kt-menu__item kt-menu__item--rel submenu-id-page_email" aria-haspopup="true"><a [routerLink]="['/settings/email']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">Email</span></a></li>
+                  <li id ="ThreatIntelKeys" (click)="OnSubNavChange($event,'Management','ThreatIntelKeys','kt-aside-submenu--active','kt-menu__item--rel')" class="kt-menu__item kt-menu__item--rel submenu-id-page_threat-intel-keys" aria-haspopup="true"><a [routerLink]="['/settings/threat-intel-keys']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">Threat Intel Keys</span></a></li>
+                  <!-- <li id ="management_drop" (click)="action($event)" class="kt-menu__item kt-menu__item--rel " aria-haspopup="true"><a [routerLink]="['/management/removed-hosts']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">Removed Hosts</span></a></li> -->
+                  <!-- <li id ="management_drop" (click)="action($event)" class="kt-menu__item kt-menu__item--rel " aria-haspopup="true"><a [routerLink]="['/management/resolved-alerts']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">Resolved Alerts</span></a></li> -->
+                  <!-- <li id ="management_drop" (click)="action($event)" class="kt-menu__item kt-menu__item--rel " aria-haspopup="true"><a [routerLink]="['/management/configuration']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu" >Configuration</span></a></li> -->
+                  <li id ="AlertSettings" (click)="OnSubNavChange($event,'Management','AlertSettings','kt-aside-submenu--active','kt-menu__item--rel')" class="kt-menu__item kt-menu__item--rel submenu-id-page_alert-settings" aria-haspopup="true"><a [routerLink]="['/settings/alert-settings']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu" >Alert Settings</span></a></li>
+                  <li *ngIf="hasAcess" id ="Troubleshooting" (click)="OnSubNavChange($event,'Management','Troubleshooting','kt-aside-submenu--active','kt-menu__item--rel')" class="kt-menu__item kt-menu__item--rel submenu-id-page_troubleshooting" aria-haspopup="true"><a [routerLink]="['/settings/troubleshooting']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu" >Troubleshooting</span></a></li>
+                  <li *ngIf="hasAcess" id ="SSOSettings" (click)="OnSubNavChange($event,'Management','SSOSettings','kt-aside-submenu--active','kt-menu__item--rel')" class="kt-menu__item kt-menu__item--rel  submenu-id-page_sso-settings" aria-haspopup="true"><a [routerLink]="['/settings/sso-settings']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu" >SSO Settings</span></a></li>
+                  <li id ="DataPurge" (click)="OnSubNavChange($event,'Management','DataPurge','kt-aside-submenu--active','kt-menu__item--rel')" class="kt-menu__item kt-menu__item--rel  submenu-id-page_data-purge" aria-haspopup="true"><a [routerLink]="['/settings/data-purge']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu" >Data Purge</span></a></li>
+                  <li id ="VTSettings" (click)="OnSubNavChange($event,'Management','VTSettings','kt-aside-submenu--active','kt-menu__item--rel')" class="kt-menu__item kt-menu__item--rel  submenu-id-page_vt-settings" aria-haspopup="true"><a [routerLink]="['/settings/vt-settings']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">VT Settings</span></a></li>
+                  <li *ngIf="hasAcess" id ="UserManagement" (click)="OnSubNavChange($event,'Management','UserManagement','kt-aside-submenu--active','kt-menu__item--rel')" class="kt-menu__item kt-menu__item--rel  submenu-id-page_user-management" aria-haspopup="true"><a [routerLink]="['/settings/user-management']"  class="kt-menu__link "><span class="dot"></span><span class="kt-menu__link-text kt-aside-submenu">User Management</span></a></li>
+                </ul>
+              </div>
             </li>
-            <li class="kt-menu__item kt-menu__item--rel"(click)="OnNavChange($event,'Packs','kt-menu__item--active','kt-menu__item--rel')" id="Packs" aria-haspopup="true">
-              <a [routerLink]="['/packs']"  class="kt-menu__link ">
-                <span class="kt-menu__link-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
-                    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                      <rect id="bound" x="0" y="0" width="24" height="24" />
-                      <path
-                        d="M20.4061385,6.73606154 C20.7672665,6.89656288 21,7.25468437 21,7.64987309 L21,16.4115967 C21,16.7747638 20.8031081,17.1093844 20.4856429,17.2857539 L12.4856429,21.7301984 C12.1836204,21.8979887 11.8163796,21.8979887 11.5143571,21.7301984 L3.51435707,17.2857539 C3.19689188,17.1093844 3,16.7747638 3,16.4115967 L3,7.64987309 C3,7.25468437 3.23273352,6.89656288 3.59386153,6.73606154 L11.5938615,3.18050598 C11.8524269,3.06558805 12.1475731,3.06558805 12.4061385,3.18050598 L20.4061385,6.73606154 Z"
-                        id="Combined-Shape" fill="#000000" opacity="0.3" />
-                      <polygon id="Combined-Shape-Copy" fill="#000000" points="14.9671522 4.22441676 7.5999999 8.31727912 7.5999999 12.9056825 9.5999999 13.9056825 9.5999999 9.49408582 17.25507 5.24126912" />
-                    </g>
-                  </svg>
-                </span>
-                <span class="kt-menu__link-text">Packs</span>
-              </a>
-            </li>
-            <li class="kt-menu__item kt-menu__item--rel"(click)="OnNavChange($event,'Queries','kt-menu__item--active','kt-menu__item--rel')" id="Queries" aria-haspopup="true">
-              <a [routerLink]="['/queries']"  class="kt-menu__link ">
-                <span class="kt-menu__link-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
-                    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                      <rect id="bound" x="0" y="0" width="24" height="24" />
-                      <path
-                        d="M15.2718029,8.68536757 C14.8932864,8.28319382 14.9124644,7.65031935 15.3146382,7.27180288 C15.7168119,6.89328641 16.3496864,6.91246442 16.7282029,7.31463817 L20.7282029,11.5646382 C21.0906029,11.9496882 21.0906029,12.5503176 20.7282029,12.9353676 L16.7282029,17.1853676 C16.3496864,17.5875413 15.7168119,17.6067193 15.3146382,17.2282029 C14.9124644,16.8496864 14.8932864,16.2168119 15.2718029,15.8146382 L18.6267538,12.2500029 L15.2718029,8.68536757 Z M8.72819712,8.6853647 L5.37324625,12.25 L8.72819712,15.8146353 C9.10671359,16.2168091 9.08753558,16.8496835 8.68536183,17.2282 C8.28318808,17.6067165 7.65031361,17.5875384 7.27179713,17.1853647 L3.27179713,12.9353647 C2.90939712,12.5503147 2.90939712,11.9496853 3.27179713,11.5646353 L7.27179713,7.3146353 C7.65031361,6.91246155 8.28318808,6.89328354 8.68536183,7.27180001 C9.08753558,7.65031648 9.10671359,8.28319095 8.72819712,8.6853647 Z"
-                        id="Combined-Shape" fill="#000000" fill-rule="nonzero" />
-                    </g>
-                  </svg>
-                </span>
-                <span class="kt-menu__link-text">Queries</span>
-              </a>
-            </li>
+
+
+            <br><br><br><br><br>
             <div class="separator-menu"></div>
-            <li class="kt-menu__item kt-menu__item--rel"(click)="OnNavChange($event,'user-profile','kt-menu__item--active','kt-menu__item--rel')" id="user-profile" aria-haspopup="true">
-              <a [routerLink]="['/user-profile']"  class="kt-menu__link ">
-                <i class="fas fa-user " style="color:#f2f3f8e0"></i> <span class="kt-menu__link-text" style="margin-left:23px">User Profile</span>
-              </a>
-            </li>
-            <li class="kt-menu__item kt-menu__item--rel" aria-haspopup="true">
-              <a class="kt-menu__link ">
-                <span class="kt-menu__link-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
-                    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                        <rect id="bound" x="0" y="0" width="24" height="24"/>
-                        <path d="M14.0069431,7.00607258 C13.4546584,7.00607258 13.0069431,6.55855153 13.0069431,6.00650634 C13.0069431,5.45446114 13.4546584,5.00694009 14.0069431,5.00694009 L15.0069431,5.00694009 C17.2160821,5.00694009 19.0069431,6.7970243 19.0069431,9.00520507 L19.0069431,15.001735 C19.0069431,17.2099158 17.2160821,19 15.0069431,19 L3.00694311,19 C0.797804106,19 -0.993056895,17.2099158 -0.993056895,15.001735 L-0.993056895,8.99826498 C-0.993056895,6.7900842 0.797804106,5 3.00694311,5 L4.00694793,5 C4.55923268,5 5.00694793,5.44752105 5.00694793,5.99956624 C5.00694793,6.55161144 4.55923268,6.99913249 4.00694793,6.99913249 L3.00694311,6.99913249 C1.90237361,6.99913249 1.00694311,7.89417459 1.00694311,8.99826498 L1.00694311,15.001735 C1.00694311,16.1058254 1.90237361,17.0008675 3.00694311,17.0008675 L15.0069431,17.0008675 C16.1115126,17.0008675 17.0069431,16.1058254 17.0069431,15.001735 L17.0069431,9.00520507 C17.0069431,7.90111468 16.1115126,7.00607258 15.0069431,7.00607258 L14.0069431,7.00607258 Z" id="Path-103" fill="#000000" fill-rule="nonzero" opacity="0.3" transform="translate(9.006943, 12.000000) scale(-1, 1) rotate(-90.000000) translate(-9.006943, -12.000000) "/>
-                        <rect id="Rectangle" fill="#000000" opacity="0.3" transform="translate(14.000000, 12.000000) rotate(-270.000000) translate(-14.000000, -12.000000) " x="13" y="6" width="2" height="12" rx="1"/>
-                        <path d="M21.7928932,9.79289322 C22.1834175,9.40236893 22.8165825,9.40236893 23.2071068,9.79289322 C23.5976311,10.1834175 23.5976311,10.8165825 23.2071068,11.2071068 L20.2071068,14.2071068 C19.8165825,14.5976311 19.1834175,14.5976311 18.7928932,14.2071068 L15.7928932,11.2071068 C15.4023689,10.8165825 15.4023689,10.1834175 15.7928932,9.79289322 C16.1834175,9.40236893 16.8165825,9.40236893 17.2071068,9.79289322 L19.5,12.0857864 L21.7928932,9.79289322 Z" id="Path-104" fill="#000000" fill-rule="nonzero" transform="translate(19.500000, 12.000000) rotate(-90.000000) translate(-19.500000, -12.000000) "/>
-                    </g>
-                </svg>
-                </span>
-                <span class="kt-menu__link-text" (click)="logout()">Logout</span>
-              </a>
-            </li>
-            <br>
-            <li class="kt-menu__item kt-menu__item--active kt-version-ht" aria-haspopup="true">
-              <div class="kt-menu__link" style="cursor: default !important;">
-                <span class="kt-menu__link-icon">
-                  <svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
-                    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                      <rect id="Rectangle-5" x="0" y="0" width="24" height="24" />
-                      <path
-                        d="M16.5428932,17.4571068 L11,11.9142136 L11,4 C11,3.44771525 11.4477153,3 12,3 C12.5522847,3 13,3.44771525 13,4 L13,11.0857864 L17.9571068,16.0428932 L20.1464466,13.8535534 C20.3417088,13.6582912 20.6582912,13.6582912 20.8535534,13.8535534 C20.9473216,13.9473216 21,14.0744985 21,14.2071068 L21,19.5 C21,19.7761424 20.7761424,20 20.5,20 L15.2071068,20 C14.9309644,20 14.7071068,19.7761424 14.7071068,19.5 C14.7071068,19.3673918 14.7597852,19.2402148 14.8535534,19.1464466 L16.5428932,17.4571068 Z"
-                        id="Combined-Shape" fill="#000000" fill-rule="nonzero" />
-                      <path
-                        d="M7.24478854,17.1447885 L9.2464466,19.1464466 C9.34021479,19.2402148 9.39289321,19.3673918 9.39289321,19.5 C9.39289321,19.7761424 9.16903559,20 8.89289321,20 L3.52893218,20 C3.25278981,20 3.02893218,19.7761424 3.02893218,19.5 L3.02893218,14.136039 C3.02893218,14.0034307 3.0816106,13.8762538 3.17537879,13.7824856 C3.37064094,13.5872234 3.68722343,13.5872234 3.88248557,13.7824856 L5.82567301,15.725673 L8.85405776,13.1631936 L10.1459422,14.6899662 L7.24478854,17.1447885 Z"
-                        id="Combined-Shape" fill="#000000" fill-rule="nonzero" opacity="0.3" />
-                    </g>
-                  </svg>
-                </span>
-                <span class="kt-menu__link-text">Community Edition
+                  <li class="kt-menu__item kt-menu__item--rel"(click)="OnNavChange($event,'user-profile','kt-menu__item--active','kt-menu__item--rel')" id="user-profile" aria-haspopup="true">
+                    <a [routerLink]="['/profile']"  class="kt-menu__link ">
+                      <i class="fas fa-user icon-center" style="color:#f2f3f8e0"></i> <span class="kt-menu__link-text" style="margin-left:23px">Profile</span>
+                    </a>
+                  </li>
+                  <li class="kt-menu__item kt-menu__item--rel" aria-haspopup="true">
+                    <a class="kt-menu__link ">
+                      <span class="kt-menu__link-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
+                          <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                              <rect id="bound" x="0" y="0" width="24" height="24"/>
+                              <path d="M14.0069431,7.00607258 C13.4546584,7.00607258 13.0069431,6.55855153 13.0069431,6.00650634 C13.0069431,5.45446114 13.4546584,5.00694009 14.0069431,5.00694009 L15.0069431,5.00694009 C17.2160821,5.00694009 19.0069431,6.7970243 19.0069431,9.00520507 L19.0069431,15.001735 C19.0069431,17.2099158 17.2160821,19 15.0069431,19 L3.00694311,19 C0.797804106,19 -0.993056895,17.2099158 -0.993056895,15.001735 L-0.993056895,8.99826498 C-0.993056895,6.7900842 0.797804106,5 3.00694311,5 L4.00694793,5 C4.55923268,5 5.00694793,5.44752105 5.00694793,5.99956624 C5.00694793,6.55161144 4.55923268,6.99913249 4.00694793,6.99913249 L3.00694311,6.99913249 C1.90237361,6.99913249 1.00694311,7.89417459 1.00694311,8.99826498 L1.00694311,15.001735 C1.00694311,16.1058254 1.90237361,17.0008675 3.00694311,17.0008675 L15.0069431,17.0008675 C16.1115126,17.0008675 17.0069431,16.1058254 17.0069431,15.001735 L17.0069431,9.00520507 C17.0069431,7.90111468 16.1115126,7.00607258 15.0069431,7.00607258 L14.0069431,7.00607258 Z" id="Path-103" fill="#000000" fill-rule="nonzero" opacity="0.3" transform="translate(9.006943, 12.000000) scale(-1, 1) rotate(-90.000000) translate(-9.006943, -12.000000) "/>
+                              <rect id="Rectangle" fill="#000000" opacity="0.3" transform="translate(14.000000, 12.000000) rotate(-270.000000) translate(-14.000000, -12.000000) " x="13" y="6" width="2" height="12" rx="1"/>
+                              <path d="M21.7928932,9.79289322 C22.1834175,9.40236893 22.8165825,9.40236893 23.2071068,9.79289322 C23.5976311,10.1834175 23.5976311,10.8165825 23.2071068,11.2071068 L20.2071068,14.2071068 C19.8165825,14.5976311 19.1834175,14.5976311 18.7928932,14.2071068 L15.7928932,11.2071068 C15.4023689,10.8165825 15.4023689,10.1834175 15.7928932,9.79289322 C16.1834175,9.40236893 16.8165825,9.40236893 17.2071068,9.79289322 L19.5,12.0857864 L21.7928932,9.79289322 Z" id="Path-104" fill="#000000" fill-rule="nonzero" transform="translate(19.500000, 12.000000) rotate(-90.000000) translate(-19.500000, -12.000000) "/>
+                          </g>
+                      </svg>
+                      </span>
+                      <span class="kt-menu__link-text" (click)="logout()">Logout</span>
+                    </a>
+                  </li>
+
+            <!-- <br> -->
+            <li class="kt-menu__item" aria-haspopup="true">
+              <div class="" style="cursor: default !important; padding-left: 10px;">
+                <span class="text_enterprise">Community Edition
                   Version: {{Version}} </span>
               </div>
             </li>
@@ -374,15 +279,5 @@
     </div>
     <!-- end:: Aside -->
   </div>
-</div>
-<div *ngIf="id_for_links != 'live-queries'" class="live-qry1 live-qry">
-  <ul class="live-qry" id="drag_button">
-    <li class="">
-      <a [routerLink]="['/live-queries']" class="">
-        <i class="fa fa-code"></i>
-        <span>Live Query Builder</span>
-      </a>
-    </li>
-  </ul>
 </div>
 <!-- end:: Page -->

@@ -2,13 +2,13 @@
   <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
     <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
       <div class="kt-grid__item kt-grid__item--fluid">
-        <div class="kt-portlet kt-portlet--mobile kt-portlet--responsive-mobile">
+        <div class="kt-portlet kt-portlet--mobile kt-portlet--responsive-mobile mb-0">
           <div class="kt-portlet__head kt-portlet__head--lg">
             <div class="kt-portlet__head-label">
-              <span class="kt-portlet__head-icon">
-                <i class="kt-font-brand fa fa-search"></i>
+              <span class="kt-portlet__head-icon custom-header-icon-container">
+                <i class="kt-font-brand fa fa-search custom-header-icon"></i>
               </span>
-              <h3 class="kt-portlet__head-title">
+              <h3 class="kt-portlet__head-title custom-header-title">
                 Search
               </h3>
             </div>
@@ -17,7 +17,8 @@
               </div>
             </div>
           </div>
-          <div class="kt-portlet__body">
+          <div class="kt-portlet__body container-body flex-flow-col">
+          <div class="">
             <div class="paragraph-align">
             </div>
              <!-- begin:: form -->
@@ -73,10 +74,11 @@
                       <div class="form-group row">
                         <div class="col-2 col-form-label"></div>
                         <div class="col-10" style="padding-left:0px">
-                          <button type="button" id="button" (click)="search()" class="btn btn-primary btn-sm">
+                          <!-- <button type="button" id="button" (click)="search()" class="btn btn-primary btn-sm">
                             <i class="fas fa-search"></i>Search
                             <span *ngIf="loading"  class="spinner-border spinner-border-sm" style="margin-left: 10px" role="status" aria-hidden="true"></span>
-                          </button>
+                          </button> -->
+                          <appbutton text="Search" btnClass="btn-small btn-long" btnType="button" icon="fa-search" (click)="search()" [isLoading]="loading"></appbutton>
                         </div>
                       </div>
                     </div>
@@ -86,10 +88,10 @@
             </form>
               <!-- End:: form -->
            </div>
-           <div   class="kt-portlet__body table_data">
-            <div class="" style="margin-bottom: 60px;" >
+           <div class="overflow-y-clip table_data flex-2">
+            <div class="full-height" >
               <!--begin: Datatable -->
-              <table  datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable" style="text-align: left;" >
+              <table id="search_table" datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable full-height custom-paginate-wrapper" style="text-align: left;" >
                 <thead>
                   <tr>
                     <th class="wd">Host Name</th>
@@ -106,12 +108,12 @@
 
                         {{alrowdata.name}}
                         </td>
-                        <td class="cell-breakWord">
+                        <td class="cell-breakWord pl-0">
 
                           <div (click)="ele.class = ele.class == 'showChildren' ? '' : 'showChildren'" [ngClass]="{ hideChildren : ele.class !== 'showChildren' }" #ele>
                             <font color='#16ace3'>
                                 <div >
-                                  <div class="sql hljs desc-background_rules container ft-sz" [class.show_1]="alrowdata.visible_1" style="cursor: pointer;">
+                                  <div class="sql hljs desc-background_rules container ft-sz ml-0" [class.show_1]="alrowdata.visible_1" style="cursor: pointer;">
                                     {{myjson.stringify(alrowdata.columns)}}
                                   </div>
                                   <span *ngIf="myjson.stringify(alrowdata.columns).length > 200" style="cursor: pointer;padding-left:10px" class="kt-link" (click)="alrowdata.visible_1 = !alrowdata.visible_1; $event.stopPropagation()">{{ alrowdata.visible_1 ? 'Read less': 'Read More' }}</span>
@@ -165,12 +167,16 @@
                           </td>
                       </tr>
                 </tbody>
+                <tr role="row" class="text-center" *ngIf="search_data_output?.length === 0">
+                  <td colspan="3" style="font-size: larger;">
+                    No results found
+                  </td>
+                </tr>
               </table>
-              <div id="table_noresults"  >No results found
-              </div>
               <!--end: Datatable -->
             </div>
           </div>
+        </div>
 
         </div>
       </div>

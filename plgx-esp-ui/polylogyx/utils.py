@@ -18,20 +18,31 @@ from flask import current_app, flash, request, abort
 from polylogyx.constants import PolyLogyxServerDefaults, DEFAULT_PLATFORMS
 from polylogyx.database import db
 from polylogyx.models import (
-    DistributedQuery, DistributedQueryTask, HandlingToken,
-    Node, Pack, Query, ResultLog, querypacks,
-    Options, Settings, AlertEmail, Tag, User, DefaultFilters, DefaultQuery, Config, NodeConfig)
+    DistributedQuery, DistributedQueryTask, AuthToken,
+    Node, Pack, Query, ResultLog, querypacks, Settings, AlertEmail, Tag, User, DefaultFilters, DefaultQuery,
+    Config, NodeConfig)
 
+from itsdangerous import serializer
+from os.path import dirname, join
 
 Field = namedtuple('Field', ['name', 'action', 'columns', 'timestamp'])
 
 # Read DDL statements from our package
-schema = pkg_resources.resource_string('polylogyx', join('resources', 'osquery_schema.sql'))
-schema = schema.decode('utf-8')
+schema = ''
+extension_schema = ''
+if os.environ.get('FLASK_ENV') and (os.environ.get('FLASK_ENV') == 'development' or os.environ.get('FLASK_ENV') == 'dev'):
+    common_resources_path = join(dirname(dirname(dirname(__file__))), "common")
+else:
+    common_resources_path = join(dirname(dirname(__file__)), "common")  # This path should be taken from app config
+
+with open(join(common_resources_path, 'osquery_schema.sql'), 'r') as schema_file:
+    schema = schema_file.read()
+
 schema = [x for x in schema.strip().split('\n') if not x.startswith('--')]
 
-extension_schema = pkg_resources.resource_string('polylogyx', join('resources', 'extension_schema.sql'))
-extension_schema = extension_schema.decode('utf-8')
+with open(join(common_resources_path, 'extension_schema.sql'), 'r') as schema_file:
+    extension_schema = schema_file.read()
+
 extension_schema = [x for x in extension_schema.strip().split('\n') if not x.startswith('--')]
 
 # SQLite in Python will complain if you try to use it from multiple threads.
@@ -87,7 +98,7 @@ def assemble_configuration(node):
     from polylogyx.dao.v1 import configs_dao
     config = configs_dao.get_config_of_node(node)
     configuration = assemble_filters(config)
-    configuration['options'] = assemble_options(node, configuration)
+    configuration['options'] = assemble_options(configuration)
     configuration['schedule'] = assemble_schedule(node, config)
     configuration['packs'] = assemble_packs(node)
     if config:
@@ -97,42 +108,38 @@ def assemble_configuration(node):
     return configuration, config_details
 
 
-def assemble_options(node, configuration):
-    options = {'disable_watchdog': True, 'logger_tls_compress': True}
+def assemble_options(configuration):
+    options = {"disable_watchdog": True, "logger_tls_compress": True}
 
     # https://github.com/facebook/osquery/issues/2048#issuecomment-219200524
-    if current_app.config['POLYLOGYX_EXPECTS_UNIQUE_HOST_ID']:
-        options['host_identifier'] = 'uuid'
+    if current_app.config["POLYLOGYX_EXPECTS_UNIQUE_HOST_ID"]:
+        options["host_identifier"] = "uuid"
     else:
-        options['host_identifier'] = 'hostname'
+        options["host_identifier"] = "hostname"
 
-    options['schedule_splay_percent'] = 10
-    existing_option = Options.query.filter(Options.name == PolyLogyxServerDefaults.plgx_config_all_options).first()
-    if existing_option:
-        existing_option_value = json.loads(existing_option.option)
-        options = merge_two_dicts(options, existing_option_value)
-    options.update(configuration.get('options', {}))
+    options["schedule_splay_percent"] = 10
+    options.update(configuration.get("options", {}))
     return options
 
 
 def assemble_queries(node, config_json=None):
-    if config_json:
-        schedule = {}
-        for query in node.queries.options(db.lazyload('*')):
+    platform = node.get_platform()
+    schedule = {}
+    for query in node.queries.options(db.lazyload('*')):
+        if query.platform in (platform, 'all'):
             schedule[query.name] = query.to_dict()
-        if config_json:
-            schedule = merge_two_dicts(schedule, config_json.get('schedule'))
-    else:
-        schedule = []
-        for query in node.queries.options(db.lazyload('*')):
-            schedule.append(query.to_dict())
-    return schedule
+    if config_json:
+        schedule = merge_two_dicts(schedule, config_json.get('schedule'))
+        return schedule
+    return list(schedule.values())
 
 
 def assemble_schedule(node, config=None):
     schedule = {}
+    platform = node.get_platform()
     for query in node.queries.options(db.lazyload('*')):
-        schedule[query.name] = query.to_dict()
+        if query.platform in (platform, 'all'):
+            schedule[query.name] = query.to_dict()
     queries = db.session.query(DefaultQuery).filter(
         DefaultQuery.config == config).filter(DefaultQuery.status).all()
 
@@ -340,7 +347,7 @@ def validate_osquery_query(query):
 
 
 def is_token_logged_out(loggedin_token):
-    qs_object = HandlingToken.query.filter(HandlingToken.token == loggedin_token).first()
+    qs_object = AuthToken.query.filter(AuthToken.token == loggedin_token).first()
     if qs_object and qs_object.token_expired:
         return True
     elif qs_object:
@@ -399,7 +406,8 @@ def get_server_ip():
     import os
     server_ip = "localhost"
     try:
-        file_path = os.path.abspath('.') + "/resources/linux/x64/osquery.flags"
+        # file_path = os.path.abspath('.') + "/resources/linux/x64/osquery.flags"
+        file_path = os.path.join(current_app.config.get('RESOURCES_URL', ''), 'linux', 'x64', 'osquery.flags')
         with open(file_path, "r") as fi:
             for ln in fi:
                 if ln.startswith("--tls_hostname="):
@@ -411,9 +419,9 @@ def get_server_ip():
 
 
 def form_status_log_csv(results, node_id):
-    import csv
+    import csv, os
     file_name = 'status_log_' + str(node_id) + '_' + str(dt.datetime.now()).replace(' ', '_') + '.csv'
-    file_path = current_app.config['BASE_URL'] + "/status_log/" + file_name
+    file_path = os.path.join(current_app.config['RESOURCES_URL'], "status_log", file_name)
 
     if results:
         try:
@@ -484,3 +492,12 @@ def is_password_strong(password):
             or not any(i.isdigit() for i in password):
         return False
     return True
+
+
+def is_username_valid(username):
+    if int(current_app.config.get('INI_CONFIG', {}).get('min_username_length', 3)) < len(username) < int(current_app.config.get('INI_CONFIG', {}).get('max_username_length', 64)):
+        for char in username:
+            if char.isalpha():
+                return True
+    return False
+

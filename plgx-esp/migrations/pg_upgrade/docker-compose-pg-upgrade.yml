@@ -1,0 +1,19 @@
+version: '3'
+services:
+  postgres-upgrade:
+    image: "postgres:14.3-alpine3.16"
+    command: postgres -c 'max_connections=1000'
+    env_file:
+      - .env
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=upgrade
+      - POSTGRES_INITDB_ARGS="--locale=en_US.utf8"
+    shm_size: ${SHARED_MEMORY}
+    volumes:
+      - postgres-data-upgrade:/var/lib/postgresql/data
+    restart: always
+volumes:
+  postgres-data-upgrade:
+

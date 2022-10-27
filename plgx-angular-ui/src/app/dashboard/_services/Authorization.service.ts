@@ -3,10 +3,10 @@ import { Injectable, OnInit } from '@angular/core';
   providedIn: 'root'
 })
 export class AuthorizationService  {
-adminLevelAccess=['admin','maintainer']
+adminLevelAccess=['admin']
 userLevelAccess=['analyst']
     hasAccess(){
-      if(['admin','maintainer'].includes(localStorage.getItem('roles'))){
+      if(['admin'].includes(localStorage.getItem('roles'))){
         return true
       }else{
         return false

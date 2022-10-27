@@ -1,8 +1,8 @@
-from flask_restplus import fields
+from flask_restful import fields
 import datetime
 from polylogyx.blueprints.v1.external_api import api
 
-rule_wrapper = api.model('rule_info', {
+rule_wrapper =  {
     'id': fields.Integer(),
     'alerters': fields.List(fields.String(default=None)),
     'conditions': fields.Raw(default=None),
@@ -11,16 +11,17 @@ rule_wrapper = api.model('rule_info', {
     'severity': fields.String(default=None),
     'platform': fields.String(default=None),
     'status': fields.String(default=None),
-    'updated_at': fields.DateTime(default=datetime.datetime.now()),
+    'created_at':fields.String(default=datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')),
+    'updated_at': fields.String(default=datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')),
     'type': fields.String(default=None),
     'tactics': fields.Raw(),
     'technique_id': fields.String(default=None),
     'alert_description': fields.Boolean(default=None)
-})
+}
 
 
-response_add_rule = api.model('rule_add_wrapper', {
+response_add_rule = {
     'status': fields.String(default="success"),
     'rule_id': fields.Integer(),
     'message': fields.String(default='rule is added successfully')
-})
+}

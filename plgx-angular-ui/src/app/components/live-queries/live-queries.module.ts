@@ -9,6 +9,9 @@ import { AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
 import { NgxSpinnerModule } from "ngx-spinner";
 import { LiveSearchPipe } from './livesearch.pipe';
 import { DataTablesModule } from 'angular-datatables';
+import { SharedModule } from 'src/app/shared/shared.module';
+import { HttpClientModule,HTTP_INTERCEPTORS } from '@angular/common/http';
+import { AuthInterceptor } from 'src/app/_helpers/auth.interceptor';
 
 
 @NgModule({
@@ -23,8 +26,12 @@ import { DataTablesModule } from 'angular-datatables';
     AngularMultiSelectModule,
     NgxSpinnerModule,
     DataTablesModule,
+    SharedModule
     // TableModule
     
-  ]
+  ],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
+  ],
 })
 export class LiveQueriesModule { }

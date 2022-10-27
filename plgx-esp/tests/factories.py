@@ -4,8 +4,8 @@ from factory.alchemy import SQLAlchemyModelFactory
 
 from polylogyx.db.database import db
 from polylogyx.db.models import (Alerts, DistributedQuery,
-                                 DistributedQueryResult, DistributedQueryTask,
-                                 FilePath, Node, Pack, Query, ResultLog, Rule,
+                                 DistributedQueryTask,
+                                 Node, Pack, Query, ResultLog, Rule,
                                  StatusLog, Tag, ResultLogScan)
 
 
@@ -40,11 +40,6 @@ class TagFactory(BaseFactory):
         model = Tag
 
 
-class FilePathFactory(BaseFactory):
-    class Meta:
-        model = FilePath
-
-
 class DistributedQueryFactory(BaseFactory):
     class Meta:
         model = DistributedQuery
@@ -53,11 +48,6 @@ class DistributedQueryFactory(BaseFactory):
 class DistributedQueryTaskFactory(BaseFactory):
     class Meta:
         model = DistributedQueryTask
-
-
-class DistributedQueryResultFactory(BaseFactory):
-    class Meta:
-        model = DistributedQueryResult
 
 
 class ResultLogFactory(BaseFactory):

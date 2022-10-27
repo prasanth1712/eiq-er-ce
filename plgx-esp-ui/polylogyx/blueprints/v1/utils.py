@@ -1,14 +1,14 @@
-import six
+import six,re
 import datetime as dt
 import unicodecsv as csv
 from io import BytesIO
-from flask import current_app, send_file
-from flask_restplus import reqparse, marshal
-
-from polylogyx.models import Node, Rule, Alerts, db, Settings
-from polylogyx.dao.v1 import rules_dao, packs_dao, alerts_dao, hosts_dao, queries_dao, dashboard_dao
+from flask import current_app, send_file,request,abort
+from flask_restful import reqparse,marshal
+from polylogyx.models import Node, Rule, Alerts, db, Settings,Query
+from polylogyx.dao.v1 import rules_dao, packs_dao, alerts_dao, hosts_dao, queries_dao, dashboard_dao ,users_dao
 from polylogyx.util.constants import DEFAULT_EVENT_STATE_QUERIES
 from polylogyx.constants import PolyLogyxServerDefaults
+from functools import wraps
 
 
 process_guid_column = 'process_guid'
@@ -71,7 +71,7 @@ def add_pack_through_json_data(args):
     from polylogyx.utils import create_tags, validate_osquery_query
     from polylogyx.models import Pack
 
-    if 'tags' in args:
+    if 'tags' in args and args['tags']:
         tags = args['tags'].split(',')
     else:
         tags = []
@@ -86,29 +86,24 @@ def add_pack_through_json_data(args):
     pack = packs_dao.get_pack_by_name(name)
     if not pack:
         pack = packs_dao.add_pack(name, category, platform, version, description, shard)
-
-    for query_name, query in queries.items():
-        if validate_osquery_query(query['query']):
-            q = queries_dao.get_query_by_name(query_name)
-            if not q:
+        for query_name, query in queries.items():
+            if not 'platform' in query:
+                query['platform'] = 'all'
+            if validate_osquery_query(query['query']):
                 q = queries_dao.add_query(query_name, **query)
                 pack.queries.append(q)
                 current_app.logger.debug("Adding new query %s to pack %s",
                                          q.name, pack.name)
-                continue
-            else:
-                if q.sql == query['query']:
-                    current_app.logger.debug("Adding existing query %s to pack %s",
-                                             q.name, pack.name)
-                    pack.queries.append(q)
-                else:
-                    q2 = queries_dao.add_query(query_name, **query)
-                    current_app.logger.debug(
-                        "Created another query named %s, but different sql: %r vs %r",
-                        query_name, q2.sql.encode('utf-8'), q.sql.encode('utf-8'))
-                    pack.queries.append(q2)
-                if q in pack.queries:
-                    continue
+    else:
+        pack = pack.update(category=category,platform=platform,version=version,description=description, shard=shard)
+        pack_queries = {query.name:query for query in pack.queries}
+        for query_name, query in queries.items():
+            if not 'platform' in query:
+                query['platform'] = 'all'
+            if validate_osquery_query(query['query']) and query_name not in pack_queries:
+                q2 = queries_dao.add_query(query_name, **query)
+                current_app.logger.debug("Created another query named %s, but different sql: %r vs %r", query_name, q2.sql.encode('utf-8'), q2.sql.encode('utf-8'))
+                pack.queries.append(q2)
     if pack:
         if tags:
             pack.tags = create_tags(*tags)
@@ -354,15 +349,17 @@ def get_response(results):
         return response
     else:
         return marshal(prepare_response("Data couldn't find for the alert source given!", "failure"),
-                       parent_wrappers.common_response_wrapper, skip_none=True)
+                       parent_wrappers.common_response_wrapper)
 
 
 def add_rule_name_to_alerts_response(dictionary_list_data):
-    from polylogyx.dao import rules_dao
+    from polylogyx.dao.v1 import rules_dao
     for dict_item in dictionary_list_data:
         if dict_item['type'] == 'rule':
             if 'rule_name' not in dict_item:
-                dict_item['rule_name'] = rules_dao.get_rule_name_by_id(dict_item['rule_id'])
+                rule = rules_dao.get_rule_name_by_id(dict_item['rule_id'])
+                if rule:
+                    dict_item['rule_name'] = rule.name
     return dictionary_list_data
 
 
@@ -370,7 +367,7 @@ def fetch_alert_node_query_status():
     limits = 5
     rules = dashboard_dao.get_rules_data(limits)
     nodes = dashboard_dao.get_host_data(limits)
-    queries = dashboard_dao.get_querries(limits)
+    queries = dashboard_dao.get_queries(limits)
 
     alerts = {}
     top_five_alerts = {}
@@ -400,17 +397,19 @@ def fetch_alert_node_query_status():
     # fetching alerts count by severity and type
     alert_count = dashboard_dao.get_alert_count()
 
-    alert_name = {'ioc': {'INFO': 0, 'LOW': 0, 'WARNING': 0, 'CRITICAL': 0},
-                  'rule': {'INFO': 0, 'LOW': 0, 'WARNING': 0, 'CRITICAL': 0},
-                  'virustotal': {'INFO': 0, 'LOW': 0, 'WARNING': 0, 'CRITICAL': 0},
-                  'ibmxforce': {'INFO': 0, 'LOW': 0, 'WARNING': 0, 'CRITICAL': 0},
-                  'alienvault': {'INFO': 0, 'LOW': 0, 'WARNING': 0, 'CRITICAL': 0}}
+    alert_name = {
+        'ioc': {'INFO': 0, 'LOW': 0, 'MEDIUM': 0, 'CRITICAL': 0,'HIGH':0,'INFO':0},
+        'rule': {'INFO': 0, 'LOW': 0, 'MEDIUM': 0, 'CRITICAL': 0,'HIGH':0,'INFO':0},
+        'virustotal': {'INFO': 0, 'LOW': 0, 'MEDIUM': 0, 'CRITICAL': 0,'HIGH':0,'INFO':0},
+        'ibmxforce': {'INFO': 0, 'LOW': 0, 'MEDIUM': 0, 'CRITICAL': 0,'HIGH':0,'INFO':0},
+        'alienvault': {'INFO': 0, 'LOW': 0, 'MEDIUM': 0, 'CRITICAL': 0,'HIGH':0,'INFO':0}
+    }
     for alert in alert_count:
         alert_name[alert[0]][alert[1]] = alert[2]
 
     for key in alert_name.keys():
-        alert_name[key]['TOTAL'] = alert_name[key]['INFO'] + alert_name[key]['LOW'] + alert_name[key]['WARNING'] + \
-                                   alert_name[key]['CRITICAL']
+        alert_name[key]['TOTAL'] = alert_name[key]['INFO'] + alert_name[key]['LOW'] + alert_name[key]['MEDIUM'] + \
+                                   alert_name[key]['CRITICAL']+alert_name[key]['HIGH']
 
     alerts['source'] = alert_name
 
@@ -419,8 +418,8 @@ def fetch_alert_node_query_status():
 
 def fetch_dashboard_data():
     distribution_and_status = {}
-    counts = dashboard_dao.get_platform_count()
-
+    #counts = dashboard_dao.get_platform_count()
+    counts = hosts_dao.get_platform_count()
     distribution_and_status['hosts_platform_count'] = counts
 
     checkin_interval = current_app.config['POLYLOGYX_CHECKIN_INTERVAL']
@@ -433,21 +432,24 @@ def fetch_dashboard_data():
     return distribution_and_status
 
 
-def get_alerts_data(source, start_date, end_date, node, rule_id):
+def get_alerts_data(source, start_date, end_date, node, rule_id,severity=None,verdict=None,search=None):
     try:
         data = []
-        alerts_severity = alerts_dao.get_alerts_severity_with_id_timestamp(source, start_date, end_date, node, rule_id)
+        alerts_severity = alerts_dao.get_alerts_severity_with_id_timestamp(source, start_date, end_date, node, rule_id,severity,verdict,search)
 
         for alert in alerts_severity:
             color = ""
             if alert[1]:
-                if alert[1] == Rule.WARNING:
+                if alert[1] == Rule.MEDIUM:
                     color = "green-m"
                 elif alert[1] == Rule.INFO:
                     color = ""
                 elif alert[1] == Rule.CRITICAL:
                     color = "yellow"
-
+                elif alert[1] == Rule.HIGH:
+                    color = "orange"
+                elif alert[1] == Rule.LOW:
+                    color = "green"
             data.append({"start": alert[2].timestamp() * 1000, "content": "",
                          "event_id": alert[0], "className": color})
         return data
@@ -455,15 +457,18 @@ def get_alerts_data(source, start_date, end_date, node, rule_id):
         print(e, 'error in request')
 
 
-def get_results_by_alert_source(start, limit, source, searchterm="", resolved=False, event_ids=None, start_date=None,
-                                end_date=None, node_id=None, query_name=None, rule_id=None, events_count=False):
+def get_results_by_alert_source(start, limit, source, searchterm="", resolved=None, event_ids=None, start_date=None,
+                                end_date=None, node_id=None, query_name=None, rule_id=None, events_count=False,column=None,order_by=None,severity=None,verdict=None):
     """ Alerts by source Result Set. """
-    if resolved:
-        filter = alerts_dao.resolved_alert()
-    else:
-        filter = alerts_dao.non_resolved_alert()
 
-    base_query = alerts_dao.get_record_query_by_dsc_order(filter, source, searchterm, event_ids, node_id, query_name, rule_id, events_count)
+    if resolved == True:
+        filter = alerts_dao.resolved_alert()
+    elif resolved == False:
+        filter = alerts_dao.non_resolved_alert()
+    else:
+        filter=None
+
+    base_query = alerts_dao.get_record_query_by_dsc_order(filter, source, searchterm, event_ids, node_id, query_name, rule_id, events_count,column,order_by,severity,verdict)
 
     if not resolved and start_date and end_date:
         base_query = base_query.filter(Alerts.created_at >= start_date).filter(Alerts.created_at <= end_date)
@@ -484,7 +489,8 @@ def get_results_by_alert_source(start, limit, source, searchterm="", resolved=Fa
         alert['hostname'] = hosts_dao.get_all_nodes_by_id(alert['node_id']).display_name
 
         if alert['source'] == 'rule':
-            alert['rule'] = {'name': rules_dao.get_rule_name_by_id(alert['rule_id']), 'id': alert['rule_id']}
+            rule=rules_dao.get_rule_name_by_id(alert['rule_id'])
+            alert['rule'] = {'name':rule.name ,'id': alert['rule_id'],'status':rule.status}
             del alert['intel_data']
         elif source == 'self' or source == 'IOC' or source == 'ioc':
             del alert['rule_id']
@@ -557,17 +563,29 @@ def time_in_alert(alert):
         print(e)
 
 
-def alerts_details(alert):
+def alerts_details(alert,platform_activity=None):
     from polylogyx.wrappers.v1.alert_wrappers import alerts_wrapper
-
     alerts_data = marshal(alert, alerts_wrapper)
     if alerts_data['source'] == 'rule':
-        alerts_data['rule'] = {'name': rules_dao.get_rule_name_by_id(alerts_data['rule_id']),
-                               'id': alerts_data['rule_id']}
+        rule=rules_dao.get_rule_name_by_id(alerts_data['rule_id'])
+        if rule:
+            alerts_data['rule'] = {
+                                    'name':rule.name,
+                                    'id': alerts_data['rule_id'],
+                                    'status':rule.status
+                                  }
+    if int(alerts_data['verdict']) == 2:
+        alerts_data['verdict'] = 'FALSE POSITIVE'
+    elif int(alerts_data['verdict']) == 1:
+        alerts_data['verdict'] = 'TRUE POSITIVE'
+    else:
+        alerts_data['verdict'] = None
     host = hosts_dao.get_node_by_id(alerts_data['node_id'])
     alerts_data['hostname'] = host.display_name
     alerts_data['platform'] = host.platform
-
+    alerts_data['updated_by'] = None
+    if platform_activity:
+        alerts_data['updated_by'] = platform_activity.user.username
     return alerts_data
 
 
@@ -628,17 +646,19 @@ def schedule_query_data_by_time(alert, SYSTEM_EVENT_QUERIES):
 
 
 def unwrap_alert_message(alert):
-    eid = alert.message['eid']
+    eid = None
     alerted_process_guid = None
     alerted_process_name = None
+    if 'eid' in alert.message:
+        eid = alert.message.get('eid')
     if 'parent_process_guid' in alert.message:
-        alerted_process_guid = alert.message['parent_process_guid']
+        alerted_process_guid = alert.message.get('parent_process_guid')
     elif 'process_guid' in alert.message:
-        alerted_process_guid = alert.message['process_guid']
+        alerted_process_guid = alert.message.get('process_guid')
     if 'parent_path' in alert.message:
-        alerted_process_name = alert.message['parent_path']
+        alerted_process_name = alert.message.get('parent_path')
     elif 'process_name' in alert.message:
-        alerted_process_name = alert.message['process_name']
+        alerted_process_name = alert.message.get('process_name')
     alerted_action = alert.message.get('action')
     return eid, alerted_process_guid, alerted_process_name, alerted_action
 
@@ -698,13 +718,13 @@ def graph_data_based_on_process(process_guid, node_id, alert):
     return graph_data
 
 
-def get_start_dat_end_date(args):
+def get_start_date_end_date(args):
     end_date = dt.datetime.utcnow()
     end_date = dt.datetime.strptime(end_date.today().strftime('%Y-%m-%d'), '%Y-%m-%d')+dt.timedelta(days=1)
     start_date = dt.datetime.strptime(end_date.today().strftime('%Y-%m-%d'), '%Y-%m-%d') - dt.timedelta(weeks=1)+dt.timedelta(days=1)
+    type = args['type']
+    duration = args['duration']
     if 'date' in args and args['date']:
-        type = args['type']
-        duration = args['duration']
         date = dt.datetime.strptime(args['date'], '%Y-%m-%d')
         difference_time = 0
         if duration == 1:
@@ -721,11 +741,16 @@ def get_start_dat_end_date(args):
         elif type == 2:
             end_date = date
             start_date = end_date - difference_time
+    if 'start_date' in args and args['start_date']:
+        start_date = dt.datetime.strptime(args['start_date'], '%Y-%m-%d')
+
+        if 'end_date' in args and args['end_date']:
+            end_date =  dt.datetime.strptime(args['end_date'], '%Y-%m-%d')
+        return start_date,end_date+dt.timedelta(days=1)
     return start_date+dt.timedelta(days=1), end_date+dt.timedelta(days=1)
 
 
 def result_log_columns_export_using_query_set(results):
-    results = [r for r, in results]
     headers = []
     data_array = []
     if not len(results) == 0:
@@ -746,3 +771,132 @@ def result_log_columns_export_using_query_set(results):
 
     bio.seek(0)
     return bio
+
+
+class SearchParserOld:
+
+    def parse_condition(self, d):
+        from polylogyx.search_rules import OPERATOR_MAP
+
+        op = d['operator']
+        value = d['value']
+
+        # If this is a "column operator" - i.e. operating on a particular
+        # value in a column - then we need to give a custom extraction
+        # function that knows how to get this value from a query.
+        column_name = None
+        if d['field'] == 'column':
+            # Strip 'column_' prefix to get the 'real' operator.
+            if op.startswith('column_'):
+                op = op[7:]
+            if isinstance(value, six.string_types):
+                column_name = value
+            else:
+                # The 'value' array will look like ['column_name', 'actual value']
+                column_name, value = value
+        if not column_name:
+            column_name = d['field']
+        klass = OPERATOR_MAP.get(op)
+
+        if not klass:
+            raise ValueError("Unsupported operator: {0}".format(op))
+
+        inst = self.make_condition(klass, d['field'], value, column_name=column_name)
+        return inst
+
+    def parse_group(self, d):
+        from polylogyx.search_rules import AndCondition, OrCondition
+
+        if len(d['rules']) == 0:
+            raise ValueError("A group contains no rules")
+        upstreams = [self.parse(r) for r in d['rules']]
+        condition = d['condition']
+        if condition == 'AND' or condition == 'and':
+            return self.make_condition(AndCondition, upstreams)
+        elif condition == 'OR' or condition == 'or':
+            return self.make_condition(OrCondition, upstreams)
+
+        raise ValueError("Unknown condition: {0}".format(condition))
+
+    def parse(self, d):
+        if 'condition' in d:
+            return self.parse_group(d)
+        return self.parse_condition(d)
+
+    def make_condition(self, klass, *args, **kwargs):
+        from polylogyx.search_rules import BaseCondition
+
+        """
+        Memoizing constructor for conditions.  Uses the input config as the cache key.
+        """
+        conditions = {}
+
+        # Calculate the memoization key.  We do this by creating a 3-tuple of
+        # (condition class name, args, kwargs).  There is some nuance to this,
+        # though: we need to put args/kwargs in the right format.  We
+        # recursively iterate through lists/dicts and convert them to tuples,
+        # and extract the memoization key from instances of BaseCondition.
+        def tupleify(obj):
+            if isinstance(obj, BaseCondition):
+                return obj.__network_memo_key
+            elif isinstance(obj, tuple):
+                return tuple(tupleify(x) for x in obj)
+            elif isinstance(obj, list):
+                return tuple(tupleify(x) for x in obj)
+            elif isinstance(obj, dict):
+                items = ((tupleify(k), tupleify(v)) for k, v in obj.items())
+                return tuple(sorted(items))
+            else:
+                return obj
+
+        args_tuple = tupleify(args)
+        kwargs_tuple = tupleify(kwargs)
+
+        key = (klass.__name__, args_tuple, kwargs_tuple)
+        if key in conditions:
+            return conditions[key]
+
+        # Instantiate the condition class.  Also, save the memoization key on
+        # the class, so it can be retrieved (above).
+        inst = klass(*args, **kwargs)
+        inst.__network_memo_key = key
+
+        # Save the condition
+        conditions[key] = inst
+        return inst
+
+
+def valid_string_parser(string):
+    pattern = '^[A-Za-z0-9_@.-]+$'
+    if re.match(pattern, string):
+        return True
+    else:
+        return False
+
+
+def validate_file_size(f):
+    """
+       Decorator to make sure the  uploaded file size within configured size
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        try:
+            blob = request.files['file'].read()
+            size = len(blob)
+            request.files['file'].seek(0)
+        except Exception as e:
+            size = 0
+        if size > (1024 * 1024 * int(current_app.config.get('INI_CONFIG', {}).get('content_max_length'))):
+            return abort(413, {'message': 'Request entity is too large ,please upload file size below {0} MB'.format(current_app.config.get('INI_CONFIG', {}).get('content_max_length'))})
+        else:
+            return f(*args, **kwargs)
+
+    return decorated_function
+
+
+def is_email_valid(email_input):
+    import re
+    pattern = r"^\S+@\S+\.\S+$"
+    if email_input is None or (isinstance(email_input, str) and re.match(pattern, email_input)):
+        return email_input
+    raise ValueError('Provided email is not in a valid format!')

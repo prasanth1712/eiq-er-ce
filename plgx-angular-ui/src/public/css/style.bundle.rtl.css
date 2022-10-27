@@ -10676,12 +10676,14 @@ input.btn.btn-label-danger {
     border-bottom-color: rgba(88, 103, 221, 0.1); }
   .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link:hover,
   .nav-tabs.nav-tabs-line.nav-tabs-line-success a.nav-link:hover {
-    border-bottom: 1px solid #1dc9b7; }
+    /* border-bottom: 1px solid #1dc9b7;  */
+  }
   .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link:hover, .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link.active,
   .nav-tabs.nav-tabs-line.nav-tabs-line-success a.nav-link:hover,
   .nav-tabs.nav-tabs-line.nav-tabs-line-success a.nav-link.active {
     color: #1dc9b7;
-    border-bottom: 1px solid #1dc9b7; }
+    /* border-bottom: 1px solid #1dc9b7;  */
+  }
     .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link:hover > i, .nav-tabs.nav-tabs-line.nav-tabs-line-success.nav.nav-tabs .nav-link.active > i,
     .nav-tabs.nav-tabs-line.nav-tabs-line-success a.nav-link:hover > i,
     .nav-tabs.nav-tabs-line.nav-tabs-line-success a.nav-link.active > i {

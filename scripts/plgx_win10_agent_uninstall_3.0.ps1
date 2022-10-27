@@ -17,7 +17,7 @@ $output = -join($tempdir, "plgx_cpt_maint.exe")
 $taskxml = -join($tempdir, "plgx_agent_uninstall_3.0.xml")
 $task = "EclecticIQ Agent Maintenance"
 
-if ($(Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue).TaskName -eq $task)
+if ($(Get-ScheduledTaskInfo -TaskName $task -ErrorAction SilentlyContinue).TaskName -eq $task)
 {
     Unregister-ScheduledTask -TaskName $task -Confirm:$False
     write-output "Unregistered existing scheduled task '$task'"
@@ -55,7 +55,7 @@ catch
     Exit 3 
 }
 
-if ($(Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue).TaskName -eq $task)
+if ($(Get-ScheduledTaskInfo -TaskName $task -ErrorAction SilentlyContinue).TaskName -eq $task)
 {
 	write-output "Successfully created '$task' scheduled task !!"
 	

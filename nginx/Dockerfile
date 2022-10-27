@@ -1,6 +1,11 @@
-FROM nginx:1.21.4
+FROM nginx:1.23.1-alpine
 
 COPY docker-entrypoint.sh /
+RUN apk update && apk upgrade
+
+RUN set -x ; \
+  addgroup -g 82 -S www-data ; \
+  adduser -u 82 -D -S -G www-data www-data && exit 0 ; exit 1
 
 # Create nginx log directory
 RUN mkdir -p /var/log/nginx/
@@ -10,7 +15,7 @@ RUN rm /var/log/nginx/access.log
 RUN rm /var/log/nginx/error.log
 
 # Install logrotate
-RUN apt-get update && apt-get -y install logrotate
+RUN apk update && apk add  logrotate
 
 # Copy MyApp nginx config
 #COPY nginx.conf /etc/nginx/nginx.conf
@@ -28,3 +33,4 @@ RUN chmod -R 644 /etc/logrotate.d/logrotate_nginx
 
 # Start nginx and cron as a service
 ENTRYPOINT ["sh","/docker-entrypoint.sh"]
+

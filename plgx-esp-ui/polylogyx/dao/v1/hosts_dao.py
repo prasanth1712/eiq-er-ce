@@ -1,36 +1,36 @@
 import datetime as dt
 
 from flask import current_app
-
-from sqlalchemy import or_,desc, and_, cast, not_
+import json
+from sqlalchemy import or_, desc, and_, cast, not_, JSON, case, literal_column, func, asc
 import sqlalchemy
-from sqlalchemy.sql import functions
+from sqlalchemy.sql import functions, func
 
 from polylogyx.models import db, Node, ResultLog, Tag, StatusLog, NodeQueryCount, Alerts, Rule
 from polylogyx.constants import ModelStatusFilters
 
 
 def get_all_nodes():
-    return Node.query.filter(and_(Node.state != Node.REMOVED, Node.state != Node.DELETED)).order_by(desc(Node.id)).all()
+    return Node.query.filter(ModelStatusFilters.HOSTS_NON_DELETED).order_by(desc(Node.id)).all()
 
 
 def get_node_by_host_identifier(host_identifier):
-    return db.session.query(Node).filter(
-            or_(Node.host_identifier == host_identifier, Node.node_key == host_identifier)).filter(Node.state != Node.DELETED).first()
+    return Node.query.filter(or_(Node.host_identifier == host_identifier, Node.node_key == host_identifier))\
+        .filter(ModelStatusFilters.HOSTS_NON_DELETED).first()
 
 
 def get_disable_node_by_host_identifier(host_identifier):
-    return db.session.query(Node).filter(Node.state == Node.REMOVED).filter(
+    return db.session.query(Node).filter(ModelStatusFilters.HOSTS_REMOVED).filter(
         or_(Node.host_identifier == host_identifier, Node.node_key == host_identifier)).first()
 
 
 def get_disable_node_by_id(node_id):
-    return db.session.query(Node).filter(and_(Node.id == node_id, Node.state == Node.REMOVED)).first()
+    return db.session.query(Node).filter(and_(Node.id == node_id, ModelStatusFilters.HOSTS_REMOVED)).first()
 
 
 def get_all_node_by_host_identifier(host_identifier):
     return db.session.query(Node).filter(or_(
-        Node.host_identifier == host_identifier, Node.node_key == host_identifier, Node.state != Node.DELETED, Node.state != Node.REMOVED)).first()
+        Node.host_identifier == host_identifier, Node.node_key == host_identifier).filter(ModelStatusFilters.HOSTS_NON_DELETED)).first()
 
 
 def get_nodes_list_by_host_ids(host_identifiers, tags=[], platform=None):
@@ -46,7 +46,7 @@ def get_nodes_list_by_host_ids(host_identifiers, tags=[], platform=None):
 
 def get_nodes_by_host_ids(host_identifiers):
     return db.session.query(Node).filter(Node.host_identifier.in_(host_identifiers))\
-        .filter(ModelStatusFilters.HOSTS_ENABLED).all()
+        .filter(ModelStatusFilters.HOSTS_NON_DELETED).all()
 
 
 def get_host_id_and_name_by_node_id(node_id):
@@ -56,15 +56,15 @@ def get_host_id_and_name_by_node_id(node_id):
 
 
 def get_node_by_id(node_id):
-    return db.session.query(Node).filter(and_(Node.id == node_id)).filter(Node.state != Node.DELETED).first()
+    return Node.query.filter(Node.id == node_id).filter(ModelStatusFilters.HOSTS_NON_DELETED).first()
 
 
 def get_all_nodes_by_id(node_id):
-    return db.session.query(Node).filter(Node.id == node_id).filter(Node.state != Node.DELETED).first()
+    return db.session.query(Node).filter(Node.id == node_id).filter(ModelStatusFilters.HOSTS_NON_DELETED).first()
 
 
 def get_host_name_by_node_id(node_id):
-    query = db.session.query(Node).filter(Node.id == node_id).filter(Node.state != Node.DELETED).first()
+    query = db.session.query(Node).filter(Node.id == node_id).filter(ModelStatusFilters.HOSTS_NON_DELETED).first()
     if query:
         return query.display_name
 
@@ -179,32 +179,35 @@ def node_result_log_search_results(filter, node_id, query_name, column_name=None
 
 
 def get_hosts_filtered_status_platform_count():
+    from polylogyx.cache import get_online_node_keys
     from sqlalchemy import and_
-    linux_filter = [~Node.platform.in_(('windows', 'darwin'))]
+    count_dict = {
+        'windows': {'online': 0, 'offline': 0, 'removed': 0}, 
+        'linux': {'online': 0, 'offline': 0, 'removed': 0}, 
+        'darwin': {'online': 0, 'offline': 0, 'removed': 0}
+    }
+    checkin_interval = current_app.config['POLYLOGYX_CHECKIN_INTERVAL']
+    online_hosts = get_online_node_keys(checkin_interval)
+    non_linux_platforms = ('windows', 'darwin')
+    query_set = db.session.query(Node.platform, Node.state, or_(Node.is_active, Node.node_key.in_(online_hosts)), db.func.count(Node.id)).filter(ModelStatusFilters.HOSTS_NON_DELETED).group_by(Node.platform, Node.state, or_(Node.is_active, Node.node_key.in_(online_hosts))).all()
+    for platform, state, status, count in query_set:
+        if platform not in non_linux_platforms:
+            platform = 'linux'
+        if state == Node.REMOVED:
+            count_dict[platform]['removed'] += count
+        else:
+            if status:
+                count_dict[platform]['online'] += count
+            else:
+                count_dict[platform]['offline'] += count
+    return count_dict
+
+
+def get_hosts_paginated(status, platform, searchterm="", enabled=None, alerts_count=False, column=None, order_by=None):
+    from polylogyx.cache import get_online_node_keys
 
     checkin_interval = current_app.config['POLYLOGYX_CHECKIN_INTERVAL']
-    current_time = dt.datetime.utcnow() - checkin_interval
-    linux_online = db.session.query(db.func.count(Node.id)).filter(or_(Node.is_active,
-            Node.last_checkin > current_time)).filter(and_(*linux_filter)).filter(and_(Node.state != Node.REMOVED, Node.state != Node.DELETED)).scalar()
-    linux_offline = db.session.query(db.func.count(Node.id)).filter(and_(not_(Node.is_active),
-            Node.last_checkin < current_time)).filter(and_(*linux_filter)).filter(and_(Node.state != Node.REMOVED, Node.state != Node.DELETED)).scalar()
-
-    windows_online = db.session.query(db.func.count(Node.id)).filter(or_(Node.is_active,
-            Node.last_checkin > current_time)).filter(and_(Node.platform == "windows", Node.state != Node.REMOVED, Node.state != Node.DELETED)).scalar()
-    windows_offline = db.session.query(db.func.count(Node.id)).filter(and_(not_(Node.is_active),
-            Node.last_checkin < current_time)).filter(and_(Node.platform == "windows", Node.state != Node.REMOVED, Node.state != Node.DELETED)).scalar()
-
-    darwin_online = db.session.query(db.func.count(Node.id)).filter(or_(Node.is_active,
-            Node.last_checkin > current_time)).filter(and_(Node.platform == "darwin", Node.state != Node.REMOVED, Node.state != Node.DELETED)).scalar()
-    darwin_offline = db.session.query(db.func.count(Node.id)).filter(and_(not_(Node.is_active),
-            Node.last_checkin < current_time)).filter(and_(Node.platform == "darwin", Node.state != Node.REMOVED, Node.state != Node.DELETED)).scalar()
-    return {'windows': {'online': windows_online, 'offline': windows_offline}, 'linux': {'online': linux_online, 'offline': linux_offline}, 'darwin':{'online': darwin_online, 'offline': darwin_offline}}
-
-
-def get_hosts_paginated(status, platform, searchterm="", enabled=True, alerts_count=False):
-    checkin_interval = current_app.config['POLYLOGYX_CHECKIN_INTERVAL']
-    online_filter = or_(Node.is_active, dt.datetime.utcnow() - Node.last_checkin < checkin_interval)
-    offline_filter = and_(not_(Node.is_active), dt.datetime.utcnow() - Node.last_checkin > checkin_interval)
+    online_hosts = get_online_node_keys(checkin_interval)
 
     filter = []
     if platform == 'linux':
@@ -213,15 +216,17 @@ def get_hosts_paginated(status, platform, searchterm="", enabled=True, alerts_co
         filter.append(Node.platform == platform)
 
     if alerts_count:
-        query_set = db.session.query(Node, db.func.count(Alerts.id)).outerjoin(Alerts, and_(Alerts.node_id == Node.id, or_(Alerts.status == None, Alerts.status != Alerts.RESOLVED)))
+        query_set = db.session.query(Node, db.func.count(Alerts.id)).outerjoin(Alerts, and_(Alerts.node_id == Node.id, ModelStatusFilters.ALERTS_NON_RESOLVED))
     else:
         query_set = db.session.query(Node)
     if platform:
         query_set = query_set.filter(*filter)
-    if enabled:
-        query_set = query_set.filter(and_(Node.state != Node.REMOVED, Node.state != Node.DELETED))
+    if enabled is True:
+        query_set = query_set.filter(ModelStatusFilters.HOSTS_ENABLED)
+    elif enabled is False:
+        query_set = query_set.filter(ModelStatusFilters.HOSTS_REMOVED)
     else:
-        query_set = query_set.filter(Node.state == Node.REMOVED)
+        query_set = query_set.filter(ModelStatusFilters.HOSTS_NON_DELETED)
     if searchterm:
         query_set = query_set.filter(or_(
             Node.node_info['display_name'].astext.ilike('%' + searchterm + '%'),
@@ -229,19 +234,38 @@ def get_hosts_paginated(status, platform, searchterm="", enabled=True, alerts_co
             Node.node_info['hostname'].astext.ilike('%' + searchterm + '%'),
             Node.os_info['name'].astext.ilike('%' + searchterm + '%'),
             cast(Node.last_ip, sqlalchemy.String).ilike('%' + searchterm + '%'),
-            Node.tags.any(Tag.value.in_([searchterm]))
+            Node.tags.any(Tag.value.ilike('%'+searchterm+'%'))
         ))
     if status is not None:
         if status:
-            query_set = query_set.filter(online_filter)
+            query_set = query_set.filter(or_(Node.is_active, Node.node_key.in_(online_hosts)))
         else:
-            query_set = query_set.filter(offline_filter)
+            query_set = query_set.filter(and_(not_(Node.is_active), ModelStatusFilters.HOSTS_ENABLED, Node.node_key.notin_(online_hosts)))
+    if column is not None and order_by is not None:
+        if column == 'host':
+            order_object = Node.node_info['computer_name']
+        elif column == 'state':
+            if str(order_by).upper() == 'ASC':
+                return query_set.group_by(Node).order_by(desc(Node.node_key.in_(online_hosts)), desc(Node.is_active))
+            else:
+                return query_set.group_by(Node).order_by(asc(Node.node_key.in_(online_hosts)), asc(Node.is_active))
+        elif column == 'os':
+            order_object = Node.os_info['name']
+        elif column == 'health':
+            order_object = db.func.count(Alerts.id)
+        elif column == 'last_ip':
+            order_object = Node.last_ip
+        if str(order_by).upper() == 'ASC':
+            return query_set.group_by(Node).order_by(order_object)
+        else:
+            return query_set.group_by(Node).order_by(desc(order_object))
+    
     if alerts_count:
-        return query_set.group_by(Node).order_by(desc(online_filter), desc(db.func.count(Alerts.id)), desc(Node.id))
-    return query_set.order_by(desc(online_filter), desc(Node.id))
+        return query_set.group_by(Node).order_by(desc(Node.node_key.in_(online_hosts)), desc(Node.is_active), desc(db.func.count(Alerts.id)), desc(Node.id))
+    return query_set.order_by(desc(Node.node_key.in_(online_hosts)), desc(Node.is_active), desc(Node.id))
 
 
-def get_hosts_total_count(status, platform, enabled=True):
+def get_hosts_total_count(status, platform, enabled=False):
     filter = []
     if platform == 'linux':
         filter.append(~Node.platform.in_(('windows', 'darwin')))
@@ -253,15 +277,17 @@ def get_hosts_total_count(status, platform, enabled=True):
         qs = Node.query.filter(*filter)
     else:
         qs = Node.query
-    if enabled:
-        qs = qs.filter(and_(Node.state != Node.REMOVED, Node.state != Node.DELETED))
+    if enabled is True:
+        qs = qs.filter(ModelStatusFilters.HOSTS_ENABLED)
+    elif enabled is False:
+        qs = qs.filter(ModelStatusFilters.HOSTS_REMOVED)
     else:
-        qs = qs.filter(Node.state == Node.REMOVED)
+        qs = qs.filter(ModelStatusFilters.HOSTS_NON_DELETED)
     if status is not None:
         if status:
-            qs = qs.filter(or_(Node.is_active,dt.datetime.utcnow() - Node.last_checkin < checkin_interval))
+            qs = qs.filter(or_(Node.is_active, dt.datetime.utcnow() - Node.last_checkin < checkin_interval))
         else:
-            qs = qs.filter(and_(not_(Node.is_active),dt.datetime.utcnow() - Node.last_checkin > checkin_interval))
+            qs = qs.filter(and_(not_(Node.is_active), dt.datetime.utcnow() - Node.last_checkin > checkin_interval))
     return qs.count()
 
 
@@ -270,7 +296,7 @@ def get_status_logs_of_a_node(node, searchterm=''):
         StatusLog.message.ilike('%' + searchterm + '%'),
         StatusLog.filename.ilike('%' + searchterm + '%'),
         StatusLog.version.ilike('%' + searchterm + '%'),
-        cast(StatusLog.created, sqlalchemy.String).ilike('%' + searchterm + '%'),
+        func.to_char(StatusLog.created, "YYYY-MM-DD HH24:MI:SS").contains(searchterm),
         cast(StatusLog.line, sqlalchemy.String).ilike('%' + searchterm + '%'),
         cast(StatusLog.severity, sqlalchemy.String).ilike('%' + searchterm + '%')
         )).order_by(desc(StatusLog.id))
@@ -281,12 +307,11 @@ def get_status_logs_total_count(node):
 
 
 def get_tagged_nodes(tag_names):
-    if tag_names is None:
-        nodes = Node.query.filter(Node.tags == None).all()
-    else:
-        nodes = Node.query.filter(and_(Node.tags.any(Tag.value.in_(tag_names))), Node.state != Node.DELETED, Node.state != Node.REMOVED).all()
-    print(nodes)
-    return nodes
+    return Node.query.filter(Node.tags.any(Tag.value.in_(tag_names))).filter(ModelStatusFilters.HOSTS_NON_DELETED).all()
+
+
+def get_tagged_active_hosts(tag_names):
+    return Node.query.filter(Node.tags.any(Tag.value.in_(tag_names))).filter(ModelStatusFilters.HOSTS_ENABLED).all()
 
 
 def is_tag_of_node(node, tag):
@@ -300,50 +325,73 @@ def soft_remove_host(node):
     return node.update(state=Node.REMOVED, updated_at=dt.datetime.now())
 
 
-def delete_host(node):
-    return node.update(state=Node.DELETED, updated_at=dt.datetime.now())
-
-
 def enable_host(node):
     return node.update(state=Node.ACTIVE, updated_at=dt.datetime.now())
 
 
+def delete_host(node):
+    return node.update(state=Node.DELETED, updated_at=dt.datetime.now())
+
+
+def delete_hosts(nodes_ids):
+    Node.query.filter(Node.id.in_(nodes_ids)).update(
+        {Node.state: Node.DELETED, Node.updated_at: dt.datetime.now()},
+        synchronize_session=False)
+
+
+def enable_hosts(nodes_ids):
+    Node.query.filter(Node.id.in_(nodes_ids)).update(
+        {Node.state: Node.ACTIVE, Node.updated_at: dt.datetime.now()},
+        synchronize_session=False)
+
+
+def soft_remove_hosts(nodes_ids):
+    Node.query.filter(Node.id.in_(nodes_ids)).update({Node.state: Node.REMOVED, Node.updated_at: dt.datetime.now()},
+                                                     synchronize_session=False)
+
+
 def host_alerts_distribution_by_source(node):
     alert_count = db.session.query(Alerts.source, Alerts.severity, db.func.count(
-        Alerts.id)).filter(or_(Alerts.status == None, Alerts.status != Alerts.RESOLVED))\
+        Alerts.id)).filter(ModelStatusFilters.ALERTS_NON_RESOLVED)\
         .filter(Alerts.node_id == node.id).group_by(Alerts.source, Alerts.severity).all()
 
-    alert_distro = {'ioc': {'INFO': 0, 'LOW': 0, 'WARNING': 0, 'CRITICAL': 0},
-                  'rule': {'INFO': 0, 'LOW': 0, 'WARNING': 0, 'CRITICAL': 0},
-                  'virustotal': {'INFO': 0, 'LOW': 0, 'WARNING': 0, 'CRITICAL': 0},
-                  'ibmxforce': {'INFO': 0, 'LOW': 0, 'WARNING': 0, 'CRITICAL': 0},
-                  'alienvault': {'INFO': 0, 'LOW': 0, 'WARNING': 0, 'CRITICAL': 0}}
+    alert_distro = {'ioc': {'INFO': 0, 'LOW': 0, 'MEDIUM': 0,'HIGH':0, 'CRITICAL': 0},
+                  'rule': {'INFO': 0, 'LOW': 0, 'MEDIUM': 0,'HIGH':0, 'CRITICAL': 0},
+                  'virustotal': {'INFO': 0, 'LOW': 0, 'MEDIUM': 0,'HIGH':0, 'CRITICAL': 0},
+                  'ibmxforce': {'INFO': 0, 'LOW': 0, 'MEDIUM': 0,'HIGH':0 ,'CRITICAL': 0},
+                  'alienvault': {'INFO': 0, 'LOW': 0, 'MEDIUM': 0,'HIGH':0, 'CRITICAL': 0}}
 
     for alert in alert_count:
         alert_distro[alert[0]][alert[1]] = alert[2]
 
     for key in alert_distro.keys():
-        alert_distro[key]['TOTAL'] = alert_distro[key]['INFO'] + alert_distro[key]['LOW'] + alert_distro[key]['WARNING'] + \
-                                   alert_distro[key]['CRITICAL']
+        alert_distro[key]['TOTAL'] = alert_distro[key]['INFO'] + alert_distro[key]['LOW'] + alert_distro[key]['MEDIUM'] + \
+                                   alert_distro[key]['CRITICAL']+alert_distro[key]['HIGH']
     return alert_distro
 
 
 def host_alerts_distribution_by_rule(node):
     return db.session.query(Rule.name, db.func.count(Alerts.id)).filter(Alerts.source == Alerts.RULE)\
-        .join(Alerts.rule).filter(or_(Alerts.status == None, Alerts.status != Alerts.RESOLVED))\
+        .join(Alerts.rule).filter(ModelStatusFilters.ALERTS_NON_RESOLVED)\
         .filter(Alerts.node_id == node.id).group_by(Rule.name).order_by(db.func.count(Alerts.rule_id).desc()).limit(5).all()
 
 
 def get_hosts_from_os_names(os_names):
     return db.session.query(Node).filter(Node.os_info['name'].astext.in_(os_names))\
+        .filter(ModelStatusFilters.HOSTS_NON_DELETED).all()
+
+
+def get_active_hosts_from_os_names(os_names):
+    return db.session.query(Node).filter(Node.os_info['name'].astext.in_(os_names))\
         .filter(ModelStatusFilters.HOSTS_ENABLED).all()
 
 
-def get_host_by_host_identifiers(host_ids):
-    return Node.query.filter(Node.host_identifier.in_(host_ids)).filter(and_(Node.state != Node.DELETED, Node.state != Node.REMOVED)).all()
+def get_active_hosts_by_host_identifiers(host_ids):
+    return Node.query.filter(Node.host_identifier.in_(host_ids)).filter( ModelStatusFilters.HOSTS_ENABLED).all()
 
 
-def get_result_log_of_a_query_opt(node_id, query_name, start=None, limit=None, searchterm=None , column_name=None, column_value=None):
+def get_result_log_of_a_query_opt(node_id, query_name, start=None, limit=None, searchterm=None, column_name=None,
+                                  column_value=None):
 
     categorized_count = 0
     total_count = 0
@@ -355,7 +403,7 @@ def get_result_log_of_a_query_opt(node_id, query_name, start=None, limit=None, s
                         .filter(NodeQueryCount.node_id == node_id) \
                         .filter(NodeQueryCount.query_name == query_name)
         nqq_query=nqq_basequery
-        
+
         nqq_query_count = nqq_query.first()
 
         total_count = nqq_query_count[0] or 0
@@ -367,41 +415,58 @@ def get_result_log_of_a_query_opt(node_id, query_name, start=None, limit=None, s
             categorized_count = nqq_query_cat_count[0] or 0
 
     # Node query count - End
-    
-    # Result Log Fetch - Start 
-    rl_basequery = ResultLog.query.with_entities(ResultLog.id,ResultLog.timestamp,ResultLog.action,ResultLog.columns)\
-                   .filter(ResultLog.node_id==str(node_id),ResultLog.name==query_name,ResultLog.action!="removed")
+
+    # Result Log Fetch - Start
+    rl_basequery = ResultLog.query.with_entities(ResultLog.id, ResultLog.timestamp, ResultLog.action,
+                                                 ResultLog.columns).filter(ResultLog.node_id == str(node_id),
+                                                                           ResultLog.name == query_name,
+                                                                           ResultLog.action != "removed")
 
     rl_query = rl_basequery
 
     if column_name and column_value:
-        if column_name=="defender_event_id":
-            rl_query=rl_query.filter(ResultLog.columns.has_key(column_name))
+        if column_name == "defender_event_id":
+            rl_query = rl_query.filter(ResultLog.columns.has_key(column_name))
             total_count = rl_query.count()
-            categorized_count=total_count
-        rl_query=rl_query.filter(ResultLog.columns[column_name].astext.in_(column_value))
-    
-    if searchterm:
-        rl_query = rl_query.filter(ResultLog.columns.cast(sqlalchemy.Text).contains(searchterm))
-        
+            categorized_count = total_count
+        rl_query = rl_query.filter(ResultLog.columns[column_name].astext.in_(column_value))
 
+    if searchterm:
+        rl_query = rl_query.filter(func.lower(ResultLog.columns.cast(sqlalchemy.Text)).contains(searchterm.lower()))
+        
     rl_query = rl_query.order_by(ResultLog.id.desc())
-    search_count =  rl_query.count()
+    search_count = rl_query.count()
 
     if start:
-        rl_query = rl_query.filter(ResultLog.id<start)
-    
-    if limit:
-        rl_query=rl_query.limit(limit)
+        rl_query = rl_query.filter(ResultLog.id < start)
 
-    query_results=rl_query.all()
+    if limit:
+        rl_query = rl_query.limit(limit)
+
+    query_results = rl_query.all()
 
     db.session.rollback()
     return search_count, query_results, total_count, categorized_count
 
 
 def topFiveNodes(date):
-    return  db.session.query(
-            sqlalchemy.func.sum(NodeQueryCount.total_results),Node).join(Node,and_(NodeQueryCount.node_id == Node.id, Node.state == Node.ACTIVE)) \
-         .filter(NodeQueryCount.date==date).group_by(Node.id).order_by(desc(sqlalchemy.func.sum(NodeQueryCount.total_results))).limit(5). \
-            all()
+    return db.session.query(sqlalchemy.func.sum(NodeQueryCount.total_results), Node)\
+        .join(Node, NodeQueryCount.node_id == Node.id).filter(NodeQueryCount.date == date)\
+        .group_by(Node.id).order_by(desc(sqlalchemy.func.sum(NodeQueryCount.total_results))).limit(5).all()
+
+
+def get_hosts(node_ids=[], host_identifiers=[], state=Node.ACTIVE):
+    qs = Node.query.filter(Node.state == state)
+    if node_ids:
+        qs = qs.filter(Node.id.in_(node_ids))
+    if host_identifiers:
+        qs = qs.filter(Node.host_identifier.in_(host_identifiers))
+    return qs.all()
+
+
+def get_platform_count():
+    cs = case((Node.platform.in_(['windows', 'darwin']), Node.platform),
+              else_=literal_column("'linux'"))
+    qry = Node.query.with_entities(cs, func.count(Node.id)).filter(ModelStatusFilters.HOSTS_NON_DELETED).group_by(cs).all()
+    platform_count_list = [{"os_name": platform[0], "count":platform[1]} for platform in qry]
+    return platform_count_list

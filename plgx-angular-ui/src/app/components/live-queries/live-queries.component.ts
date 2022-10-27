@@ -91,6 +91,14 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
   OsNameListSettings = {};
   OsNamesSelectedItems = [];
 
+  noSchemaData: boolean = false
+
+  searchTerm: any;
+
+  tempheader: any;
+
+  public isRowGrouping: any = 'host_name'
+
   createKeywordMapper = function (map, defaultToken, ignoreCase,) {
     try{
       var keywords = Object.create(null);
@@ -107,7 +115,7 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
     }
     catch(err){
       console.log(err);
-      this.router.navigate(['/live-queries']);
+      this.router.navigate(['/live-query']);
     }
 
   };
@@ -245,9 +253,6 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
 
   ngOnInit() {
     $.fn.dataTable.ext.errMode = 'none';
-    let bodyTemp = document.getElementsByTagName("BODY")[0];
-    bodyTemp.classList.add("kt-aside--minimize");
-    $.fn.dataTable.ext.errMode = 'none';
     this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"Live query");
 
     this._Activatedroute.paramMap.subscribe(params => {
@@ -272,8 +277,11 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
     this.commonapi.Hosts_data().subscribe((res: CustomResponse) => {
       var ListOfOs=[]
       for (const i in res.data.results) {
-        this.hostedList.push({id: res.data.results[i].host_identifier, itemName: res.data.results[i].display_name,osName:res.data.results[i].os_info['name']});
-        ListOfOs.push(res.data.results[i]['os_info'].name)
+        if(res.data.results[i].state == 0)
+        {
+          this.hostedList.push({id: res.data.results[i].id, host_identifier: res.data.results[i].host_identifier, itemName: res.data.results[i].display_name, osName:res.data.results[i].os_info['name']});
+          ListOfOs.push(res.data.results[i]['os_info'].name)
+        }
       }
       ListOfOs=ListOfOs.filter((value,index)=>ListOfOs.indexOf(value)===index)
       for(const i in ListOfOs){
@@ -284,10 +292,11 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
         singleSelection: false,
         text: "Select by Hosts",
         selectAllText: 'Select All Hosts',
-        unSelectAllText: 'DeSelect All Hosts',
+        unSelectAllText: 'Unselect All Hosts',
         badgeShowLimit: 1,
         enableSearchFilter: true,
         classes: "tag-class",
+        searchBy:["itemName"],
         searchPlaceholderText: "Search host here.."
       };
     });
@@ -299,7 +308,7 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
         singleSelection: false,
         text: "Select by Tags",
         selectAllText: 'Select All Tags',
-        unSelectAllText: 'DeSelect All Tags',
+        unSelectAllText: 'Unselect All Tags',
         badgeShowLimit: 1,
         enableSearchFilter: true,
         classes: "tag-class",
@@ -362,6 +371,7 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
     this.select_tab='false'
     this.failed_nodes_percentage=0
     Timer_count=0
+    this.searchText = undefined;
     this.systems_with_empty_results=[];
     this.columns_fetched=false;
     if (ws != undefined) {
@@ -390,7 +400,7 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
     }
     var selected_hosts = '';
     for (const i in hosts) {
-      selected_hosts = selected_hosts + ',' + hosts[i].id;
+      selected_hosts = selected_hosts + ',' + hosts[i].host_identifier;
     }
     var SelectedOSNames=[];
     for (const i in this.OsNamesSelectedItems) {
@@ -454,7 +464,7 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
 
   connect(queryId) {
     var timeNow = new Date().getTime();
-    var timeElapsed = (timeNow - this.startedAt)/60000; 
+    var timeElapsed = (timeNow - this.startedAt)/60000;
     if(queryId==currentQueryID && this.online_nodes!=this.countReceived && timeElapsed<10){
       // Should connect only if listening to the current triggered query and only if results are not received for all the nodes and only if time elapsed is not greater than 10 min
       console.log("Connecting to websocket...");
@@ -569,6 +579,7 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
         this.systems_with_empty_results.push({"host_name": node_name+" - Failure"});
         res_data=[{"host_name": node_name+" - Failure"}];
       }else{
+        this.isRowGrouping = 'false'
         this.systems_with_empty_results.push({"host_name": node_name+" - No Data"});
         res_data=[{"host_name": node_name+" - No Data"}];
       }
@@ -578,6 +589,7 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
         this.draw_new_table(res_data);
       }
     } else {
+      this.isRowGrouping = 'host_name'
       // recreating table with new columns
       if (!this.columns_fetched) {
         this.columns_fetched = true;
@@ -596,44 +608,11 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
   }
 
   draw_new_table(res_data) {
-
-    var keys = Object.keys(res_data[0]).reverse();
+    console.log('drawing')
+    var keys = Object.keys(res_data[0]);
+    keys.unshift(keys.pop())
 
     var columns = [];
-    // var counter = 0;
-    //
-    // var toFindColumn = 'md5';
-    // var toFindColumn1 = 'url';
-    // var toFindColumn2 = 'domain_name';
-    // var toFindColumn3 = 'sha1';
-    //
-    // var columnPosition;
-    // var colExist = false;
-    // var col1Exist = false;
-    // var col2Exist = false;
-    // var col3Exist = false;
-    //
-    //
-    // keys.forEach(function (key) {
-    //   if (key == toFindColumn) {
-    //     colExist = true;
-    //     columnPosition = counter;
-    //
-    //   } else if (key == toFindColumn1) {
-    //     col1Exist = true;
-    //     columnPosition = counter;
-    //   } else if (key == toFindColumn2) {
-    //     col2Exist = true;
-    //     columnPosition = counter;
-    //   } else if (key == toFindColumn3) {
-    //     col3Exist = true;
-    //     columnPosition = counter;
-    //   }
-    //   counter++;
-    //   columns.push({data: key, title: key});
-    //
-    //
-    // });
 
 
     var _result = this.columndefs.columnDefs(keys);
@@ -645,7 +624,7 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
       .attr("style", "margin-left:auto;width:100%;overflow-x: scroll")
       .attr("width", "100%;")
       .attr("font-weight", "normal")
-      .addClass("table table-striped- table-hover table-checkable display dt-body-left list_table");
+      .addClass("table table-striped- table-hover table-checkable display dt-body-left list_table lq-custom-pagination table-controls");
 
 
     // });
@@ -656,20 +635,30 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
       "searching": true,
       "orderCellsTop": true,
       "aoColumns": columns,
-      "scrollX": true,
+      "scrollX": false,
       "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
       "bScrollCollapse": true,
       "sPaginationType": "full_numbers",
       "lengthChange": false,
       "bJQueryUI": true,
-      "dom": 'Blfrtip',
+      "dom": "Blfrt<'row table-controls'<'col-sm-6 table-controls-li'i><'col-sm-6'p>>",
       // "sDom": 'r<"H"lf><"datatable-scroll"t><"F"ip>',
       "language": {
-        "search": "Search: "
+        "search": "Search: ",
+        "info" : "Showing _START_ to _END_ of <b>_TOTAL_</b> entries"
       },
       "rowGroup": {
-        dataSrc: 'host_name'
+        dataSrc: this.isRowGrouping
       },
+      "initComplete": function (settings, json) {
+          $("#live_query_table").wrap("<div style='overflow:auto; width:100%;position:relative;max-height:70vh;margin-top:10px'></div>");
+          $('.list_table thead tr').clone(true).addClass('filter-row').appendTo('.list_table thead');
+          $("#live_query_table thead tr.filter-row th").each(function() {
+            $(this).replaceWith('<td>' + $(this).text() + '</td>');
+            $(this).wrapInner('<div />').find('div').unwrap().wrap('<td/>');
+          });
+          $('#live_query_table_filter').hide()
+       },
       "buttons": [
         {
           extend: 'excelHtml5',
@@ -699,8 +688,7 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
     this.table=table;
     /* adding column search Start */
 
-    $('.list_table thead tr').clone(true).appendTo('.list_table thead');
-    $('.list_table thead tr:eq(1) th').each(function (i) {
+    $('.list_table thead tr:eq(1) td').each(function (i) {
       var title = $(this).text();
       $(this).html('<input type="text" placeholder="Search ' + title + '" />');
 
@@ -723,7 +711,9 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
     /* Adjusting header in datatable Start*/
     $('#container').css('display', 'block');
     table.columns.adjust().draw();
-
+    $('.list_table thead tr th').each(function (i) {
+          $(this).removeClass('sorting_asc');
+    });
     /* Adjusting header in datatable End*/
   }
 
@@ -734,6 +724,18 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
        },50);
     }
   }
+  tableSearch(){
+    this.searchTerm = (<HTMLInputElement>document.getElementById('customsearch')).value
+    var oTable = $('#live_query_table').DataTable()
+    oTable.search(this.searchTerm).draw()
+    if(oTable.page.info().recordsDisplay == 0){
+      this.tempheader = $('.filter-row').html()
+      $('.filter-row').html('<td colspan=' +oTable.columns().nodes().length + '>No Matching Records Found</td>')
+    }
+    else if(oTable.page.info().recordsDisplay > 0){
+      $('.filter-row').html(this.tempheader)
+    }
+  }
 
   add_to_existing_table(res_data) {
     $('#live_query_table').DataTable().rows.add(res_data).draw(false);
@@ -741,6 +743,7 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
   search_tables(){
     var that = this;
     var searchTerm, panelContainerId;
+    var allHidden;
     // Create a new contains that is case insensitive
     $.expr[':'].containsCaseInsensitive = function (n, i, m) {
       return jQuery(n).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
@@ -756,6 +759,15 @@ export class LiveQueriesComponent implements AfterViewInit, OnInit,OnDestroy {
         $(panelContainerId + ':not(:containsCaseInsensitive(' + searchTerm + '))').hide();
         $(panelContainerId + ':containsCaseInsensitive(' + searchTerm + ')').show();
       });
+      if($('.panel > .card-header').children(':visible').length == 0) {
+        // action when all are hidden
+        allHidden = true
+        that.noSchemaData = true
+     }
+     else{
+        allHidden = false
+        that.noSchemaData = false
+     }
     });
   }
   expand(indexId){

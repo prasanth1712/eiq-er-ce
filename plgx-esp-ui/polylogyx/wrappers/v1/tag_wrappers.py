@@ -1,17 +1,17 @@
-from flask_restplus import fields
+from flask_restful import fields
 from polylogyx.blueprints.v1.external_api import api
 
-tag_name_wrapper = api.model('tag_name_wrapper', {
+tag_name_wrapper = {
     'id': fields.Integer(),
     'value': fields.String(),
-})
+}
 
-tag_wrapper = api.model('tags_list', {
+tag_wrapper =  {
     'value' : fields.Raw(),
     'nodes' : fields.Raw(),
     'packs' : fields.Raw(),
     'queries' : fields.Raw(),
     'file_paths' : fields.Raw(),
-})
+}
 
 

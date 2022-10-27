@@ -5,10 +5,10 @@
         <!-- start:: Content -->
         <div class="kt-portlet__head kt-portlet__head--lg">
             <div class="kt-portlet__head-label">
-              <span class="kt-portlet__head-icon">
-                <i class="kt-font-brand fab fa-whmcs"></i>
+              <span class="kt-portlet__head-icon custom-header-icon-container">
+                <i class="kt-font-brand fab fa-whmcs custom-header-icon"></i>
               </span>
-                <h3 class="kt-portlet__head-title">
+                <h3 class="kt-portlet__head-title custom-header-title">
                     Data Purge
                   </h3>
 
@@ -16,16 +16,18 @@
             <div class="kt-portlet__head-toolbar">
               <div class="kt-portlet__head-wrapper">
                 <div class="">
-                  <a  (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark"
+                  <!-- <a  (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark"
                     data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page" style="color:#93a2dd;">
                     <i class="fas fa-chevron-left"></i>
                     Back
-                  </a>
+                  </a> -->
+                  <appbutton (click)="goBack()" text="Back" icon="fa-chevron-left" btnClass="btn-small-light" btnType="button"></appbutton>
                 </div>
               </div>
             </div>
           </div>
           <div class="kt-portlet__body">
+            <h6 class="mb-3 ml-2"><span style="color:#cc1313cc">Note : </span>The EclecticIQ Endpoint Response server stores data for alerts, scheduled query results, status logs, and deleted hosts.</h6>
             <div class="kt-portlet">
               <div class="kt-portlet__body">
                 <form class="kt-form" id="kt_form" [formGroup]="dataRetentionSettings" (ngSubmit)="onSubmit()">
@@ -34,13 +36,9 @@
                     <h3 class="col-form-label"  style="font-weight:bold;color: #646c9a;" >Data retention settings :</h3>
                     <div class="kt-section__body">
                                 <div class="form-group row">
-                                  <label class="col-3 col-form-label">Data retention intervel : <i class="help-badge badge-pill badge-light fa fa-info" title="Below data will be automatically deleted beyond the retention interval.
-1.Alerts
-2.Scheduled query results
-3.Status Logs
-4.Deleted hosts"></i></label>
+                                  <label class="col-3 col-form-label">Data retention interval : <i class="help-badge badge-pill badge-light fa fa-info" title="Automatically purge data daily and retain data for only last <X> days"></i></label>
                                   <div class="col-6">
-                                    <input  type="number" id="interval" id="purgeDataDuration" min="1"  name="purgeDataDuration"  formControlName="purgeDataDuration" class="form-control inputElement "[ngClass]="{ 'is-invalid': submitted && f.purgeDataDuration.errors }" [readonly]="!hasAcess" />
+                                    <input  (keypress)="isNumberKey($event)" id="interval" id="purgeDataDuration" min="1"  name="purgeDataDuration"  formControlName="purgeDataDuration" class="form-control inputElement "[ngClass]="{ 'is-invalid': submitted && f.purgeDataDuration.errors }" [readonly]="!hasAcess" />
                                     <div *ngIf="submitted && f.purgeDataDuration.errors" class="invalid-feedback">
                                       <div *ngIf="f.purgeDataDuration.errors.required">Error On Purge Data Field</div>
                                       <div *ngIf="f.purgeDataDuration.errors.min">Please select a positive value </div>
@@ -51,9 +49,10 @@
                                 <div *AppHasRole="role.adminAccess" class="form-group row">
                                   <label class="col-3"></label>
                                   <div class="col-6">
-                                    <button  style="width:100px"  type="submit" class="btn btn-success"><i class="fa fa-sync-alt"></i>
+                                    <!-- <button  style="width:100px"  type="submit" class="btn btn-success"><i class="fa fa-sync-alt"></i>
                                       <span>Update</span>
-                                    </button>
+                                    </button> -->
+                                    <appbutton text="Update" btnClass="btn-small" btnType="submit" icon="fa-sync-alt"></appbutton>
                                   </div>
                                 </div>
                         </div>
@@ -75,22 +74,23 @@
                     <h3 class="col-form-label"  style="font-weight:bold;color: #646c9a;" >Manual data purge :</h3>
                     <div class="kt-section__body">
                                 <div class="form-group row">
-                                  <label class="col-3 col-form-label">Retain last x days data : <i class="help-badge badge-pill badge-light fa fa-info" title="Below data will be automatically deleted beyond the retention interval.
-1.Alerts
-2.Scheduled query results
-3.Status Logs
-4.Deleted hosts"></i></label>
+                                  <label class="col-3 col-form-label">Retain last x days data : <i class="help-badge badge-pill badge-light fa fa-info" title="Manually purge data now and retain data for only last <X> days"></i></label>
                                   <div class="col-6">
-                                        <input type="number" name="manualDataPurgeval" min="1" formControlName="manualDataPurgeval"  class="form-control" [readonly]="!hasAcess"/>
+                                        <input (keypress)="isNumberKey($event)" name="manualDataPurgeval" min="1" formControlName="manualDataPurgeval" [ngClass]="{ 'is-invalid': dataPurgSubmitted && g.manualDataPurgeval.errors }" class="form-control" [readonly]="!hasAcess"/>
+                                        <div *ngIf="dataPurgSubmitted && g.manualDataPurgeval.errors" class="invalid-feedback">
+                                          <div *ngIf="g.manualDataPurgeval.errors.required">Retention days should not be empty</div>
+                                          <div *ngIf="g.manualDataPurgeval.errors.min">Retention days should be valid</div>
+                                        </div>
                                         <label class="">days</label>
                                   </div>
                                 </div>
                                 <div *AppHasRole="role.adminAccess" class="form-group row">
                                   <label class="col-3"></label>
                                   <div class="col-6">
-                                    <button  style="width:100px" type="submit" class="btn btn-success"><i class="fa fa-sync-alt"></i>
+                                    <!-- <button  style="width:100px" type="submit" class="btn btn-success"><i class="fa fa-sync-alt"></i>
                                       <span>Purge</span>
-                                    </button>
+                                    </button> -->
+                                    <appbutton text="Purge" btnClass="btn-small" btnType="submit" icon="fa-sync-alt"></appbutton>
                                   </div>
                                 </div>
                         </div>

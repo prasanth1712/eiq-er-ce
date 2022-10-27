@@ -14,58 +14,33 @@ from polylogyx.db.models import (
     DistributedQueryTask,
     Node,
     NodeConfig,
-    Options,
     Pack,
     Query,
     querypacks
 )
-from polylogyx.utils.generic import merge_two_dicts
 from polylogyx.utils.node import get_config_of_node
 
 
 def get_node_configuration(node):
     from polylogyx.utils.cache import get_all_configs, refresh_cached_config
 
-    platform = node.platform
-    if platform not in DEFAULT_PLATFORMS:
-        platform = "linux"
+    platform = node.get_platform()
     config = get_config_of_node(node)
     # get all cached configs
     all_configs = get_all_configs()
     configuration = all_configs.get(platform, {}).get(config.name, {})
-    if not configuration:
-        all_configs = refresh_cached_config()
-        configuration = all_configs.get(platform, {}).get(config.name, {})
-        if not configuration:
-            current_app.logger.warning("Could not find config assigned to the node '{}'".format(node))
-    else:
-        cached_at = configuration.get("cached_at")
-        if cached_at and cached_at < config.updated_at:
-            # refresh cached config when there is an update in the config
-            all_configs = refresh_cached_config()
-            configuration = all_configs.get(platform, {}).get(config.name, {})
-            if not configuration:
-                current_app.logger.warning("Could not find config assigned to the node '{}'".format(node))
-    if isinstance(configuration, dict) and 'cached_at' in configuration:
-        configuration.pop("cached_at")
     return configuration
 
 
 def assemble_configuration(node):
-    from polylogyx.celery.tasks import is_extension_old
-
     configuration = get_node_configuration(node)
+    platform = node.get_platform()
     if node.tags:
         # assemble extra queries added(not default queries)
         for query in node.queries.options(db.lazyload("*")):
-            configuration["schedule"][query.name] = query.to_dict()
+            if query.platform in (platform, 'all'):
+                configuration["schedule"][query.name] = query.to_dict()
         configuration["packs"] = assemble_packs(node)
-    if (
-        "schedule" in configuration
-        and DefaultInfoQueries.EXTENSION_HASH_QUERY_NAME in configuration["schedule"]
-        and not is_extension_old(node)
-    ):
-        del configuration["schedule"][DefaultInfoQueries.EXTENSION_HASH_QUERY_NAME]
     return configuration
 
 
@@ -79,10 +54,6 @@ def assemble_options(configuration):
         options["host_identifier"] = "hostname"
 
     options["schedule_splay_percent"] = 10
-    existing_option = Options.query.filter(Options.name == PolyLogyxServerDefaults.plgx_config_all_options).first()
-    if existing_option:
-        existing_option_value = json.loads(existing_option.option)
-        options = merge_two_dicts(options, existing_option_value)
     options.update(configuration.get("options", {}))
     return options
 
@@ -94,7 +65,7 @@ def assemble_packs(node):
     return packs
 
 
-def assemble_distributed_queries(node):
+def assemble_distributed_queries(node_id):
     """
     Retrieve all distributed queries assigned to a particular node
     in the NEW state. This function will change the state of the
@@ -105,7 +76,7 @@ def assemble_distributed_queries(node):
     now = dt.datetime.utcnow()
     pending_query_count = 0
     query_recon_count = db.session.query(db.func.count(DistributedQueryTask.id)).filter(
-        DistributedQueryTask.node == node,
+        DistributedQueryTask.node_id == node_id,
         DistributedQueryTask.status == DistributedQueryTask.NEW,
         DistributedQueryTask.priority == DistributedQueryTask.HIGH,
     )
@@ -116,7 +87,7 @@ def assemble_distributed_queries(node):
             db.session.query(DistributedQueryTask)
             .join(DistributedQuery)
             .filter(
-                DistributedQueryTask.node == node,
+                DistributedQueryTask.node_id == node_id,
                 DistributedQueryTask.status == DistributedQueryTask.NEW,
                 DistributedQuery.not_before < now,
                 DistributedQueryTask.priority == DistributedQueryTask.HIGH,
@@ -128,7 +99,7 @@ def assemble_distributed_queries(node):
             db.session.query(DistributedQueryTask)
             .join(DistributedQuery)
             .filter(
-                DistributedQueryTask.node == node,
+                DistributedQueryTask.node_id == node_id,
                 DistributedQueryTask.status == DistributedQueryTask.NEW,
                 DistributedQuery.not_before < now,
                 DistributedQueryTask.priority == DistributedQueryTask.LOW,
@@ -139,10 +110,7 @@ def assemble_distributed_queries(node):
 
     queries = {}
     for task in query:
-        if task.sql:
-            queries[task.guid] = task.sql
-        else:
-            queries[task.guid] = task.distributed_query.sql
+        queries[task.guid] = task.distributed_query.sql
         task.update(
             status=DistributedQueryTask.PENDING,
             viewed_at=dt.datetime.utcnow(),
@@ -154,4 +122,5 @@ def assemble_distributed_queries(node):
         # as sure as we possibly can be that it's been received by the
         # osqueryd client. unfortunately, there are no guarantees though.
         db.session.add(task)
+    db.session.commit()
     return queries

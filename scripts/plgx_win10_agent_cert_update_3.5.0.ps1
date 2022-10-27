@@ -21,7 +21,7 @@ $task = "EclecticIQ Agent Cert Update"
 $xmlurl = -join("https://", $ip, "/downloads/windows/plgx_agent_cert_update_3.5.0.xml")
 $taskxml = -join($tempdir, "plgx_agent_cert_update_3.5.0.xml")
 
-if ($(Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue).TaskName -eq $task)
+if ($(Get-ScheduledTaskInfo -TaskName $task -ErrorAction SilentlyContinue).TaskName -eq $task)
 {
     Unregister-ScheduledTask -TaskName $task -Confirm:$False
     write-output "Unregistered existing scheduled task '$task'"
@@ -65,7 +65,7 @@ catch
     Exit 3 
 }
 
-if ($(Get-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue).TaskName -eq $task)
+if ($(Get-ScheduledTaskInfo -TaskName $task -ErrorAction SilentlyContinue).TaskName -eq $task)
 {
 	write-output "Successfully created '$task' scheduled task !!"
 	

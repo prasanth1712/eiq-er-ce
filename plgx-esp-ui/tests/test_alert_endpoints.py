@@ -343,7 +343,7 @@ class TestRuleEndToEnd:
                         ]
                     },
                     status='ACTIVE',
-                    severity=Rule.WARNING, recon_queries=json.dumps(ALERT_RECON_QUERIES_JSON))
+                    severity=Rule.WARNING)
         rule.save()
         now = dt.datetime.utcnow()
         data = [

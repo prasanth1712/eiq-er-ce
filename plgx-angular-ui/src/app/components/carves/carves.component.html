@@ -2,55 +2,34 @@
   <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
     <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
       <!-- begin:: Content -->
-        <div class="col-lg-12">
         <!--begin::Portlet-->
-        <div class="kt-portlet kt-portlet--last kt-portlet--responsive-mobile row" id="kt_page_portlet">
-          <div class="kt-portlet__head kt-portlet__head--lg">
-            <div class="kt-portlet__head-label">
-              <span class="kt-portlet__head-icon">
-                <i class="kt-font-brand fab fa-cuttlefish"></i>
-              </span>
-              <h3 class="kt-portlet__head-title">
-                Carves
-              </h3>
-              <!-- <popover-content #myPopover
-              title="Popover title"
-              placement="left"
-
-         >
-  <b>Very</b> <span style="color: #C21F39">Dynamic</span> <span style="color: #00b3ee">Reusable</span>
-  <b><i><span style="color: #ffc520">Popover With</span></i></b> <small>Html support</small>.
-</popover-content>
-
-<button [popover]="myPopover">element on which this popover is applied.</button> -->
-              <div class="info-icon">
-
-                <a href="javascript:void(0);" tabindex="0" class="help" role="button" data-toggle="popover"
-                aria-label="Send a live query for a file acquisition from endpoint. Eg: select * from carves where path like '/some/path/%' and carve=1;">
-                  <span class="badge badge-pill badge-light fa fa-info" data-placement="top" title="info"> </span>
-                </a>
+        <div class="kt-portlet kt-portlet--last kt-portlet--responsive-mobile custom-margin-body">
+            <div class="kt-portlet__head kt-portlet__head--lg">
+              <div class="kt-portlet__head-label">
+                <span class="kt-portlet__head-icon custom-header-icon-container">
+                  <i class="kt-font-brand fab fa-cuttlefish custom-header-icon"></i>
+                </span>
+                <h3 class="kt-portlet__head-title custom-header-title d-flex align-items-center">
+                  Carves <i class="badge badge-pill badge-light fa fa-info custom-badge" title="Send a live query for a file acquisition from endpoint. Eg: select * from carves where path like '/some/path/%' and carve=1;"></i>
+                </h3>
+              </div>
+              <div class="kt-portlet__head-toolbar">
+                <div class="kt-portlet__head-wrapper">
+                  <appbutton (click)="goBack()" text="Back" icon="fa-chevron-left" btnClass="btn-small-light" btnType="button"></appbutton>
+                </div>
               </div>
             </div>
-            <div class="kt-portlet__head-toolbar">
-              <div class="kt-portlet__head-wrapper">
-                <a href="javascript:void(0);" (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page">
-                  <i class="fas fa-chevron-left back_icon_align"></i>
-                  Back
-                </a>
-              </div>
-            </div>
-          </div>
 
           <!-- <div class="kt-portlet__body"> -->
             <!--begin::Carves-->
-            <div class="kt-portlet__body">
-            <!-- <div *ngIf="carves_data?.length != 0"> -->
-            <div class="col-lg-12 row">
-              <div class="col-lg-7">
-              </div>
-               <div class="col-lg-5">
+            <div class="kt-portlet__body tbl-bg custom-margin-body-inner">
+            <!-- <div > -->
+              <div class="table-wrapper" >
+
+                <div class="row" *ngIf="ProgressDiv">
+                  <div class="col-lg-5 offset-lg-7">
                     <div class="dropdown">
-                      <button class="btn Progress-bg dropdown-toggle fnt-white w-100" *ngIf="ProgressDiv" (click)="ToggleProgressMenu()" type="button" id="dropdownMenu"  aria-haspopup="true" aria-expanded="false">
+                      <button class="btn Progress-bg dropdown-toggle fnt-white w-100" (click)="ToggleProgressMenu()" type="button" id="dropdownMenu"  aria-haspopup="true" aria-expanded="false">
                         File Downloads ({{InprogessInfo}} / {{ProgressInfos.length}})
                       </button>
                       <div class="dropdown-menu px-3 w-100" id="dropdown-div" aria-labelledby="dropdownMenu">
@@ -63,8 +42,7 @@
                                attr.aria-valuenow="{{ progressInfo.progress }}"
                                aria-valuemin="0"
                                aria-valuemax="100"
-                               [ngStyle]="{ width: progressInfo.progress + '%' }"
-                             >
+                               [ngStyle]="{ width: progressInfo.progress + '%' }">
                                {{ progressInfo.progress }}%
                              </div>
                            </div>
@@ -72,50 +50,86 @@
                       <span style="color:grey">Note: Please don't refresh the page until download completes</span>
                       </div>
                     </div>
-               </div>
-            <div class="carves_result w-100">
-              <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable" >
-                <thead style="text-align: center;color: #212529">
-                  <tr>
-                  <th >Host</th>
-                  <th>Session</th>
-                  <th style="width: 150px;">Carve Size</th>
-                  <th style="width: 200px;">File</th>
-                  <th style="width: 150px;">Blocks Acquired</th>
-                  <th>Status</th>
-                  <th>Created At</th>
-                  <th *AppHasRole="role.adminAccess"></th>
-                </tr>
-                </thead>
-                <tbody style="text-align: center;">
-                  <tr *ngFor="let carve of carves_data">
-                    <td><a [routerLink]="['/hosts/', carve.node_id]">{{ carve.hostname }}</a></td>
-                    <td><code>{{ carve.session_id }}</code></td>
-                    <td>{{getCarvesize(carve.carve_size)}}
-                    <td><a style="color:#5867dd;" (click)="downloadCarve($event,carve.hostname,carve.archive)" id="{{ carve.session_id }}" >{{ carve.archive }}</a></td>
-                    <td>{{ carve.block_count }}</td>
-                    <td>{{ carve.status }}</td>
-                    <td>{{ carve.created_at |  date: 'yyyy-MM-dd hh:mm:ss'}}</td>
-
-                    <td *AppHasRole="role.adminAccess">
-                      <button (click)="deleteCarve($event)" class="btn btn-outline-danger btn-sm" id="{{ carve.session_id }}">
-                        Delete
-                      </button>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-12 row-filter-search pull-right">
+                    <search class="pull-right"  (keyup.enter)="tableSearch()" (valueChange)='tableSearch()'></search>
+                  </div>
+                </div>
+                <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable row-border hover" >
+                  <thead style="text-align: center;color: #212529">
+                    <tr role="row" *ngIf="selectedCount > 0;">
+                      <th class="chk-pad close-icon" style="text-align: center;" (click)="removeSelectedHost()">
+                        <i class="fa fa-times fa-lg" aria-hidden="true"></i>
+                      </th>
+                      <th style="color:#1F1F1F !important"> {{selectList.length}} selected </th>
+                      <th></th>
+                      <th></th>
+                      <th></th>
+                      <th></th>
+                      <th></th>
+                      <th></th>
+                      <th (click)="multideleteCarve(true)">
+                        <i title="Delete" class="fa fa fa-trash-alt delete-icon resolve-circle-check"></i></th>
+                    </tr>
+                    <tr role="row">
+                      <th class="th-width-5">
+                        <div class="custom-control mt-2 custom-checkbox">
+                          <input type="checkbox" [(ngModel)]="masterSelected" (change)="checkUncheckAll()"
+                           class="custom-control-input" id="masterCheck">
+                          <label class="custom-control-label" for="masterCheck"></label>
+                        </div>
+                      </th>
+                      <th class="th-width-15">Host</th>
+                      <th class="th-width-15">Session</th>
+                      <th class="th-width-15">Carve Size</th>
+                      <th class="th-width-15">File</th>
+                      <th class="th-width-10">Blocks Acquired</th>
+                      <th class="th-width-10">Status</th>
+                      <th class="th-width-10">Created At</th>
+                      <th class="th-width-5" *AppHasRole="role.adminAccess"></th>
+                    </tr>
+                  </thead>
+                  <tbody style="text-align: center;">
+                    <tr *ngFor="let carve of carves_data; let i = index" [ngClass]="{'row-selected':selectList.includes(carve.session_id)}" role="row">
+                      <td>
+                        <div class="custom-control custom-checkbox">
+                          <input type="checkbox"   [(ngModel)]="checklist[i].isSelected"  (change)="isAllSelected(carve.id,carve.session_id)"
+                           class="custom-control-input" id="customCheck_{{i}}">
+                          <label class="custom-control-label" for="customCheck_{{i}}"></label>
+                        </div>
                     </td>
-                  </tr>
-                </tbody>
-              </table>
-            <!-- </div> -->
-          </div>
-            <div class="" *ngIf="carves_data?.length == 0">
-              <p class="txt-clr">No files acquired.</p>
-            </div>
+                      <td class="host-link"><a [routerLink]="['/hosts/', carve.node_id]">{{ carve.hostname }}</a></td>
+                      <td><code>{{ carve.session_id }}</code></td>
+                      <td>{{getCarvesize(carve.carve_size)}}
+                      <td class="host-link"><a style="color:#5867dd;" (click)="downloadCarve($event,carve.hostname,carve.archive)" id="{{ carve.session_id }}" >{{ carve.archive }}</a></td>
+                      <td>{{ carve.block_count }}</td>
+                      <td>{{ carve.status }}</td>
+                      <td>{{ carve.created_at |  date: 'yyyy-MM-dd hh:mm:ss'}}</td>
+
+                      <td *AppHasRole="role.adminAccess">
+                        <a href="javascript:void(0);" (click)="deleteCarve(carve.session_id)" id="{{ carve.session_id }}" data-skin="dark" data-toggle="kt-tooltip"
+                        data-placement="top" title="Delete">
+                          <i class="fa fa fa-trash-alt delete-icon resolve-circle-check" aria-hidden="true"></i>
+                        </a>
+                      </td>
+                    </tr>
+                    <tr role="row" class="text-center" *ngIf="carves_data?.length == 0">
+                      <td colspan="9">
+                        No files acquired.
+                      </td>
+                    </tr>
+
+                  </tbody>
+                </table>
+              </div>
             <!--end::Carves-->
           <!-- </div> -->
-        </div>
+            </div>
         <!--end::Portlet-->
+            </div>
         </div>
-      </div>
-      <!-- end:: Content -->
     </div>
-</div>
+      <!-- end:: Content -->
+  </div>

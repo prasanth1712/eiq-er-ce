@@ -4,376 +4,222 @@
 		<div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
 			<!-- begin:: Content -->
 
-			<div class="kt-portlet kt-portlet--mobile kt-portlet--responsive-mobile" style="margin-bottom: 0px;">
+			<div class="kt-portlet kt-portlet--mobile kt-portlet--responsive-mobile custom-margin-body">
 				<div class="kt-portlet__head">
 
-					<a [routerLink]="['/hosts']" style="padding-top: 35px">
-						<div class="kt-portlet__head-label" (click)="getByFilterId(true, 'all')">
-							<span class="kt-portlet__head-icon">
-								<i class="kt-font-brand fa fa-desktop "></i>
+					<a class="kt-portlet__head-anchor">
+						<div class="kt-portlet__head-label">
+							<span class="kt-portlet__head-icon d-flex">
+								<i class="kt-font-brand fa fa-desktop fnt-dark-black"></i>
 							</span>
-							<h3 class="kt-portlet__head-title">
+							<h3 class="kt-portlet__head-title fnt-dark-black">
 								Hosts
 							</h3>
 						</div>
 					</a>
-					<!--Begin::Section-1-->
-					<div class="row">
-						<div class="">
-							<div class="kt-portlet kt-portlet--border-bottom-brand window_widget_body2" style="border-bottom: 3px solid #45b4f2; margin-right:15px; margin-bottom:0px;min-height: 87px;min-width: 116px;">
-								<div class="ph-row">
-									<div class="ph-col-4"></div>
-									<div class="ph-col-8 empty"></div>
-									<div class="ph-col-6"></div>
-									<div class="ph-col-6 empty"></div>
-									<div class="ph-col-2"></div>
-									<div class="ph-col-10 empty"></div>
-									<div class="ph-col-6"></div>
-									<div class="ph-col-6 empty"></div>
-								  </div>
-							</div>
-							<!--begin:: Windows Widgets -->
-							<div class="window_widget_body" style="display: none;">
-							<div class="kt-portlet kt-portlet--border-bottom-brand"
-								style="border-bottom: 3px solid #45b4f2; margin-right:15px; margin-bottom:0px;min-height: 76px;min-width: 116px;">
-								<div class="kt-portlet__body" style="padding: 0px;" data-skin="dark"
-									data-toggle="kt-tooltip" data-placement="top" title="Windows Platforms">
-									<div class="kt-widget14" style="padding:10px;">
 
-										<div class="kt-widget14__content">
-											<!-- <i class="fab fa-5x fa-windows"></i> -->
-											<img alt="Logo" src="./assets/media/logo/windows.svg" height="30px"
-												width="30px" />
-											<!-- Begin:: Windows -->
-											<div class="kt-widget14__legends"
-												style="line-height: 2.5rem; margin-top: auto;">
-												<!-- Begin:: Windows Online -->
-												<!-- <a [routerLink]="['/nodes']" id="div_rule"> -->
-												<div *ngIf="windows_online==0" class="kt-widget14__legend"
-													data-skin="dark" data-toggle="kt-tooltip" data-placement="top"
-													title="online">
-													<span class="kt-widget14__bullet kt-bg-success"></span>
-													<span class="kt-widget14__stats">
+					<!-- Modal Begins -->
+					<div class="modal" id="myModal" tabindex="-1" role="dialog"
+						aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+						<div class="modal-dialog modal-lg" role="document">
+							<div class="modal-content modal-width" style=''>
+								<div class="modal-header">
+									<!-- <h3 class="">Alerted Entry</h3> -->
+									<span id="stitle">Configuration</span>
+									<h3 class=""></h3>
+									<button type="button" class="close" data-dismiss="modal" aria-label="Close"
+										(click)="closeModal('myModal')"></button>
 
-														<span style="color: #1b9300">
-															{{windows_online}}
-														</span>
+								</div>
+								<div class="modal-body kt-scroll" data-scroll="false" data-height="200"
+									data-scrollbar-shown="true">
+									<!--begin:: Widgets/Tasks -->
 
-													</span>
-												</div>
-												<a *ngIf="windows_online>0"
-													[routerLink]="['/hosts']">
-													<div class="kt-widget14__legend" data-skin="dark"
-														data-toggle="kt-tooltip" data-placement="top" title="online"
-														(click)="getByFilterId(true, 'windows')">
-														<span class="kt-widget14__bullet kt-bg-success"></span>
-														<span class="kt-widget14__stats">
-															<span style="color: #1b9300">
-																{{windows_online}}
-															</span>
-														</span>
+									<form class="kt-form" id="kt_form">
+										<div class="row">
+											<!-- <div class="col-xl-2"></div> -->
+											<div class="col-xl-12">
+												<div class="kt-section kt-section--first">
+													<div class="kt-section__body">
+														<div class="row mb-3">
+															<label class="col-12 col-form-label lbl-wt">Configuration :<ng-container *AppHasRole="role.userAccess"> {{additionalConfigData}}</ng-container></label>
+															<div *AppHasRole="role.adminAccess"
+																class="col-12 assignedConfig">
+																<dropdown label=""
+																	[options]="configListDropdownList"
+																	[formControl]="configSelectControl"
+																	(change)="onItemSelect_config($event.target.value, $event.target.options[$event.target.selectedIndex].text)"
+																	[(ngModel)]="configListSelectedItem" class="custom-dropdown-config config-dropdown-host"></dropdown>
+																<ng-container *AppHasRole="role.adminAccess">
+																	<appbutton text="Assign config"
+																		btnClass="btn-small btn-long" btnType="submit"
+																		(click)="Assign_config()"
+																		(click)="closeModal('myModal')" [isDisabled]="configListSelectedItem == additionalConfigData_id">
+																	</appbutton>
+																</ng-container>
+															</div>
+															<!-- <button *AppHasRole="role.adminAccess" type="submit" class="btn btn-primary col-2" (click)="Assign_config()" data-dismiss="modal">Assign config</button> -->
+
+														</div>
+														<div class="" *ngIf="toggle">
+															<json-editor [options]="editorOptions"
+																[data]="alertedData_json"></json-editor>
+														</div>
 													</div>
-												</a>
-												<!-- </a> -->
-												<!-- End:: Windows Online -->
-												<!-- Begin:: Windows Offline -->
-												<div *ngIf="windows_offline==0"
-													class="kt-widget14__legend" data-skin="dark"
-													data-toggle="kt-tooltip" data-placement="top" title="offline">
-													<span class="kt-widget14__bullet kt-bg-danger"></span>
-													<span class="kt-widget14__stats">
 
-														<span style="color: #f86c6b">
-															{{windows_offline}}
-														</span>
-
-													</span>
 												</div>
-												<a *ngIf="windows_offline>0"
-													[routerLink]="['/hosts']">
-													<div class="kt-widget14__legend" data-skin="dark"
-														data-toggle="kt-tooltip" data-placement="top" title="offline"
-														(click)="getByFilterId(false, 'windows')">
-														<span class="kt-widget14__bullet kt-bg-danger"></span>
-														<span class="kt-widget14__stats">
-
-															<span style="color: #f86c6b">
-																{{windows_offline}}
-															</span>
-
-														</span>
-													</div>
-												</a>
-												<!-- </a> -->
-												<!-- End:: Windows Offline -->
+												<!-- <div class="kt-separator kt-separator--border-dashed kt-separator--space-lg"></div> -->
 											</div>
-											<!-- Begin:: Windows -->
+											<div class="col-xl-2"></div>
 										</div>
-									</div>
+									</form>
+									<!--end:: Widgets/Tasks -->
+								</div>
+								<div class="modal-footer align-center">
+									<!-- <button type="button" (click)="close()" class="btn btn-outline-secondary" data-dismiss="modal">Close</button> -->
+									<appbutton text="Close" btnClass="btn-small-opaque" btnType="button"
+										(click)="closeModal('myModal')"></appbutton>
 								</div>
 							</div>
 						</div>
-							<!--end:: Windows Widgets -->
-						</div>
-						<div class="">
-							<div class="kt-portlet kt-portlet--border-bottom-brand linux_widget_body2" style="border-bottom: 3px solid #363638; margin-right:15px; margin-bottom:0px;min-height: 87px;min-width: 116px;">
-
-								<div class="ph-row">
-									<div class="ph-col-4"></div>
-									<div class="ph-col-8 empty"></div>
-									<div class="ph-col-6"></div>
-									<div class="ph-col-6 empty"></div>
-									<div class="ph-col-2"></div>
-									<div class="ph-col-10 empty"></div>
-									<div class="ph-col-6"></div>
-									<div class="ph-col-6 empty"></div>
-								  </div>
-							</div>
-							<!--begin:: Linux Widgets -->
-							<div class="linux_widget_body" style="display: none;">
-							<div class="kt-portlet kt-portlet--border-bottom-brand"
-								style="border-bottom: 3px solid #363638; margin-right:15px; margin-bottom:0px;min-height: 76px;min-width: 116px;">
-								<div class="kt-portlet__body" style="padding: 0px;" data-skin="dark"
-									data-toggle="kt-tooltip" data-placement="top" title="Linux Platforms">
-									<div class="kt-widget14" style="padding:10px;">
-
-										<div class="kt-widget14__content">
-											<!-- <i class="fab fa-5x fa-linux"></i> -->
-											<img alt="Logo" src="./assets/media/logo/Linux1.svg" height="40px"
-												width="30px" />
-											<!-- begin:: Linux -->
-											<div class="kt-widget14__legends"
-												style="line-height: 2.5rem; margin-top: auto;">
-												<!-- Begin:: Linux Online -->
-												<div *ngIf="ubuntu_online==0" class="kt-widget14__legend"
-													data-skin="dark" data-toggle="kt-tooltip" data-placement="top"
-													title="online">
-													<span class="kt-widget14__bullet kt-bg-success"></span>
-													<span class="kt-widget14__stats">
-
-														<span style="color: #1b9300">
-															{{ubuntu_online}}
-														</span>
-
-													</span>
-												</div>
-												<a *ngIf="ubuntu_online>0" [routerLink]="['/hosts']">
-													<div class="kt-widget14__legend" data-skin="dark"
-														data-toggle="kt-tooltip" data-placement="top" title="online"
-														(click)="getByFilterId(true, 'linux')">
-
-														<span class="kt-widget14__bullet kt-bg-success"></span>
-														<span class="kt-widget14__stats">
-															<span style="color: #1b9300">
-																{{ubuntu_online}}
-															</span>
-														</span>
-
-													</div>
-												</a>
-												<!-- End:: Linux Online -->
-
-												<!-- begin:: Linux Offline -->
-
-
-												<div *ngIf="ubuntu_offline==0" class="kt-widget14__legend"
-													data-skin="dark" data-toggle="kt-tooltip" data-placement="top"
-													title="offline">
-													<span class="kt-widget14__bullet kt-bg-danger"></span>
-													<span class="kt-widget14__stats">
-
-														<span style="color: #f86c6b">
-															{{ubuntu_offline}}
-														</span>
-
-													</span>
-												</div>
-												<a *ngIf="ubuntu_offline>0"
-													[routerLink]="['/hosts']">
-													<div class="kt-widget14__legend" data-skin="dark"
-														data-toggle="kt-tooltip" data-placement="top" title="offline"
-														(click)="getByFilterId(false, 'linux')">
-														<span class="kt-widget14__bullet kt-bg-danger"></span>
-														<span class="kt-widget14__stats">
-															<span style="color: #f86c6b">
-																{{ubuntu_offline}}
-															</span>
-														</span>
-													</div>
-												</a>
-
-												<!-- End:: Linux Offline -->
-											</div>
-											<!-- End:: Linux -->
-
-										</div>
-									</div>
-								</div>
-							</div>
-							</div>
-							<!--end:: Linux Widgets-->
-						</div>
-						<div class="">
-							<div class="kt-portlet kt-portlet--border-bottom-brand apple_widget_body2" style="border-bottom: 3px solid #8e8e93; margin-right:15px; margin-bottom:0px;min-height: 87px;min-width: 116px;">
-								<div class="ph-row">
-									<div class="ph-col-4"></div>
-									<div class="ph-col-8 empty"></div>
-									<div class="ph-col-6"></div>
-									<div class="ph-col-6 empty"></div>
-									<div class="ph-col-2"></div>
-									<div class="ph-col-10 empty"></div>
-									<div class="ph-col-6"></div>
-									<div class="ph-col-6 empty"></div>
-								  </div>
-							</div>
-							<!--begin:: Apple Widgets -->
-							<div class="apple_widget_body" style="display: none;">
-							<div class="kt-portlet kt-portlet--border-bottom-brand"
-								style="border-bottom: 3px solid #8e8e93; margin-right:15px; margin-bottom:0px;min-height: 76px;min-width: 116px;">
-								<div class="kt-portlet__body" style="padding: 0px;" data-skin="dark"
-									data-toggle="kt-tooltip" data-placement="top" title="Darwin Platforms">
-									<div class="kt-widget14" style="padding:10px;">
-
-										<div class="kt-widget14__content kt-widget21__icon">
-											<i class="fab fa-4x fa-apple" style="color: #8e8e93;"></i>
-											<!-- Begin:: Mac -->
-											<div class="kt-widget14__legends"
-												style="line-height: 2.5rem; margin-top: auto;">
-
-												<div *ngIf="darwins_online==0" class="kt-widget14__legend"
-													data-skin="dark" data-toggle="kt-tooltip" data-placement="top"
-													title="online">
-													<span class="kt-widget14__bullet kt-bg-success"></span>
-													<span class="kt-widget14__stats">
-
-														<span style="color: #1b9300">
-															{{darwins_online}}
-														</span>
-
-													</span>
-												</div>
-												<a *ngIf="darwins_online>0" [routerLink]="['/hosts']">
-													<div class="kt-widget14__legend" data-skin="dark"
-														data-toggle="kt-tooltip" data-placement="top" title="online"
-														(click)="getByFilterId(true, 'darwin')">
-														<span class="kt-widget14__bullet kt-bg-success"></span>
-														<span class="kt-widget14__stats">
-
-															<span style="color: #1b9300">
-																{{darwins_online}}
-															</span>
-
-														</span>
-													</div>
-												</a>
-												<!-- End:: Mac Online -->
-
-												<!-- begin:: Mac Offline -->
-												<!-- <a [routerLink]="['/nodes']" id="div_rule"> -->
-												<div *ngIf="darwins_offline==0" class="kt-widget14__legend"
-													data-skin="dark" data-toggle="kt-tooltip" data-placement="top"
-													title="offline">
-													<span class="kt-widget14__bullet kt-bg-danger"></span>
-													<span class="kt-widget14__stats">
-														<span style="color: #f86c6b">
-															{{darwins_offline}}
-														</span>
-													</span>
-												</div>
-												<a *ngIf="darwins_offline>0"
-													[routerLink]="['/hosts']">
-													<div class="kt-widget14__legend" data-skin="dark"
-														data-toggle="kt-tooltip" data-placement="top" title="offline"
-														(click)="getByFilterId(false, 'darwin')">
-														<span class="kt-widget14__bullet kt-bg-danger"></span>
-														<span class="kt-widget14__stats">
-
-															<span style="color: #f86c6b">
-																{{darwins_offline}}
-															</span>
-
-														</span>
-													</div>
-												</a>
-												<!-- End:: Mac Offline -->
-											</div>
-											<!-- End:: Mac -->
-										</div>
-									</div>
-								</div>
-							</div>
-							</div>
-							<!--end:: Apple Widgets -->
-						</div>
-						<!-- All Networks -->
-
-
 					</div>
-					<!--End::Section-1-->
+					<!-- Modal Ends -->
+
 					<div class="kt-portlet__head-toolbar">
 						<div class="kt-portlet__head-wrapper">
-							<div class="kt-portlet__head-actions" id="exportData">
-
+							<div class="kt-portlet__head-tabs">
+								<ul class="nav nav-tabs nav-tabs-line nav-tabs-line-success" role="tablist">
+									<li class="nav-item">
+										<a class="nav-link" id="windows" style="cursor: pointer;"
+											data-toggle="tab" (click)="setStateFilter('Active')" (click)="setActiveTab('Active')" role="tab" [ngClass]="activeTab == 'Active'? 'active' : '' ">Active</a>
+									</li>
+									<li class="nav-item">
+										<a class="nav-link" id="linux" style="cursor: pointer;" data-toggle="tab"
+											(click)="setStateFilter('Removed Hosts')" (click)="setActiveTab('Archived')" role="tab" [ngClass]="activeTab == 'Archived'? 'active' : '' ">Archived</a>
+									</li>
+								</ul>
 							</div>
 						</div>
 					</div>
 				</div>
 				<div id="container" style="display:none;"></div>
-				<div class="kt-portlet__body">
-				<div class="row">
-				<div class="col-md-4"></div>
-				<div class="col-md-2">
+				<div class="kt-portlet__body tbl-bg custom-margin-body-inner pb-0">
+					<div class="row">
+						<div class="col-md-6 row-filter-search">
+							<single-select label="Platform: "
+								[options]="platformOptions" [formControl]="platformSelectControl"
+								(valueChange)="getByFilterId(selectedState,selectedStatus,$event)" [(ngModel)]="selectedPlatform" ngDefaultControl>
+							</single-select>
+							<single-select  *ngIf="this.selectedState != 1" label="Host Status: "
+								[options]="stateOptions" [formControl]="stateSelectControl"
+								(valueChange)="setStateFilter($event)" [(ngModel)]="selectedStatusFilter" ngDefaultControl>
+							</single-select>
+						</div>
+						<div id="Search" class="col-md-6 row-filter-search element-right">
+							<search (keyup.enter)="tableSearch()" (valueChange)='tableSearch()' [textInput]="searchTerm"></search>
+						</div>
 
-				</div>
-				</div>
-
-					<!-- end:: Search -->
-					<!-- begin:: Table -->
-
-					 <table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable row-border hover" id="host_table">
-						<thead>
-						<tr role="row">
-								<th style="min-width: 100px">Host Name</th>
-								<th>Online</th>
-								<th>Health</th>
-								<th style="min-width: 204px">Operating System</th>
-								<th style="min-width: 80px">IP Address</th>
-								<th *AppHasRole="role.adminAccess" class="dt-justify" style="min-width: 200px" rowspan="1" colspan="1">Tags</th>
-								<th *AppHasRole="role.userAccess" class="dt-justify" style="min-width: 200px" rowspan="1" colspan="1">Tags</th>
-								<th style="min-width: 20px" *AppHasRole="role.adminAccess" >Action</th>
+					</div>
+					<table datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger"
+						class="table table-hover table-checkable row-border hover" id="host_table">
+						<thead style="background-color: #fff;">
+							<tr role="row" *ngIf="selectedCount > 0;">
+								<th class="chk-pad close-icon" (click)="removeSelectedHost()">
+									<i class="fa fa-times fa-lg" aria-hidden="true"></i>
+								</th>
+								<th style="color:#1F1F1F !important"> {{selectList.length}} selected </th>
+								<th></th>
+								<th></th>
+								<th></th>
+								<th></th>
+								<th *AppHasRole="role.adminAccess"></th>
+								<th *ngIf="activeTab == 'Active'">
+									<div *AppHasRole="role.adminAccess">
+										<i title="Remove Host" (click)="disableBulkHost()"
+											class="fa fa fa-trash-alt delete-icon">
+										</i>
+									</div>
+								</th>
+								<th *ngIf="activeTab == 'Archived'">
+									<div *AppHasRole="role.adminAccess">
+										<i title="Remove Host" (click)="deleteBulkHost()"
+											class="fa fa fa-trash-alt delete-icon">
+										</i>
+									</div>
+								</th>
+							</tr>
+							<tr role="row">
+								<th class="chk-pad th-width-2">
+										<div class="custom-control mt-2 custom-checkbox">
+											<input type="checkbox" [(ngModel)]="masterSelected" (change)="checkUncheckAll()"
+											 class="custom-control-input" id="masterCheck">
+											<label class="custom-control-label" for="masterCheck"></label>
+										</div>
+								</th>
+								<th class="th-width-15 pl-8">Host Name</th>
+								<th class="left-pad text-center th-width-5">Status</th>
+								<th class="left-pad text-center pr-18 th-width-5 img-bg-right">Health</th>
+								<th class="th-width-15 pl-8 img-bg-75">Operating System</th>
+								<th class="th-width-10 pl-8">IP Address</th>
+								<th *AppHasRole="role.adminAccess" class="dt-justify th-width-40 pl-8" rowspan="1"
+									colspan="1">Tags</th>
+								<th *AppHasRole="role.userAccess" class="dt-justify th-width-45" rowspan="1"
+									colspan="1">Tags</th>
+								<th class="download-header th-width-5 pl-8">
+									<i class="fa fa-solid fa-download download-icon" (click)="download()" [ngClass]="hostmainvalue_data?.length === 0? 'display-none': '' "></i>
+								</th>
 							</tr>
 
 						</thead>
 						<tbody>
-							<tr *ngFor="let hostdata of hostmainvalue_data; let i = index " role="row">
-								<td >
-									<a *ngIf="hostdata.is_active == true;" [routerLink]="['./',hostdata.id]"
-										class="active" data-skin="dark" data-toggle="kt-tooltip" data-placement="top"
-										title="Click -> Host Details"
-										>{{hostdata.display_name}}</a>
-									<a *ngIf="hostdata.is_active == false;" [routerLink]="['./', hostdata.id]"
-										class="active" data-skin="dark" data-toggle="kt-tooltip" data-placement="top"
-										title="Click -> Host Details"
-										>{{hostdata.display_name}}</a>
+							<tr>
+
+							<tr>
+							<tr *ngFor="let hostdata of hostmainvalue_data; let i = index " [ngClass]="{'row-selected':selectList.includes(hostdata.id) || selectedRow == hostdata.id,'row-opened':selectOpenedList.includes(hostdata.id)}" role="row" (click)="openDetailPane(hostdata.state,hostdata.id,hostdata, $event)">
+								<!-- <ng-container *ngIf="hostdata.state != 1 || (selectedTab == 2 && hostdata.state == 1)"> -->
+								<td class="chk-pad text-center">
+									<div class="custom-control custom-checkbox">
+										<input type="checkbox" [(ngModel)]="checklist[i].isSelected" (change)="isAllSelected(hostdata.id)"
+										 class="custom-control-input no-click-event" id="customCheck_{{i}}">
+										<label class="custom-control-label no-click-event" for="customCheck_{{i}}"></label>
+									</div>
 								</td>
-								<td  *ngIf="hostdata.is_active == true;" >
-									<i id="{{hostdata.host_identifier}}_online" class="fa fa-circle onlinehost" data-toggle="kt-tooltip" title="Status Online"></i>
+								<td class="host-link">
+									<a (click)="setState(hostdata.state)" (click)="fetchData(hostdata.id)"
+										(click)="toggleShowDiv(hostdata)" class="active" data-skin="dark"
+										data-toggle="kt-tooltip" data-placement="top"
+										title="Click -> Host Details">{{hostdata.display_name}}</a>
 								</td>
-					    	<td *ngIf="hostdata.is_active ==false ;"><i class="fa fa-circle" data-toggle="kt-tooltip" title="Status Offline" style="color: #e60f0db3; margin-left: 15px;"></i>
-                                 </td>
-                                  <td *ngIf="hostdata.alerts_count !=0 ;"><kbd data-toggle="tooltip" title="Unresolved Alerts" style="background-color: orange;border-radius: 15%;margin-left: 10px;"><strong>{{hostdata.alerts_count}}</strong></kbd>
-                </td>
-                <td *ngIf="hostdata.alerts_count ==0 ;"><i class="fa fa-check-circle" data-toggle="kt-tooltip" title="No Alerts" style="color: green;margin-left: 15px;margin-top: 8px;"></i></td>
+								<td *ngIf="hostdata.is_active == true && hostdata.state == 0" class="text-center">
+									<i id="{{hostdata.host_identifier}}_online" class="fa fa-check-circle onlinehost"
+										data-toggle="kt-tooltip" title="Status Online"></i>
+								</td>
+								<td *ngIf="hostdata.is_active ==false && hostdata.state == 0" class="text-center"><i
+										class="fa fa-check-circle" data-toggle="kt-tooltip" title="Status Offline"
+										style="color: #8e8e93;"></i>
+								</td>
+								<td *ngIf="hostdata.state == 1" class="text-center">
+									<i id="{{hostdata.host_identifier}}_removed" class="fa fa-check-circle removedhost"
+										data-toggle="kt-tooltip" title="Removed Host"></i>
+								</td>
+								<td *ngIf="hostdata.alerts_count !=0 ;" class="text-center"><kbd data-toggle="tooltip"
+										title="Unresolved Alerts"
+										style="background-color: orange;border-radius: 15%;"><strong>{{hostdata.alerts_count}}</strong></kbd>
+								</td>
+								<td *ngIf="hostdata.alerts_count ==0 ;" class="text-center"><i class="fa fa-check-circle color-green"
+										data-toggle="kt-tooltip" title="No Alerts"></i>
+								</td>
 
 								<td>
 									<span *ngIf="hostdata.os_info.platform == 'windows'" class='logo-color menu-icon'
 										style='font-weight: 400;'>
-										<img alt='' src='./assets/media/logo/windows.svg' height='19px' width='16px' />
+										<img alt='' src='./assets/media/logo/windows_icon.svg' height='19px'
+											width='16px' />
 										<span>&ensp;{{hostdata.os_info.name}}</span>
 									</span>
 									<span *ngIf="hostdata.os_info.platform == 'darwin'" class='logo-color menu-icon'
 										style='font-weight: 400;'>
-										<i class='fab fa-apple' style='font-size: 18px; color: #8e8e93;'></i>
+										<i class='fab fa-apple' style='font-size: 18px; color: #999999;'></i>
 										<span>&ensp;{{hostdata.os_info.name}}</span>
 									</span>
 									<span *ngIf="hostdata.os_info.name == 'windows'" class='logo-color menu-icon'
@@ -381,39 +227,70 @@
 										<img alt='' src='./assets/media/logo/windows.svg' height='19px' width='16px' />
 										<span>&ensp;{{hostdata.os_info.name}}</span>
 									</span>
-									<span *ngIf="!['windows','darwin'].includes(hostdata.os_info.platform)" class='logo-color menu-icon'
-										style='font-weight: 400;'>
-										<img alt='' src='./assets/media/logo/Linux1.svg' height='19px' width='16px' />
+									<span *ngIf="!['windows','darwin'].includes(hostdata.os_info.platform)"
+										class='logo-color menu-icon' style='font-weight: 400;'>
+										<img alt='' src='./assets/media/logo/linux_icon.svg' height='19px'
+											width='16px' />
 										<span>&ensp;{{hostdata.os_info.name}}</span>
 									</span>
 								</td>
 								<td>
 									<div style="color: #25282a" class="text-wrap width">{{hostdata.last_ip}}</div>
 								</td>
-								<td *AppHasRole="role.adminAccess"  class="dt-justify">
-									<tag-input [theme]="'foundation-theme'"  [(ngModel)]='hostdata.tags'  [secondaryPlaceholder]="'Add tags here...'" [placeholder]="'Add tags here...'"
-										(onAdd)="hosts_addTag(hostdata.tags,hostdata.id)" [validators]="validators" [errorMessages]="errorMessages"
-										(onRemove)="hosts_removeTag($event,hostdata.id)" [modelAsStrings]="true"
-										style="font-family: 'Poppins', sans-serif !important;">
+								<td *AppHasRole="role.adminAccess" class="dt-justify no-click-event">
+									<tag-input (keypress)="omitSpecialChar($event)" class="no-click-event zero-margin zero-padding font-roboto" [theme]="'foundation-theme'" [(ngModel)]='hostdata.tags'
+										[secondaryPlaceholder]="'Add tags here...'" [placeholder]="'Add tags here...'"
+										(onAdd)="hosts_addTag(hostdata.tags,hostdata.id)" [validators]="validators"
+										[errorMessages]="errorMessages" (onRemove)="hosts_removeTag($event,hostdata.id)"
+										[modelAsStrings]="true" (paste)="validatePastedData($event);">
 									</tag-input>
 								</td>
-								<td *AppHasRole="role.userAccess" class="dt-justify" style="height: 35px; width: 420px;">
-									<label class="tagAnalyst">
-										{{hostdata?.tags}}
-									</label>
+								<td *AppHasRole="role.userAccess" class="dt-justify">
+									<tag-input (keypress)="omitSpecialChar($event)" class="no-click-event no-border-bottom zero-margin zero-padding font-roboto width-fit-content" [theme]="'foundation-theme'" [(ngModel)]='hostdata.tags'
+										[modelAsStrings]="true" [removable]='false' [editable]='false' [inputClass]="'display-none'">
+									</tag-input>
 								</td>
-								<td  *AppHasRole="role.adminAccess" >
-									<i style="font-size:12px;color:orange;cursor: pointer;padding-left:15px;" (click) ="disableHost(hostdata.host_identifier)" title="Remove Host" class="fa fa fa-trash-alt"></i>
+								<td *AppHasRole="role.adminAccess">
+									<div ngbDropdown class="div-center no-click-event" [display]=" hostmainvalue_data.length > 1 ? 'static': 'dynamic' " [container]=" hostmainvalue_data.length < 2 ? 'body': '' ">
+										<a class="status no-click-event" ngbDropdownToggle id="dropdownMenuButton"
+											data-toggle="dropdown" aria-haspopup="true"
+											style='padding-top:4px;padding-bottom:4px' (click)="fetchData(hostdata.id)">
+											<i class="fas fa-ellipsis-v resolve-circle-check no-click-event" aria-hidden="true"></i>
+										</a>
+										<div id="dropdown" class="dropdown-menu" ngbDropdownMenu
+											aria-labelledby="dropdownMenuButton">
+											<ng-container *ngIf="hostdata.state == 0">
+												<a class="dropdown-item" ngbDropdownItem (click)="toggleShowDiv(hostdata)" >Open</a>
+												<a class="dropdown-item no-click-event" ngbDropdownItem (click)="openModal()">View Configuration</a>
+												<a class="dropdown-item no-click-event" ngbDropdownItem (click) ="disableHost(hostdata)">Disable</a>
+											</ng-container>
+											<ng-container *ngIf="hostdata.state == 1">
+												<a class="dropdown-item" ngbDropdownItem (click)="toggleShowDiv(hostdata)" >Open</a>
+												<a class="dropdown-item no-click-event" ngbDropdownItem (click) ="addNodes(hostdata.id)" >Restore Host</a>
+												<a class="dropdown-item no-click-event" ngbDropdownItem (click) ="deleteHost(hostdata.id, hostdata.display_name)">Delete Host</a>
+											</ng-container>
+										</div>
+										<!-- <div *ngIf="hostdata.state == 1" class="dropdown-menu" ngbDropdownMenu >
+											<i (click) ="addNodes(hostdata.id)" style="padding-left: 0px;" title="Restore Host" class="fa fa-check-circle delete-icon"></i>
+											<i (click) ="deleteHost(hostdata.id, hostdata.display_name)" title="Delete Host"  class="fa fa fa-trash-alt delete-icon"></i>
+										</div> -->
+									</div>
 
 								</td>
+
+								<td *AppHasRole="role.userAccess"></td>
+								<!-- </ng-container> -->
 							</tr>
+
 						</tbody>
+						<tr role="row" class="text-center" *ngIf="hostmainvalue_data?.length === 0">
+							<td colspan="8" style="font-size: larger;">
+								{{errorMessage}}
+							</td>
+						</tr>
+
 					</table>
-					<div  *ngIf="hostmainvalue_data?.length === 0">
-						<span style=" text-align: center; padding-left: 450px;font-size: larger;font-weight: 600;">
-						 {{errorMessage}}
-						</span>
-					  </div>
+
 					<!-- end:: Table -->
 
 
@@ -423,6 +300,65 @@
 
 			</div>
 
+
+		</div>
+	</div>
+</div>
+<div class="create" style="overflow-y: auto;" id="slideAlertDetail" [@flyInOutRTL]="isVisible ? true : false" [hidden]="!isVisible">
+	<div class="kt-portlet kt-portlet--last kt-portlet--responsive-mobile" id="kt_page_portlet">
+		<div class="kt-portlet__head pane-header kt-portlet__head--lg kt-portlet__head-responsive"
+			style="padding-right: 0px;background-color: #051E39;">
+			<div class="row col-12 kt-portlet__head-label " style="padding-right: 0px;">
+				<div class="row col-12" style="padding: 0px;">
+					<div class="col-12" style="padding: 0px;">
+						<span class="kt-portlet__head-icon" (click)="toggleHideDiv();" title='Close Detail Pane'>
+							<img src='./assets/media/icons/icon_close.svg' class="icon-close myicon" />
+						</span>
+						<span class="kt-portlet__head-icon" style="padding-left: 10px;">
+
+							<a class='logo-color menu-icon' style='font-weight: 400;' [routerLink]="['./',hostID]"
+								[state]="{ hostState: hostData?.state }" data-toggle='kt-tooltip' data-placement='top'
+								title='Open Host'>
+								<img src='./assets/media/icons/icon_open-new.svg' class="icon-expand myicon" /></a>
+						</span>
+						<div style="float: right;"  ngbDropdown class="dropdown show">
+							<!-- Three dots dropdown icon -->
+							<ng-container *AppHasRole="role.adminAccess">
+								<a class="status" href="javascript:void(0);" ngbDropdownToggle id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
+									aria-expanded="false" style='width: 90px;padding-top:4px;padding-bottom:4px'>
+									<i class="fas fa-ellipsis-v" aria-hidden="true" style="color: white;"></i>
+								</a>
+							<div class="dropdown-menu custom-pane-dropdown" ngbDropdownMenu aria-labelledby="dropdownMenuButton">
+								<ng-container *ngIf="hostData?.state == 0">
+									<a class="dropdown-item" ngbDropdownItem (click)="openModal()">View Configuration</a>
+									<a class="dropdown-item" ngbDropdownItem (click) ="disableHost(hostData)">Disable</a>
+								</ng-container>
+								<ng-container *ngIf="hostData?.state == 1">
+									<a class="dropdown-item" ngbDropdownItem (click) ="addNodes(hostData.id)" >Restore Host</a>
+									<a class="dropdown-item" ngbDropdownItem (click) ="deleteHost(hostData.id, hostData.display_name)">Delete Host</a>
+								</ng-container>
+							</div>
+							</ng-container>
+							<div *AppHasRole="role.userAccess">
+								<a class="status" *ngIf="hostData?.state == 0"  ngbDropdownToggle id="dropdownMenuButton"
+								data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+								style='width: 90px;padding-top:4px;padding-bottom:4px'>
+								<img src='./assets/media/icons/icon_more.svg' class="icon-more myicon" />
+							</a>
+							<div class="dropdown-menu" style="max-width: 40px !important;" ngbDropdownMenu
+								aria-labelledby="dropdownMenuButton">
+								<ng-container *ngIf="hostData?.state == 0">
+									<a class="dropdown-item" ngbDropdownItem (click)="openModal()">View Configuration</a>
+								</ng-container>
+							</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="">
+			<app-nodes *ngIf="enableChild" [hostData]="hostData"></app-nodes>
 		</div>
 	</div>
 </div>

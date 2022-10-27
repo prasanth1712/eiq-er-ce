@@ -6,7 +6,7 @@ import fnmatch
 
 import six
 
-from polylogyx.models import PhishTank,db
+from polylogyx.models import db
 
 
 logger = logging.getLogger(__name__)
@@ -374,15 +374,6 @@ class NotMatchesWildCardCondition(LogicCondition):
         return fnmatch.fnmatch(value,self.expected)
 
 
-class MatchesPhishTankCondition(LogicCondition):
-
-    def compare(self, value):
-        result = db.session.query(PhishTank).filter(PhishTank.url.ilike('%'+value+'%')).first()
-        if result:
-            return True
-        return False
-
-
 # Needs to go at the end
 OPERATOR_MAP = {
     'equal': EqualCondition,
@@ -402,7 +393,6 @@ OPERATOR_MAP = {
     'matches_regex': MatchesRegexCondition,
     'not_matches_regex': NotMatchesRegexCondition,
     'is_ascii': IsAsciiCondition,
-    'matches_phish_tank': MatchesPhishTankCondition,
     'matches_wildcard': MatchesWildCardCondition,
 
     'not_matches_wildcard': NotMatchesWildCardCondition,

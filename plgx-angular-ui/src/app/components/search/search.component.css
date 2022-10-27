@@ -129,3 +129,15 @@ table.dataTable thead th, table.dataTable thead td {
 .ft-sz{
   font-size: 12px !important;
 }
+#table_noresults{
+  text-align: center;
+  font-size: 16px;
+  color: #000000;
+}
+.container-body{
+  height: calc(100vh - 72px);
+  padding-bottom: 0px !important;
+}
+.kt-section.kt-section--first{
+  margin-bottom: 1rem;
+}

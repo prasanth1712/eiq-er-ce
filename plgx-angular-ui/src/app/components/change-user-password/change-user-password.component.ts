@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { FormControl, FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 import { CommonapiService } from '../../dashboard/_services/commonapi.service';
 import { CommonVariableService } from '../../dashboard/_services/commonvariable.service';
@@ -14,6 +14,8 @@ import { Router, CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, UrlTr
   styleUrls: ['./change-user-password.component.css']
 })
 export class ChangeUserPasswordComponent implements OnInit {
+  @Input() insideUserProfile: boolean = false
+  @Output() viewParent = new EventEmitter<string>();
   changePassword: FormGroup;
   submitted = false;
   resetPassword:Boolean=JSON.parse(localStorage.getItem('reset_password'));
@@ -44,12 +46,13 @@ export class ChangeUserPasswordComponent implements OnInit {
 
   }
 
+
   get f() { return this.changePassword.controls; }
 
   onSubmit() {
     this.submitted = true;
     if (this.f.existing_Password.value==undefined || this.f.new_Password.value==undefined || this.f.confirm_new_Password.value==undefined ||this.f.existing_Password.value=='' || this.f.new_Password.value=='' || this.f.confirm_new_Password.value=='') {
-      this.toastr.error(" Please provide  Existing Password/New Password/ Confirm New Password ",'',{disableTimeOut:true});
+      this.toastr.error(" Please provide  Existing Password/New Password/ Confirm New Password ",'');
     }  else {
       Swal.fire({
         title: 'Are you sure want to update?',
@@ -88,4 +91,8 @@ export class ChangeUserPasswordComponent implements OnInit {
   goBack(){
     this._location.back();
    }
+  
+   toggle() {
+    this.viewParent.emit(); //emit event here
+  } 
 }

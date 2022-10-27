@@ -1,0 +1,443 @@
+<!-- begin:: Content -->
+<div class="kt-grid kt-grid--hor kt-grid--root">
+  <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
+    <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
+      <!-- begin:: Portlet -->
+      <div class="kt-portlet kt-portlet--mobile kt-portlet--responsive-mobile">
+        <!-- begin:: Head -->
+        <div class="kt-portlet__head">
+          <div class="kt-portlet__head-label">
+            <span class="kt-portlet__head-icon">
+              <i class="kt-font-brand fa fa-tag"></i>
+            </span>
+            <h3 class="kt-portlet__head-title">
+              Tagged
+              <!-- Tagged <strong>{{ tags_val }}</strong> -->
+            </h3>
+          </div>
+          <div class="kt-portlet__head-toolbar">
+            <div class="kt-portlet__head-wrapper">
+              <!-- <a href="javascript:void(0);" (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page">
+                <i class="fas fa-chevron-left back_icon_align"></i>
+                Back
+              </a> -->
+              <appbutton (click)="goBack()" text="Back" icon="fa-chevron-left" btnClass="btn-small-light" btnType="button"></appbutton>
+            </div>
+          </div>
+        </div>
+        <!-- end:: Head -->
+        <!-- begin:: Body -->
+        <div class="kt-portlet__body" style="color: #646c9a;">
+          <!--begin: host/Tagged -->
+          <div class="kt-portlet">
+            <div class="kt-portlet__body">
+
+            <div class="row mb-3">
+              <div class="col-6">
+                <h4 class="text-truncate" style="max-width: 400px;">Hosts Tagged <strong data-toggle="kt-tooltip" data-placement="top" title="{{ tags_val }}">{{ tags_val }}</strong></h4>
+              </div>
+              <div *AppHasRole="role.adminAccess" class="col-6">
+                <div class="kt-form__actions kt-form__actions--center" style="float:right">
+                  <!-- <button type="submit" class="btn btn-success" (click)='OpenAssignModal()'>Assign To Host</button> -->
+                  <appbutton btnType="submit" btnClass="btn-small btn-long" text="Assign To Host" (click)='OpenAssignModal()'></appbutton>
+               </div>
+           </div>
+            </div>
+            <div *ngIf="host_data_val?.length>0" class="">
+              <table style=" font-weight: 500;font-size: 13px;" class="table table-hover table-striped- table-condensed">
+                <thead >
+                  <tr>
+                    <th>Host Name</th>
+                    <th>Operating System</th>
+                    <th>IP Address</th>
+                    <th>Tags</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let host of host_data_val">
+                    <td>
+                      <a [routerLink]="['/hosts/', host.id]">{{host.display_name}}</a>
+                    </td>
+                    <td>{{host.os_info.name}}</td>
+                    <td>{{host.last_ip}}</td>
+                    <td *AppHasRole="role.adminAccess" >
+                      <tag-input [theme]="'foundation-theme'"  [validators]="validators" [errorMessages]="errorMessages"  [(ngModel)]='host.tags' (onAdd)="hosts_addTag(host.tags,host.id)" (onRemove)="hosts_removeTag($event,host.id)" [modelAsStrings]="true"></tag-input>
+                    </td>
+                    <td *AppHasRole="role.userAccess">{{host?.tags}}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div *ngIf="host_data_val?.length==0" class="">
+              <p class="txt-clr">No hosts.</p>
+            </div>
+            </div>
+          </div>
+          <div class="modal" id="tagsBulkAssignModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="display: none;z-index: 910; position: fixed; background-color: hsla(0, 0%, 0%, 0.45)">
+            <div class="modal-dialog modal-lg" role="document">
+              <div class="modal-content" style="width:650px;margin:auto" >
+                <div class="modal-header">
+                   <h5 class="title kt-portlet__head-title">Assign To Host</h5>
+                   <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="closeAssignModal()"></button>
+                </div>
+                <div class="modal-body kt-scroll" data-scroll="true" data-height="200" style="overflow:visible" data-scrollbar-shown="true">
+                  <form class="form form-horizontal" [formGroup]="SelectorForm" (ngSubmit)="onSubmit()">
+                    <div class="form-group row required form-group_margin">
+                        <label class="col-md-3 col-form-label">Select Host</label>
+                        <div class="col-7">
+                          <angular2-multiselect [data]="hostDropdownList"  formControlName="hostName"
+                           [settings]="hostDropdownSettings"
+                           (onDeSelectAll)="onDeSelectAllHostName($event)" promptSearch>
+                         </angular2-multiselect>
+                        </div>
+                    </div>
+                    <div class="form-group row required form-group_margin">
+                        <label class="col-md-3 col-form-label">Select OS</label>
+                        <div class="col-7">
+                          <angular2-multiselect [data]="osNameList"
+                                        [settings]="osNameListSettings"
+                                        (onDeSelectAll)="onDeSelectAllOsName($event)" formControlName="osName" promptSearch>
+                          </angular2-multiselect>
+                        </div>
+                    </div>
+                   <div class="modal-footer">
+                    <!-- <button type="submit" class="btn btn-primary" data-dismiss="modal">Assign</button>
+                    <button type="button" class="btn btn-outline-secondary" (click)="closeAssignModal()" data-dismiss="modal">Close</button> -->
+
+
+                    <appbutton btnType="submit" btnClass="btn-small" text="Assign" (click)="closeModal('tagsBulkAssignModal')"></appbutton>
+                    <appbutton text="Close" btnClass="btn-small-light" btnType="button" (click)="closeAssignModal()"></appbutton>
+                  </div>
+                  </form>
+                </div>
+             </div>
+            </div>
+           </div>
+          <!--end: Host/Tagged -->
+          <!--begin: Packs/Tagged -->
+          <div class="kt-portlet">
+            <div class="kt-portlet__body">
+              <h4 class="text-truncate" style="max-width: 400px;">Packs Tagged <strong data-toggle="kt-tooltip" data-placement="top" title="{{ tags_val }}">{{ tags_val }}</strong></h4>
+             <!--Begin:: Content/Packs -->
+             <div *ngIf="pack_data_val?.length>0" class="">
+             <div class="row">
+               <div class="col-md-4">
+                 <!--begin::Portlet-->
+                 <div class="kt-portlet no-mar-botom portlet-body_align_pack">
+                   <div class="kt-portlet__body" style="padding: 0px;">
+                     <!--begin: Search Table -->
+                     <div class="">
+                       <div class="kt-input-icon kt-input-icon--left" style="margin-bottom: 10px;">
+                         <input type="text" class="form-control" placeholder="Search Packs here..." id="search_pack_name" (keyup)="searchPack($event.target.value)">
+                         <span class="kt-input-icon__icon kt-input-icon__icon--left">
+                           <span><i class="la la-search"></i></span>
+                         </span>
+                       </div>
+                     </div>
+                     <!--end: Search Table -->
+                     <div class="tagged_pack">
+                       <div class="">
+                         <!-- <h3>{{grouper}}</h3> -->
+                         <!--begin::Notifications-->
+                      <div *ngFor="let categoryPacks of packsCategoryDictionary"  id="search_query-name-list" style="cursor:pointer;" data-skin="dark" data-toggle="kt-tooltip" data-placement="top">
+                      <h3 class="fnt-green pt-2" >{{categoryPacks.category}}</h3>
+                      <div *ngFor="let packs of categoryPacks.packs" class="kt-notification conf-div" id="search_query-name-list" style="cursor:pointer;" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="{{packs}}">
+                           <div class="kt-notification__item-title list-group" [ngClass]="{'active': packdata_name == packs}"   (click)='getById_pack(packs)'>
+                              <a data-target="{{packs}}" class="kt-notification__item conf-link">
+                               <div class="kt-notification__item-details txt-fmly txt-trim">
+                                   {{ packs}}
+                               </div>
+                             </a>
+                           </div>
+                       </div>
+                      </div>
+                         <!--End::Notifications-->
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+                 <!--end::Portlet-->
+               </div>
+               <div class="col-md-8">
+                 <!--begin::Portlet-->
+                 <div class="kt-portlet no-mar-botom portlet-body_align__table" id="{{packdata_name}}">
+                   <div class="kt-portlet__head width-100">
+                     <div class="kt-portlet__head-label max-width-100">
+                       <span class="kt-portlet__head-icon">
+                       </span>
+                       <h3 class="kt-portlet__head-title txt-fmly text-truncate max-width-100">
+                         <!-- all-events-pack -->
+                         {{packdata_name}}
+                       </h3>
+                     </div>
+                   </div>
+                   <div class="kt-portlet__body" style="padding:10px;">
+                     <!-- begin:: Tags -->
+                     <span *AppHasRole="role.userAccess">{{pack_data?.tags}}</span>
+                     <tag-input *AppHasRole="role.adminAccess"  [validators]="validators" [errorMessages]="errorMessages"  [theme]="'foundation-theme'" [(ngModel)]='pack_data.tags' (onAdd)="pack_addTag(pack_data.tags,pack_data.id)" (onRemove)="pack_removeTag($event,pack_data.id)" [modelAsStrings]="true"></tag-input>
+                     <!-- end:: Tags -->
+                   </div>
+                   <div class="kt-portlet__body tagged_query">
+                     <div class="accordion accordion-solid" id="accordion-{{packdata_id}}">
+                       <!--begin::Portlet-->
+                       <div *ngFor="let queries of pack_data?.queries | keyvalue" class="kt-portlet__body" style="padding: 0px;">
+                         <!--begin::Accordion-->
+                         <div class="card right-conf-card" style="margin-bottom: 0.3rem;">
+                           <div class="collapsed bg-clr style-accordion-background" data-toggle="collapse" data-skin="dark" attr.data-target="#{{pack_data.name}}-query-{{queries.value.id}}" data-placement="top" title="{{ queries.value.name }}">
+                             {{ queries.value.name}}
+                             <a *AppHasRole="role.adminAccess"  [routerLink]="['/hostconfiguration/packs/','query',queries.value.id,'edit']" class="query_edit" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Edit Query">
+                               <img class="pull-right" src="./assets/media/icons/edit-document.svg" height="24" width="24" alt="">
+                             </a>
+                           </div>
+                           <div id="{{pack_data.name}}-query-{{queries.value.id}}" class="collapse" attr.data-parent="#accordion-{{pack_data.id}}">
+                             <div class="card-body txt-fmly">
+                               <table class="table table-striped- table-bordered table-hover table-checkable packs-table">
+                                 <tbody>
+                                   <tr>
+                                     <td class="head-table">Query</td>
+                                     <td class="conf-table-val">
+                                       <div>
+                                         <div class="sql hljs">
+                                           <span class="hljs-keyword desc-background_packs">{{queries.value.sql}}</span>
+                                         </div>
+                                       </div>
+                                     </td>
+                                   </tr>
+                                   <tr>
+                                     <td class="head-table" style="width:145px">Interval <span class="intrvl-fnt-md">(in secs)</span></td>
+                                     <td class="conf-table-val">
+                                       <div class="desc-background_packs">{{queries.value.interval}}</div>
+                                     </td>
+                                   </tr>
+                                   <tr>
+                                     <td class="head-table">Platform</td>
+                                     <td class="conf-table-val">
+                                       <div class="desc-background_packs">{{queries.value.platform}}
+                                         <span class="col-md-1"></span>
+                                         <appbutton text="Run Live" *AppHasRole="role.adminAccess" (click)="runAdHoc(queries.value.id)" btnClass="btn-small" btnType="Button"  ></appbutton>
+                                       </div>
+                                     </td>
+                                   </tr>
+                                   <tr>
+                                     <td class="head-table">Description</td>
+                                     <td class="conf-table-val">
+                                       <div class="desc-background_packs truncate_packs">{{queries.value.description}}</div>
+                                     </td>
+                                   </tr>
+                                   <tr>
+                                     <td class="head-table">Version</td>
+                                     <td>{{queries.value.version}}</td>
+                                   </tr>
+                                   <tr>
+                                     <td class="head-table">Value</td>
+                                     <td>{{queries.value.value}}</td>
+                                   </tr>
+                                   <tr>
+                                     <td class="head-table">Packs</td>
+                                     <td>
+                                      <span class="label_pack pack-spacing break-word-all" *ngFor="let pack_name of queries?.value?.packs">
+                                        <a (click)="navigatePacks(pack_name)" class="fnt-green">{{pack_name}}</a>
+                                        </span>
+                                     </td>
+                                   </tr>
+                                   <tr>
+                                     <td class="head-table">Tags</td>
+                                     <td *AppHasRole="role.adminAccess" >
+                                       <tag-input [theme]="'foundation-theme'" [validators]="validators" [errorMessages]="errorMessages" [(ngModel)]='queries.value.tags' (onAdd)="queries_addTag(queries.value.tags,queries.value.id)" (onRemove)="queries_removeTag($event,queries.value.id)" [modelAsStrings]="true"></tag-input>
+                                     </td>
+                                     <td *AppHasRole="role.userAccess">{{queries.value.tags}}
+                                    </td>
+                                   </tr>
+                                 </tbody>
+                               </table>
+                             </div>
+                           </div>
+                         </div>
+                         <!--Begin:: Accordion -->
+                       </div>
+                       <!--end::Portlet-->
+                     </div>
+                   </div>
+                 </div>
+                 <!--end::Portlet-->
+               </div>
+             </div>
+             </div>
+             <!--end:: Content/Packs -->
+             <div *ngIf="pack_data_val?.length==0" class="">
+               <p class="txt-clr">No packs currently associated with this Tag. Use the tag functionality to associate hosts with packs.</p>
+             </div>
+            </div>
+          </div>
+          <!--end: Packs/Tagged -->
+          <!--Begin:: Query/Tagged -->
+          <div class="kt-portlet">
+            <div class="kt-portlet__body">
+            <h4 class="text-truncate" style="max-width: 400px;">Queries Tagged <strong data-toggle="kt-tooltip" data-placement="top" title="{{ tags_val }}">{{ tags_val }}</strong></h4>
+             <!--Begin:: Content/Queries -->
+             <div *ngIf="query_data_val?.length>0" class="">
+               <div class="kt-content">
+                 <div class="row">
+                   <!--begin::Portlet/col-4-->
+                   <div class="col-md-4">
+                     <!--begin::Portlet-->
+                     <div class="kt-portlet no-mar-botom portlet-body_align">
+                       <div class="kt-portlet__body" style="padding: 0px;">
+                         <!--begin: Search Table -->
+                         <div class="">
+                           <div class="kt-input-icon kt-input-icon--left" style="margin-bottom: 10px;">
+                             <input type="text" class="form-control" placeholder="Search Queries here..." id="search_query_name" [(ngModel)]="term_query">
+                             <span class="kt-input-icon__icon kt-input-icon__icon--left">
+                               <span><i class="la la-search"></i></span>
+                             </span>
+                           </div>
+                         </div>
+                         <!--end: Search Table -->
+                         <!--begin::Notifications-->
+                         <div class="tagged_list_query">
+                            <div *ngFor="let query of query_data_val | keyvalue |filter:term_query" class="kt-notification conf-div" id="search_query-name-list" style="cursor:pointer; " data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="{{query.value.name}}">
+                              <div class="list-group"  [ngClass]="{'active': selectedItem_query == query.value.id}" (click)='getById(query.value.id)' >
+                              <a data-target="{{query.value.id}}" class="kt-notification__item conf-link-query break-word-all" >
+                               <div class="kt-notification__item-icon">
+                                 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
+                                   <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                                     <rect id="bound" x="0" y="0" width="24" height="24" />
+                                     <path
+                                       d="M10.5,5 L20.5,5 C21.3284271,5 22,5.67157288 22,6.5 L22,9.5 C22,10.3284271 21.3284271,11 20.5,11 L10.5,11 C9.67157288,11 9,10.3284271 9,9.5 L9,6.5 C9,5.67157288 9.67157288,5 10.5,5 Z M10.5,13 L20.5,13 C21.3284271,13 22,13.6715729 22,14.5 L22,17.5 C22,18.3284271 21.3284271,19 20.5,19 L10.5,19 C9.67157288,19 9,18.3284271 9,17.5 L9,14.5 C9,13.6715729 9.67157288,13 10.5,13 Z"
+                                       id="Combined-Shape" fill="#000000" />
+                                     <rect id="Rectangle-7-Copy-2" fill="#000000" opacity="0.3" x="2" y="5" width="5" height="14" rx="1" />
+                                   </g>
+                                 </svg>
+                               </div>
+                               <div class="kt-notification__item-details">
+                                 <div class="kt-notification__item-title txt-fmly">
+                                   {{query.value.name}}
+                                 </div>
+                               </div>
+                              </a>
+                              </div>
+                           </div>
+                         </div>
+                         <!--End::Notifications-->
+                       </div>
+                     </div>
+                     <!--end::Portlet-->
+                   </div>
+                   <!--end::Portlet/col-4-->
+                   <!--begin::Portlet/col-8-->
+                   <div class="col-md-8">
+                     <div class="kt-portlet no-mar-botom portlet-body_align__table" id="{{query_data.id}}">
+                       <div class="kt-portlet__head width-100">
+                         <div class="kt-portlet__head-label max-width-95">
+                           <span class="kt-portlet__head-icon">
+                             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="kt-svg-icon">
+                               <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                                 <rect id="bound" x="0" y="0" width="24" height="24" />
+                                 <path
+                                   d="M10.5,5 L20.5,5 C21.3284271,5 22,5.67157288 22,6.5 L22,9.5 C22,10.3284271 21.3284271,11 20.5,11 L10.5,11 C9.67157288,11 9,10.3284271 9,9.5 L9,6.5 C9,5.67157288 9.67157288,5 10.5,5 Z M10.5,13 L20.5,13 C21.3284271,13 22,13.6715729 22,14.5 L22,17.5 C22,18.3284271 21.3284271,19 20.5,19 L10.5,19 C9.67157288,19 9,18.3284271 9,17.5 L9,14.5 C9,13.6715729 9.67157288,13 10.5,13 Z"
+                                   id="Combined-Shape" fill="#000000" />
+                                 <rect id="Rectangle-7-Copy-2" fill="#000000" opacity="0.3" x="2" y="5" width="5" height="14" rx="1" />
+                               </g>
+                             </svg>
+                           </span>
+                           <h3 class="kt-portlet__head-title txt-fmly text-truncate">
+                             {{query_data.name}}
+                           </h3>
+                         </div>
+                         <div class="kt-portlet__head-toolbar max-width-5">
+                           <div class="kt-portlet__head-actions">
+                             <a *AppHasRole="role.adminAccess" [routerLink] = "['/hostconfiguration/queries/',query_data.id,'edit']" class="btn btn-clean btn-sm btn-icon btn-icon-md" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="Edit Query">
+                               <i class="far fa-edit"></i>
+                             </a>
+                           </div>
+                         </div>
+                       </div>
+                       <div class="right-conf-card kt-portlet__body txt-fmly tagged_query_name">
+                         <div id="">
+                           <div class="">
+                             <table class="table table-striped- table-bordered table-hover table-checkable queries-table">
+                               <tbody>
+                                 <tr>
+                                   <td class="head-table-query">Query</td>
+                                   <td class="conf-table-val">
+                                     <div class="sql hljs desc-background-query">
+                                         <span class="hljs-keyword">{{query_data.sql}}</span>
+                                     </div>
+                                     <appbutton *AppHasRole="role.adminAccess" text="Run Live" (click)="runAdHoc(query_data?.id)" btnClass="btn-small" btnType="Button" ></appbutton>
+                                   </td>
+                                 </tr>
+                                 <tr>
+                                   <td class="head-table-query" style="width:145px">Interval <span class="intrvl-fnt-md">(in secs)</span></td>
+                                   <td class="conf-table-val">
+                                     <div class="desc-background-query">{{query_data.interval}}</div>
+                                   </td>
+                                 </tr>
+                                 <tr>
+                                   <td class="head-table-query">Platform</td>
+                                   <td class="conf-table-val">
+                                     <div class="desc-background-query">{{query_data.platform}}
+                                       <span class="col-md-1"></span>
+                                     </div>
+                                   </td>
+                                 </tr>
+                                 <tr>
+                                   <td class="head-table-query">Description</td>
+                                   <td class="conf-table-val">
+                                     <span class="desc-background-query truncate_query">{{query_data.description}}</span>
+                                   </td>
+                                 </tr>
+                                 <tr>
+                                   <td class="head-table-query">Version</td>
+                                   <td>{{query_data.version}}</td>
+                                 </tr>
+                                 <tr>
+                                   <td class="head-table-query">Value</td>
+                                   <td>{{query_data.value}}</td>
+                                 </tr>
+                                 <tr>
+                                   <td class="head-table-query">Packs</td>
+                                   <td>
+                                    <span class="label_pack pack-spacing break-word-all" *ngFor="let pack_name of query_data?.packs">
+                                      <a (click)="navigatePacks(pack_name)" class="fnt-green">{{pack_name}}</a>
+                                      </span>
+                                  </td>
+                                 </tr>
+                                 <tr>
+                                   <td class="head-table-query">Tags</td>
+                                   <td *AppHasRole="role.adminAccess" >
+                                     <tag-input  [theme]="'foundation-theme'" [validators]="validators" [errorMessages]="errorMessages" [(ngModel)]='query_data.tags' (onAdd)="queries_addTag(query_data.tags,query_data.id)" (onRemove)="queries_removeTag($event,query_data.id)" [modelAsStrings]="true"></tag-input>
+
+                                     <!-- <input multiple class="form-control bootstrap-tagsinput active" data-role="tagsinput" placeholder="Add tags to schedule this query" value="{{ query.tags | map(attribute='value') | sort | join(',') }}" data-uri="{{ url_for('manage.tag_query', query_id=query.id) }}" > -->
+                                   </td>
+                                   <td *AppHasRole="role.userAccess">{{query_data?.tags}}</td>
+                                 </tr>
+                                 <tr>
+                                   <td class="head-table-query">Snapshot</td>
+                                   <td>{{query_data.snapshot}}</td>
+                                 </tr>
+                               </tbody>
+                             </table>
+                           </div>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                   <!--end::Portlet/col-8-->
+                 </div>
+               </div>
+             </div>
+             <div *ngIf="query_data_val?.length==0" class="">
+               <p class="txt-clr">No Queries currently associated with this Tag. Use the tag functionality to associate hosts with Queries.</p>
+             </div>
+             <!--end:: Content/Queries -->
+            </div>
+          </div>
+          <!--End:: Query/Tagged -->
+        </div>
+        <!-- end:: Body -->
+      </div>
+      <!-- end:: Portlet -->
+    </div>
+  </div>
+</div>
+<!-- End:: Content -->

@@ -1,7 +1,5 @@
 import sqlalchemy
 
-from polylogyx.dao import nodes_dao
-from polylogyx.dao.v1 import hosts_dao
 from polylogyx.models import ContainerMetrics,db,Node
 from flask import current_app
 import requests

@@ -1,248 +1,287 @@
-<!-- begin:: Content -->
 <div class="kt-grid kt-grid--hor kt-grid--root">
-    <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
-      <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
-        <!--begin::Portlet-->
-        <div class="kt-portlet kt-portlet--last kt-portlet--responsive-mobile" id="kt_page_portlet">
-          <div class="kt-portlet__head kt-portlet__head--lg">
-            <div class="kt-portlet__head-label">
-              <span class="kt-portlet__head-icon">
-                <i class="fas fa-users host_name fnt-green"></i>
-              </span>
-              <h3 class="kt-portlet__head-title">
-               User Management
-              </h3>
+  <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
+    <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
+
+
+<div class="kt-portlet kt-portlet--mobile kt-portlet--responsive-mobile custom-margin-body" style="margin-bottom: 0px;">
+<div class="kt-portlet__head kt-portlet__head--lg">
+  <div class="d-flex">
+    <a class="d-flex kt-portlet__head-anchor" [routerLink]="['/settings/user-management']">
+      <div class="kt-portlet__head-label">
+        <span class="kt-portlet__head-icon d-flex">
+          <img alt=''  src='../../assets/media/logo/User.svg' height="16" width="16" alt=""/>
+        </span>
+        <h3 class="kt-portlet__head-title fnt-dark-black custom-header-title">
+          User Management
+        </h3>
+      </div>
+    </a>
+    <div class="kt-portlet__head-toolbar">
+
+      <div class="kt-portlet__head-wrapper">
+        <div class="kt-portlet__head-tabs">
+          <ul class="nav nav-tabs nav-tabs-line nav-tabs-line-success" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active" data-toggle="tab" href="#Userdetails" role="tab">Details</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link " data-toggle="tab" href="#userActivity" role="tab">Activity</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<div class="kt-portlet__head-toolbar">
+  <div class="kt-portlet__head-wrapper">
+    <div class="">
+      <!-- <a [routerLink]="{[./manage],}" href="{{ url_for('manage.add_rule') }}" class="btn btn-outline-success btn-icon-sm"> -->
+        <!-- <a [routerLink]="['./add-rule']" class="btn btn-outline-success btn-icon-sm">
+          <i class="fa fa-plus-square"></i>
+          Add Rule
+        </a> -->
+        <!-- <appbutton text="Test" btnClass="btn-small-opaque" btnType="button" (click)="testEmail(ConfigureEmail)"></appbutton> -->
+        <appbutton text="Add New User" btnClass="btn-user btn-small right-no-margin" btnType="submit" (click)="createUserFormModal()"></appbutton>
+    </div>
+  </div>
+</div>
+</div>
+<div class="no_data" style="text-align: center;"></div>
+<div class="kt-portlet__body rule_body tbl-bg custom-margin-body-inner" >
+  <div class="form-group full-height mb-0">
+    <div class="tab-content full-height">
+      <div class="tab-pane active full-height" id="Userdetails" role="tabpanel" >
+           <div class="row">
+             <div class="col-md-6 row-filter-search">
+ 							<single-select  label="Role: "
+ 								[options]="roleOptions" class="float-left" name="roleName" ngDefaultControl
+ 								(valueChange)="setRoleFilter($event)" [selectedIndexInput]="selectedRoleFilter">
+ 							</single-select>
+ 							<single-select  label="Status: "
+ 								[options]="statusOptions" class="float-left" name="statusName" ngDefaultControl
+ 								(valueChange)="setStatusFilter($event)" [selectedIndexInput]="selectedStatusFilter">
+ 							</single-select>
+ 						</div>
+                  <div class="col-md-6 row-filter-search pull-right">
+                    <search class="pull-right"  (keyup.enter)="userDetailsTableSearch()" (valueChange)='userDetailsTableSearch()'></search>
+                  </div>
             </div>
-            <div class="kt-portlet__head-toolbar">
-              <div class="kt-portlet__head-wrapper">
-                <a href="javascript:void(0);" (click)="goBack()" class="btn btn-clean btn-sm" data-skin="dark"
-                  data-toggle="kt-tooltip" data-placement="top" title="Back to Previous Page">
-                  <i class="fas fa-chevron-left back_icon_align"></i>
-                  Back
-                </a>
+            <table  datatable [dtOptions]="dtOptions_userDetails" [dtTrigger]="dtTrigger_userDetails"  class="table table-hover table-checkable mt-2" id="test"  style="table-layout: fixed; width: 100%">
+              <thead >
+                <tr>
+                  <th >User</th>
+                  <th >First Name</th>
+                  <th >Last Name</th>
+                  <th  >Email</th>
+                  <th style="width:60px">Role</th>
+                  <th style="width:50px">Status</th>
+                  <th style="width:80px"></th>
+                </tr>
+              </thead>
+                <tbody id="tbody" >
+                  <tr *ngFor="let user of usersList| keyvalue;">
+                      <td class="columnData">{{user.value.username}}</td>
+                      <td class="columnData">{{user.value.first_name}}</td>
+                      <td class="columnData">{{user.value.last_name}}</td>
+                      <td class="columnData">{{user.value.email}}</td>
+                      <td >{{user.value.roles}}</td>
+                      <td *ngIf="user.value.status;else inActive"><i class="fa fa-circle" data-toggle="kt-tooltip" title="Active" style="color: #518c24f2;"></i></td>
+                      <ng-template #inActive><td ><i class="fa fa-circle" data-toggle="kt-tooltip" title="Inactive" style="color: #e60f0db3;"></i></td></ng-template>
+                      <td class="text-center">
+                        <div ngbDropdown class="div-center" container="body">
+                          <a href="javascript:void(0);" ngbDropdownToggle id="dropdownMenuLink" data-toggle="dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style='width: 90px;padding-top:4px;padding-bottom:4px' >
+                            <i class="fas fa-ellipsis-v resolve-circle-check" aria-hidden="true"></i>
+                          </a>
+                          <div class="dropdown-menu" ngbDropdownMenu aria-labelledby="dropdownMenuLink">
+                            <a class="dropdown-item" ngbDropdownItem [routerLink]="['../edit',user.value.id]" >Edit </a>
+                            <a class="dropdown-item" ngbDropdownItem (click)='changePasswordModal(user.value.id,user.value.username)'>Reset Password</a>
+                            </div>
+                         </div>
+                      </td>
+                  </tr>
+                </tbody>
+                <tr role="row" class="text-center bg-white" *ngIf="usersList?.length === 0">
+                  <td colspan="7" class="fnt-lg">
+                    {{errorMessage}}
+                  </td>
+                </tr>
+            </table>
+         </div>
+      <div class="tab-pane full-height" id="userActivity" role="tabpanel">
+           <div class="row">
+              <div class="col-12 row-filter-search pull-right">
+                <div class="pull-right d-flex activity-search-bar">
+                  <input id="platformId" class="form-control platformAcitivity"  type="text" name="search" autocomplete="off" placeholder="Search" (keyup.enter)="platformAcitivityTableSearch()">
+                  <i class="fa fa-search" (click)="platformAcitivityTableSearch()"></i>
+                  <i class="fa fa-times" (click)="clearSearch()"></i>
+                 </div>
               </div>
             </div>
-          </div>
-          <div class="kt-portlet__body" >
-            <div class="kt-portlet">
-             <div class="kt-portlet__body py-2">
-  <!-- Begin:: UserDetails -->
-            <div class="form-group row">
-                <div class="col-12 mt-3">
-                    <div class='row'>
-                        <div class="col-6">
-                          <ul class="nav nav-tabs nav-tabs-line nav-tabs-line-success" role="tablist">
-                            <li class="nav-item">
-                              <a class="nav-link active" data-toggle="tab" href="#Userdetails" role="tab">Details</a>
-                            </li>
-                            <li class="nav-item">
-                              <a class="nav-link " data-toggle="tab" href="#userActivity" role="tab">Activity</a>
-                            </li>
-                          </ul>
-                        </div>
-                        <div class="col-6">
-                            <button type="btn btn-success" class=" btn btn-success ml-2"  (click)='createUserFormModal()'  style="float: right;padding:6px"> Add User</button>
-                        </div>
-                    </div>
-                 </div>
-        <div class="tab-content">
-          <div class="tab-pane active" id="Userdetails" role="tabpanel" >
-                <table  datatable [dtOptions]="dtOptions_userDetails" [dtTrigger]="dtTrigger_userDetails"  class="table table-hover table-checkable table-bordered mt-2" id="test"  style="table-layout: fixed; width: 100%">
-                  <thead >
-                    <tr>
-                      <th >User</th>
-                      <th >First Name</th>
-                      <th >Last Name</th>
-                      <th  >Email</th>
-                      <th style="width:60px">Role</th>
-                      <th style="width:50px">Status</th>
-                      <th style="width:80px"></th>
-                    </tr>
-                  </thead>
-                    <tbody id="tbody" >
-                      <tr *ngFor="let user of usersList| keyvalue;">
-                          <td class="columnData">{{user.value.username}}</td>
-                          <td class="columnData">{{user.value.first_name}}</td>
-                          <td class="columnData">{{user.value.last_name}}</td>
-                          <td class="columnData">{{user.value.email}}</td>
-                          <td >{{user.value.roles}}</td>
-                          <td *ngIf="user.value.status;else inActive"><i class="fa fa-circle" data-toggle="kt-tooltip" title="Active" style="color: #518c24f2;"></i></td>
-                          <ng-template #inActive><td ><i class="fa fa-circle" data-toggle="kt-tooltip" title="Inactive" style="color: #e60f0db3;"></i></td></ng-template>
-                          <td>
-                            <div class="dropdown show" >
-                              <a class="btn dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="padding: 0px;border:0px">Action</a>
-                              <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                                <a class="dropdown-item"[routerLink]="['../edit',user.value.id]" >Edit </a>
-                                <a class="dropdown-item" (click)='changePasswordModal(user.value.id,user.value.username)'>Reset Password</a>
-                              </div>
-                            </div>
-                          </td>
-                      </tr>
-                    </tbody>
-                </table>
-                <div  *ngIf="usersList?.length == 0" style="text-align: center;font-weight: 600">
-                   {{this.errorMessage}}
-                </div>
-             </div>
-          <div class="tab-pane " id="userActivity" role="tabpanel">
-              <table datatable [dtOptions]="dtOptions_platformAcitivity" [dtTrigger]="dtTrigger_platformAcitivity" class="table table-hover table-checkable table-bordered mt-2" id="platformActivity" style="table-layout: fixed; width: 100%">
-                <thead >
-                  <tr>
-                    <th >Activity</th>
-                  </tr>
-                </thead>
-                  <tbody id="tbody" >
-                    <tr *ngFor="let data of PlatformActivity| keyvalue;">
-                        <td class="">{{data.value.data}}&nbsp;&nbsp;&nbsp;<span style="font-weight: lighter;color: #808080;">{{data.value.time}}</span></td>
-                    </tr>
-                  </tbody>
-               </table>
-         </div>
-      </div>
-    </div>
-  <!-- End:: UserDetails -->
-  <!-- Begin:: CreateUserFormModal -->
-            <div class="modal" id="createUserFormModel" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="display: none;z-index: 910; position: fixed; background-color: hsla(0, 0%, 0%, 0.45)">
-              <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content" style="width:650px;margin:auto" >
-                  <div class="modal-header">
-                    <h5 class="title kt-portlet__head-title"><i class="fa fa-user host_name fnt-green" >&nbsp;&nbsp;</i>Create User</h5>
-                     <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="close_AddUser_modal()"></button>
-                  </div>
-                  <div class="modal-body kt-scroll" data-scroll="true" data-height="200" data-scrollbar-shown="true">
+          <table datatable [dtOptions]="dtOptions_platformAcitivity" [dtTrigger]="dtTrigger_platformAcitivity" class="table table-hover table-checkable table-bordered mt-2" id="platformActivity" style="table-layout: fixed; width: 100%">
+            <thead >
+              <tr>
+                <th >Activity</th>
+              </tr>
+            </thead>
+              <tbody id="tbody" >
+                <tr *ngFor="let data of PlatformActivity| keyvalue;">
+                    <td class="">{{data.value.data}}&nbsp;&nbsp;&nbsp;<span style="font-weight: lighter;color: #808080;">{{data.value.time}}</span></td>
+                </tr>
+              </tbody>
+              <tr role="row" class="text-center bg-white" *ngIf="PlatformActivity?.length == 0">
+                <td colspan="1" class="fnt-lg">
+                  {{errorMessage}}
+                </td>
+              </tr>
+           </table>
+     </div>
+  </div>
+  </div>
+  <div class="modal" id="createUserFormModel" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="display: none;z-index: 910; position: fixed; background-color: hsla(0, 0%, 0%, 0.45)">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content kt-modal">
+        <div class="modal-header">
+          <h5 class="title kt-portlet__head-title"><i class="fa fa-user host_name fnt-green" >&nbsp;&nbsp;</i>Create User</h5>
+           <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="close_AddUser_modal()"></button>
+        </div>
+        <div class="modal-body kt-scroll" data-scroll="true" data-height="200" data-scrollbar-shown="true">
 
-                    <form class="kt-form ml-4" id="kt_form" [formGroup]="createUserForm" (ngSubmit)="createUserSubmitForm()">
-                      <div class="row">
-                        <div class="col-xl-11">
-                          <div class="kt-section kt-section--first">
-                            <div class="kt-section__body">
-                                <div class="form-group row required">
-                                    <label class="col-sm-2 col-form-label form--label">User Name</label>
-                                    <div class="col-8">
-                                      <input  type="text" placeholder="User Name"   name="userName"  formControlName="userName" class="form-control" [ngClass]="{ 'is-invalid': submitted && g.userName.errors }"/>
-                                      <div *ngIf="submitted && g.userName.errors" class="invalid-feedback">
-                                           <div *ngIf="g.userName.errors.required">User Name is required</div>
-                                           <div *ngIf="g.userName.errors.maxlength">User Name can be max 48 characters long</div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                 <div class="form-group row required">
-                                    <label class="col-sm-2 col-form-label form--label">First Name</label>
-                                    <div class="col-8">
-                                      <input  type="text" placeholder="First Name"   name="firstName"formControlName="firstName" class="form-control" [ngClass]="{ 'is-invalid': submitted && g.firstName.errors }"/>
-                                      <div *ngIf="submitted && g.firstName.errors" class="invalid-feedback">
-                                        <div *ngIf="g.firstName.errors.maxlength">First Name can be max 25 characters long</div>
-                                        <div *ngIf="g.firstName.errors.required">First Name is required </div>
-                                   </div>
-                                    </div>
-                                  </div>
-                                  <div class="form-group row">
-                                    <label class="col-sm-2 col-form-label form--label">Last Name</label>
-                                    <div class="col-8">
-                                      <input  type="text" placeholder="Last Name"  name="lastName" formControlName="lastName" class="form-control" [ngClass]="{ 'is-invalid': submitted && g.lastName.errors }"/>
-                                      <div *ngIf="submitted && g.lastName.errors" class="invalid-feedback">
-                                        <div *ngIf="g.lastName.errors.maxlength">Last Name can be max 25 characters long</div>
-                                   </div>
-                                    </div>
-                                  </div>
-                                  <div class="form-group row required">
-                                    <label class="col-sm-2 col-form-label form--label">Email</label>
-                                    <div class="col-8">
-                                      <input type="text" placeholder="Email"  name="email" formControlName="email" class="form-control" [ngClass]="{ 'is-invalid': submitted && g.email.errors }" />
-                                        <div *ngIf="submitted && g.email.errors" class="invalid-feedback">
-                                          <div *ngIf="g.email.errors.required">Email is required</div>
-                                          <div *ngIf="g.email.errors.pattern">Email must be a valid email address</div>
-                                       </div>
-                                    </div>
-                                  </div>
-                                <div class="form-group row required">
-                                  <label class="col-sm-2 col-form-label form--label">Password</label>
-                                  <div class="col-8">
-                                    <input  type="password" placeholder="Password"   name="PassWord"  formControlName="PassWord" class="form-control" [ngClass]="{ 'is-invalid': submitted && g.PassWord.errors }"/>
-                                    <div *ngIf="submitted && g.PassWord.errors" class="invalid-feedback">
-                                      <div *ngIf="g.PassWord.errors.required">Password is required</div>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div class="form-group row required">
-                                    <label class="col-sm-2 col-form-label form--label">Role</label>
-                                    <div class="col-10">
-                                      <div class='row'>
-                                      <ng-container *ngFor="let role of roleslist let i=index">
-                                      <div class="kt-radio-inline">
-                                        <div class="col-2">
-                                        <label class="kt-radio">
-                                          <input type="radio"   name="role"   formControlName="role" class="form-control"  [value]="role" [checked]="i === 0" >
-                                          <label >{{role}}</label>
-                                          <span></span>
-                                        </label>
-                                      </div>
-                                      </div>
-                                      </ng-container>
-                                    </div>
-                                      <span class="error-msg text-danger" *ngIf="submitted && createUserForm.controls['role'].errors?.required" style="font-size: 80%">
-                                        Please select any option above!
-                                      </span>
-                                     </div>
-                                </div>
-                                <div class="form-group row required">
-                                  <div class="col-8">
-                                   <input   name="enable_sso"  name="enable_sso"   formControlName="enable_sso" type="checkbox">&nbsp;&nbsp;
-                                   <span >Enable single sign on</span>
-                                </div>
-                                </div>
+          <form class="kt-form ml-4" id="kt_form" [formGroup]="createUserForm" (ngSubmit)="createUserSubmitForm()">
+            <div class="row">
+              <div class="col-xl-11">
+                <div class="kt-section kt-section--first">
+                  <div class="kt-section__body">
+                      <div class="form-group row required">
+                          <label class="col-sm-2 col-form-label form--label">User Name</label>
+                          <div class="col-8">
+                            <input  type="text" placeholder="User Name"   name="userName"  formControlName="userName" class="form-control" [ngClass]="{ 'is-invalid': submitted && g.userName.errors }"/>
+                            <div *ngIf="submitted && g.userName.errors" class="invalid-feedback">
+                                 <div *ngIf="g.userName.errors.required">User Name is required</div>
+                                 <div *ngIf="g.userName.errors.maxlength">User Name can be max 48 characters long</div>
                             </div>
                           </div>
-
                         </div>
-                      </div>
-                     <div class="modal-footer">
-                      <button type="submit"class="btn btn-primary" >Add</button>
-                        <button type="button" class="btn btn-secondary" (click)="close_AddUser_modal()" data-dismiss="modal">Close</button>
-                    </div>
-                    </form>
-                  </div>
-               </div>
-              </div>
-            </div>
-  <!-- End:: CreateUserFormModal -->
-  <!-- Begin:: changePasswordFromModal -->
-      <div class="modal" id="changePasswordFromModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="display: none;z-index: 910; position: fixed; background-color: hsla(0, 0%, 0%, 0.45)">
-        <div class="modal-dialog modal-lg" role="document">
-          <div class="modal-content" style="width:650px;margin:auto" >
-            <div class="modal-header">
-              <h5 class="title kt-portlet__head-title">Reset Password for {{userName}}</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="closeChangePasswordModal()"></button>
-            </div>
-            <div class="modal-body kt-scroll" data-scroll="true" data-height="200" data-scrollbar-shown="true">
-              <form class="kt-form ml-4" id="kt_form" [formGroup]="changeUserPasswordForm" (ngSubmit)="changeUserPasswordSubmitForm()">
-                <div class="row">
-                  <div class="col-xl-12">
+                       <div class="form-group row required">
+                          <label class="col-sm-2 col-form-label form--label">First Name</label>
+                          <div class="col-8">
+                            <input  type="text" placeholder="First Name"   name="firstName"formControlName="firstName" class="form-control" [ngClass]="{ 'is-invalid': submitted && g.firstName.errors }"/>
+                            <div *ngIf="submitted && g.firstName.errors" class="invalid-feedback">
+                              <div *ngIf="g.firstName.errors.maxlength">First Name can be max 25 characters long</div>
+                              <div *ngIf="g.firstName.errors.required">First Name is required </div>
+                         </div>
+                          </div>
+                        </div>
+                        <div class="form-group row">
+                          <label class="col-sm-2 col-form-label form--label">Last Name</label>
+                          <div class="col-8">
+                            <input  type="text" placeholder="Last Name"  name="lastName" formControlName="lastName" class="form-control" [ngClass]="{ 'is-invalid': submitted && g.lastName.errors }"/>
+                            <div *ngIf="submitted && g.lastName.errors" class="invalid-feedback">
+                              <div *ngIf="g.lastName.errors.maxlength">Last Name can be max 25 characters long</div>
+                         </div>
+                          </div>
+                        </div>
+                        <div class="form-group row required">
+                          <label class="col-sm-2 col-form-label form--label">Email</label>
+                          <div class="col-8">
+                            <input type="text" placeholder="Email"  name="email" formControlName="email" class="form-control" [ngClass]="{ 'is-invalid': submitted && g.email.errors }" />
+                              <div *ngIf="submitted && g.email.errors" class="invalid-feedback">
+                                <div *ngIf="g.email.errors.required">Email is required</div>
+                                <div *ngIf="g.email.errors.pattern">Email must be a valid email address</div>
+                             </div>
+                          </div>
+                        </div>
                       <div class="form-group row required">
                         <label class="col-sm-2 col-form-label form--label">Password</label>
                         <div class="col-8">
-                            <input  type="password"  name="passWord"  formControlName="passWord" class="form-control" [ngClass]="{ 'is-invalid': submitted && f.passWord.errors }"/>
-                            <div *ngIf="submitted && f.passWord.errors" class="invalid-feedback">
-                              <div *ngIf="f.passWord.errors.required">Password is required</div>
-                            </div>
+                          <input  type="password" placeholder="Password"   name="PassWord"  formControlName="PassWord" class="form-control" [ngClass]="{ 'is-invalid': submitted && g.PassWord.errors }"/>
+                          <div *ngIf="submitted && g.PassWord.errors" class="invalid-feedback">
+                            <div *ngIf="g.PassWord.errors.required">Password is required</div>
+                          </div>
                         </div>
+                      </div>
+                      <div class="form-group row required">
+                          <label class="col-sm-2 col-form-label form--label">Role</label>
+                          <div class="col-10">
+                            <div class='row'>
+                            <ng-container *ngFor="let role of roleslist let i=index">
+                            <div class="kt-radio-inline">
+                              <div class="col-2">
+                              <label class="kt-radio">
+                                <input type="radio"   name="role"   formControlName="role" class="form-control"  [value]="role" [checked]="i === 0" >
+                                <label >{{role}}</label>
+                                <span></span>
+                              </label>
+                            </div>
+                            </div>
+                            </ng-container>
+                          </div>
+                            <span class="error-msg text-danger" *ngIf="submitted && createUserForm.controls['role'].errors?.required" style="font-size: 80%">
+                              Please select any option above!
+                            </span>
+                           </div>
+                      </div>
+                      <div class="form-group row required">
+                        <div class="col-8">
+                         <input   name="enable_sso"  name="enable_sso"   formControlName="enable_sso" type="checkbox">&nbsp;&nbsp;
+                         <span >Enable single sign on</span>
+                      </div>
                       </div>
                   </div>
                 </div>
-              <div class="modal-footer">
-                <button type="submit"class="btn btn-primary">Save changes</button>
-                  <button type="button" class="btn btn-secondary" (click)="closeChangePasswordModal()" data-dismiss="modal">Close</button>
+
               </div>
-              </form>
             </div>
+           <div class="modal-footer">
+            <!-- <button type="submit"class="btn btn-primary" >Add</button>
+            <button type="button" class="btn btn-secondary" (click)="close_AddUser_modal()" data-dismiss="modal">Close</button> -->
+            <appbutton text="Add" btnClass="btn-small-opaque" btnType="submit"></appbutton>
+            <appbutton text="Close" btnClass="btn-small-light" btnType="button" (click)="close_AddUser_modal()"></appbutton>
+          </div>
+          </form>
         </div>
-        </div>
-      </div>
-  <!-- End:: changePasswordFromModal -->
-    </div>
-        </div>
-        <!--end::Portlet-->
-      </div>
+     </div>
     </div>
   </div>
-  <!-- end:: Content -->
+<!-- End:: CreateUserFormModal -->
+<!-- Begin:: changePasswordFromModal -->
+<div class="modal" id="changePasswordFromModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="display: none;z-index: 910; position: fixed; background-color: hsla(0, 0%, 0%, 0.45)">
+<div class="modal-dialog modal-lg" role="document">
+<div class="modal-content" style="width:650px;margin:auto" >
+  <div class="modal-header">
+    <h5 class="title kt-portlet__head-title">Reset Password for {{userName}}</h5>
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="closeChangePasswordModal()"></button>
+  </div>
+  <div class="modal-body kt-scroll" data-scroll="true" data-height="200" data-scrollbar-shown="true">
+    <form class="kt-form ml-4" id="kt_form_Password" [formGroup]="changeUserPasswordForm" (ngSubmit)="changeUserPasswordSubmitForm()">
+      <div class="row">
+        <div class="col-xl-12">
+            <div class="form-group row required">
+              <label class="col-sm-2 col-form-label form--label">Password</label>
+              <div class="col-8">
+                  <input  type="password"  name="passWord"  formControlName="passWord" class="form-control" [ngClass]="{ 'is-invalid': submitted && f.passWord.errors }"/>
+                  <div *ngIf="submitted && f.passWord.errors" class="invalid-feedback">
+                    <div *ngIf="f.passWord.errors.required">Password is required</div>
+                  </div>
+              </div>
+            </div>
+        </div>
+      </div>
+    <div class="modal-footer">
+      <!-- <button type="submit"class="btn btn-primary">Save changes</button>
+      <button type="button" class="btn btn-secondary" (click)="closeChangePasswordModal()" data-dismiss="modal">Close</button> -->
+      <appbutton text="Save Changes" btnClass="btn-small-opaque btn-long" btnType="submit"></appbutton>
+      <appbutton text="Close" btnClass="btn-small-light" btnType="button" (click)="closeChangePasswordModal()"></appbutton>
+    </div>
+    </form>
+  </div>
+</div>
+</div>
+</div>
+<!--Begin:: Content -->
+</div>
+</div>
+</div>
+  </div>
+</div>

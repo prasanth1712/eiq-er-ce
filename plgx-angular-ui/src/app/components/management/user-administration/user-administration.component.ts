@@ -1,6 +1,6 @@
 import { Component, OnInit,ViewChild } from '@angular/core';
 import { CommonapiService } from '../../../dashboard/_services/commonapi.service';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators ,FormControl} from '@angular/forms';
 import Swal from 'sweetalert2';
 import { ToastrService } from 'ngx-toastr';
 import { Location } from '@angular/common';
@@ -30,7 +30,7 @@ class DataTablesResponse_platformActivity {
   styleUrls: ['./user-administration.component.css']
 })
 export class UserAdministrationComponent implements OnInit {
-  @ViewChild(DataTableDirective, {static: false})
+  @ViewChild(DataTableDirective)
   dtElement_userDetails: DataTableDirective;
   dtTrigger_userDetails: Subject<any> = new Subject();
   dtOptions_userDetails: DataTables.Settings = {};
@@ -45,14 +45,31 @@ export class UserAdministrationComponent implements OnInit {
   userId:number
   userName:string
   PlatformActivity=[]
-
-  errorMessage:string
+  userDetailSearchTerm: any;
+  platformAcitivitySearchTerm: any;
+  errorMessage:string;
+  roleOptions = [
+    { value: 'any', description: 'any' },
+    { value: 'admin', description: 'admin' },
+    { value: 'analyst', description: 'analyst' },
+  ];
+  statusOptions = [
+    { value: 'any', description: 'any' },
+    { value: 'true', description: 'Active' },
+    { value: 'false', description: 'Inactive' },
+  ];
+  roleSelectControl = new FormControl('any');
+  statusSelectControl = new FormControl('any');
+  selectedRoleFilter : string = "any";
+  selectedStatusFilter : string = "any";
   role={'adminAccess':this.authorizationService.adminLevelAccess,'userAccess':this.authorizationService.userLevelAccess}
   constructor(private commonapi: CommonapiService,private formBuilder: FormBuilder,private toaster: ToastrService, private _location: Location,private authorizationService: AuthorizationService,
-    private http: HttpClient,private router: Router,private titleService: Title,private commonvariable: CommonVariableService) { }
+    private http: HttpClient,private router: Router,private titleService: Title,private commonvariable: CommonVariableService,) { }
 
   ngOnInit() {
     this.titleService.setTitle(this.commonvariable.APP_NAME+" - "+"User management");
+    this.selectedRoleFilter = "any";
+    this.selectedStatusFilter = "any";
     this.createUserForm = this.formBuilder.group({
       userName: ['', [Validators.required,Validators.maxLength(48)]],
       firstName: ['',[Validators.maxLength(25),Validators.required]],
@@ -65,26 +82,58 @@ export class UserAdministrationComponent implements OnInit {
       this.changeUserPasswordForm = this.formBuilder.group({
         passWord: ['',Validators.required],
       })
+      this.getUserDetails();
+      this.getPlatformAcitivity();
+      this.platformSearch();
+  }
+  getUserDetails(){
     this.dtOptions_userDetails = {
       pagingType: 'full_numbers',
       pageLength: 10,
       serverSide: true,
       processing: true,
-      searching: true,
+      searching: false,
+      dom: "<'row'<'col-sm-12'f>>" +
+      "<'row table-scroll-hidden flex-1'<'col-sm-12 mt-18 table-scroll full-height'tr>>" +
+      "<'row table-controls custom-pagination-margin'<'col-sm-6 table-controls-li pl-0'li><'col-sm-6 pr-0'p>>",
+      "initComplete": function (settings, json) {
+        $("#test").wrap("<div class='flex-flow-col'></div>");
+       },
       "language": {
-        "search": "Search: "
+        "search": "Search: ",
+        "lengthMenu": "<ng-container class=custom-pagination-length>Results per page: _MENU_</ng-container>",
+        "info" : "Showing _START_ to _END_ of <b>_TOTAL_</b> entries",
+        "infoFiltered": ""
       },
       ajax: (dataTablesParameters: any,callback) => {
         var body = dataTablesParameters;
         body['limit']=body['length'];
-        if(body.search.value!= ""  &&  body.search.value.length>=1)
-        {
-          body['searchterm']=body.search.value;
+        if(this.userDetailSearchTerm){
+          body['searchterm'] = this.userDetailSearchTerm
+        }
+        if(this.userDetailSearchTerm!= ""  &&  this.userDetailSearchTerm?.length>=1){
+           body['searchterm']=this.userDetailSearchTerm;
         }
         if(body['searchterm']==undefined){
-          body['searchterm']="";
+            body['searchterm']="";
         }
-        this.http.get<DataTablesResponse>(environment.api_url+"/users"+"?searchterm="+body['searchterm']+"&start="+body['start']+"&limit="+body['limit'],{ headers: {'x-access-token': localStorage.getItem('token')}}).subscribe(res =>{
+        let urlOption = ''
+        if (body.order != "" && body.order.length >= 1) {
+          body["column"] = body.columns[body.order[0].column].data;
+          body["order_by"] = body["order"][0].dir;
+          urlOption = environment.api_url+"/users"+"?searchterm="+body['searchterm']+"&start="+body['start']+"&limit="+body['limit']+"&column="+body["column"]+"&order_by="+body["order_by"];
+        }
+        else{
+          urlOption = environment.api_url+"/users"+"?searchterm="+body['searchterm']+"&start="+body['start']+"&limit="+body['limit'];
+        }
+        // debugger;
+        if(this.selectedRoleFilter!=" " && this.selectedRoleFilter != 'any'){
+          urlOption = urlOption+"&role="+this.selectedRoleFilter;
+        }
+        if(this.selectedStatusFilter!=" " && this.selectedStatusFilter != 'any'){
+          urlOption = urlOption+"&status="+this.selectedStatusFilter;
+        }
+        this.http.get<DataTablesResponse>(urlOption,{ headers: {'x-access-token': localStorage.getItem('token')}}).subscribe(res =>{
         this.usersList=res.data['results']
         if(this.usersList.length >0 &&  this.usersList!=undefined)
         {
@@ -93,9 +142,10 @@ export class UserAdministrationComponent implements OnInit {
           $('#test'+'_info').show();
         }
         else{
-          if(body.search.value=="" || body.search.value == undefined)
+          if(body.searchterm=="" || body.searchterm == undefined)
           {
-            this.errorMessage="No users found. You may create new user";
+            if(this.selectedStatusFilter == 'false'){this.errorMessage="No users found."}
+             else{this.errorMessage="No users found. You may create new user";}
           }
           else{
             this.errorMessage="No Matching Record Found";
@@ -115,73 +165,129 @@ export class UserAdministrationComponent implements OnInit {
           }
         });
       },
-      ordering: false,
-      columns: [{ data: 'User' }, { data: 'First Name' }, { data: 'Last Name' }, { data: 'Email' },{ data: 'Role' },{ data: 'Status' },{ data: ' ' }]
+      ordering: true,
+      order: [],
+      columnDefs: [{
+        targets: [1,2,3,4,5,6], /* column index */
+        orderable: false
+      }],
+      columns: [{ data: 'username' }, { data: 'first_name' }, { data: 'last_name' }, { data: 'email' },{ data: 'Role' },{ data: 'Status' },{ data: ' ' }]
     }
+  }
 
+  getPlatformAcitivity(){
     this.dtOptions_platformAcitivity = {
       pagingType: 'full_numbers',
       pageLength: 10,
       serverSide: true,
       processing: false,
-      searching: true,
+      searching: false,
       destroy: true,
+      dom: "<'row'<'col-sm-12'f>>" +
+      "<'row table-scroll-hidden'<'col-sm-12 mt-18 table-scroll full-height'tr>>" +
+      "<'row table-controls custom-pagination-margin'<'col-sm-6 table-controls-li pl-0'li><'col-sm-6 pr-0'p>>",
       "language": {
-        "search": "Search: "
+        "search": "Search: ",
+        "lengthMenu": "<ng-container class=custom-pagination-length>Results per page: _MENU_</ng-container>",
+        "info" : "Showing _START_ to _END_ of <b>_TOTAL_</b> entries",
       },
       ajax: (dataTablesParameters: any,callback) => {
         var body = dataTablesParameters;
         body['limit']=body['length'];
-        if(body.search.value!= ""  &&  body.search.value.length>=1)
-        {
-          body['searchterm']=body.search.value;
+        if(this.platformAcitivitySearchTerm){
+          body['searchterm'] = this.platformAcitivitySearchTerm
+        }
+        if(this.platformAcitivitySearchTerm!= ""  &&  this.platformAcitivitySearchTerm?.length>=1){
+           body['searchterm']=this.platformAcitivitySearchTerm;
         }
         if(body['searchterm']==undefined){
-          body['searchterm']="";
+            body['searchterm']="";
         }
         this.http.get<DataTablesResponse_platformActivity>(environment.api_url+"/users/platform_activity"+"?&limit="+body['limit']+"&searchterm="+body['searchterm']+"&start="+body['start'],{ headers: {'x-access-token': localStorage.getItem('token')}}).subscribe(res =>{
         this.PlatformActivity=[]
         var resultActivity = res['data']['results'];
         for(var i in resultActivity){
-          if(resultActivity[i].item){
+          if(resultActivity[i].text){
+            var text = resultActivity[i].text;
+            this.PlatformActivity.push({"data": text + " by " + resultActivity[i].user.username,"time":resultActivity[i].created_at})
+          }else if(resultActivity[i].item){
             if(resultActivity[i].item.type){
               var type = resultActivity[i].item.type;
               if(resultActivity[i].item.type=='Rule'){
-                var start = type + " with name '"+resultActivity[i].item.name+"'";
+                if(resultActivity[i].item.name){
+                  var start = type + " with name '"+resultActivity[i].item.name+"'";
+                }else{
+                  var start = type + " with id '"+resultActivity[i].item.id+"'";
+                }
               }else if(resultActivity[i].item.type=='Tag'){
-                var start = type + " with name '"+resultActivity[i].item.name+"'";
+                if(resultActivity[i].item.name){
+                  var start = type + " with name '"+resultActivity[i].item.name+"'";
+                }else{
+                  var start = type + " with id '"+resultActivity[i].item.id+"'";
+                }
               }else if(resultActivity[i].item.type=='Query'){
-                var start = type + " with name '"+resultActivity[i].item.name+"'";
+                if(resultActivity[i].item.name){
+                  var start = type + " with name '"+resultActivity[i].item.name+"'";
+                }else{
+                  var start = type + " with id '"+resultActivity[i].item.id+"'";
+                }
               }else if(resultActivity[i].item.type=='Pack'){
-                var start = type + " with name '"+resultActivity[i].item.name+"'";
+                if(resultActivity[i].item.name){
+                  var start = type + " with name '"+resultActivity[i].item.name+"'";
+                }else{
+                  var start = type + " with id '"+resultActivity[i].item.id+"'";
+                }
               }else if(resultActivity[i].item.type=='Config'){
-                var start = type + " of platform '"+resultActivity[i].item.platform+"' with name '"+resultActivity[i].item.name+"'";
+                if(resultActivity[i].item.name){
+                  var start = type + " of platform '"+resultActivity[i].item.platform+"' with name '"+resultActivity[i].item.name+"'";
+                }else{
+                  var start = type + " with id '"+resultActivity[i].item.id+"'";
+                }
               }else if(resultActivity[i].item.type=='Settings'){
-                var start = type + " with name '"+resultActivity[i].item.name+"'";
+                if(resultActivity[i].item.name){
+                  var start = type + " with name '"+resultActivity[i].item.name+"'";
+                }else{
+                  var start = type + " with id '"+resultActivity[i].item.id+"'";
+                }
               }else if(resultActivity[i].item.type=='DefaultFilters'){
                 var start = type + " of platform '"+resultActivity[i].item.platform+"' with config name '"+resultActivity[i].item.config_name+"'";
               }else if(resultActivity[i].item.type=='DefaultQuery'){
-                var start = type + " of platform '"+resultActivity[i].item.platform+"' with config name '"+resultActivity[i].item.config_name+"'";
+                var start = type + " '" + resultActivity[i].item.name + "'" + " of platform '"+resultActivity[i].item.platform+"' with config name '"+resultActivity[i].item.config_name+"'";
               }else if(resultActivity[i].item.type=='NodeConfig'){
                 var start = type + " of the node with name '"+resultActivity[i].item.hostname+"'";
               }else if(resultActivity[i].item.type=='ThreatIntelCredentials'){
-                var start = type + " with name '"+resultActivity[i].item.name+"'";
+                if(resultActivity[i].item.name){
+                  var start = type + " with name '"+resultActivity[i].item.name+"'";
+                }else{
+                  var start = type + " with id '"+resultActivity[i].item.id+"'";
+                }
               }else if(resultActivity[i].item.type=='IOCIntel'){
-                var start = type + " with name '"+resultActivity[i].item.name+"'";
+                var start = type;
               }else if(resultActivity[i].item.type=='VirusTotalAvEngines'){
-                var start = type + " with name '"+resultActivity[i].item.name+"'";
+                var start = type;
               }else if(resultActivity[i].item.type=='Alerts'){
                 var start = type + " with id '"+resultActivity[i].item.id+"'";
               }else if(resultActivity[i].item.type=='Node'){
-                var start = type + " with name '"+resultActivity[i].item.name+"'";
+                if(resultActivity[i].item.name){
+                  var start = type + " with name '"+resultActivity[i].item.name+"'";
+                }else{
+                  var start = type + " with id '"+resultActivity[i].item.id+"'";
+                }
               }else if(resultActivity[i].item.type=='CarveSession'){
-                var start = type + " with session id '"+resultActivity[i].item.session_id+"'";
+                if(resultActivity[i].item.session_id){
+                  var start = type + " with session id '"+resultActivity[i].item.session_id+"'";
+                }else{
+                  var start = type + " with id '"+resultActivity[i].item.id+"'";
+                }
+              }else if(resultActivity[i].item.type=='User'){
+                if(resultActivity[i].item.username){
+                  var start = type + " with username '"+resultActivity[i].item.username+"'";
+                }else{
+                  var start = type + " with id '"+resultActivity[i].item.id+"'";
+                }
               }
               this.PlatformActivity.push({"data": start + " has been " + resultActivity[i].action + " by " + resultActivity[i].user.username,"time":resultActivity[i].created_at})
             }
-          }else if(resultActivity[i].text){
-            var text = resultActivity[i].text;
-            this.PlatformActivity.push({"data": text + " by " + resultActivity[i].user.username,"time":resultActivity[i].created_at})
           }
 
         }
@@ -211,6 +317,7 @@ export class UserAdministrationComponent implements OnInit {
       columns: [{ data: 'Activity'}]
     }
   }
+
   get g() { return this.createUserForm.controls; }
   get f() { return this.changeUserPasswordForm.controls; }
 //start:: createUser
@@ -320,8 +427,53 @@ export class UserAdministrationComponent implements OnInit {
       this.router.navigate(['/dashboard']);
       },1500);
 }
+platformAcitivityTableSearch(){
+  this.platformAcitivitySearchTerm = (<HTMLInputElement>document.getElementById('platformId')).value;
+  this.dtTrigger_platformAcitivity.next();
+}
+userDetailsTableSearch(){
+  this.userDetailSearchTerm = (<HTMLInputElement>document.getElementById('customsearch')).value;
+  this.dtElement_userDetails.dtInstance.then((dtInstance: DataTables.Api) => {
+    dtInstance.destroy();
+    this.dtTrigger_userDetails.next();
+  });
+}
+platformSearch(){
+  $('.platformAcitivity').on('keyup', function(){
+    var searchValue = (<HTMLInputElement>document.getElementById('platformId')).value;
+    if (searchValue != ''){
+      $('.platformAcitivity').addClass("custom-search-typing");
+      $('.fa-times').addClass("visible");
+    }
+     else {
+      $('.platformAcitivity').removeClass("custom-search-typing");
+      $('.fa-times').removeClass("visible");
+    }
+  });
+}
+clearSearch(){
+  (<HTMLInputElement>document.getElementById('platformId')).value = ''
+  $('.platformAcitivity').removeClass("custom-search-typing");
+  $('.fa-times').removeClass("visible");
+  this.platformAcitivityTableSearch();
+}
   ngAfterViewInit(): void {
     this.dtTrigger_userDetails.next();
     this.dtTrigger_platformAcitivity.next();
+  }
+  setRoleFilter(status){
+    this.selectedRoleFilter = status.value;
+    this.dtElement_userDetails.dtInstance.then((dtInstance: DataTables.Api) => {
+      dtInstance.destroy();
+      this.dtTrigger_userDetails.next();
+    });
+
+  }
+  setStatusFilter(status){
+    this.selectedStatusFilter = status.value;
+    this.dtElement_userDetails.dtInstance.then((dtInstance: DataTables.Api) => {
+      dtInstance.destroy();
+      this.dtTrigger_userDetails.next();
+    });
   }
 }

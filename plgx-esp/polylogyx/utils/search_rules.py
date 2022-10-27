@@ -3,7 +3,7 @@
 import six
 from sqlalchemy import and_, or_
 
-from polylogyx.db.models import NodeReconData, ResultLog
+from polylogyx.db.models import ResultLog
 from polylogyx.utils.rules import logger
 
 
@@ -118,10 +118,7 @@ class LogicCondition(BaseCondition):
 
 class EqualCondition(LogicCondition):
     def compare(self, value, filter, type):
-        if type and type == "node_recon_data":
-            filter.append(NodeReconData.columns[self.column_name].astext == self.expected.lower())
-        else:
-            filter.append(ResultLog.columns[self.column_name].astext == self.expected.lower())
+        filter.append(ResultLog.columns[self.column_name].astext == self.expected.lower())
         return filter
 
 
@@ -142,10 +139,7 @@ class NotBeginsWithCondition(LogicCondition):
 
 class ContainsCondition(LogicCondition):
     def compare(self, value, filter, type):
-        if type and type == "node_recon_data":
-            filter.append(NodeReconData.columns[self.column_name].astext.ilike("%" + self.expected.lower() + "%"))
-        else:
-            filter.append(ResultLog.columns[self.column_name].astext.ilike("%" + self.expected.lower() + "%"))
+        filter.append(ResultLog.columns[self.column_name].astext.ilike("%" + self.expected.lower() + "%"))
         return filter
 
 

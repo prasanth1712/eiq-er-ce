@@ -21,6 +21,7 @@ def upgrade():
 
     op.add_column("default_query", sa.Column("arch", sa.String(), nullable=True))
     op.add_column("default_filters", sa.Column("arch", sa.String(), nullable=True))
+    
     # ### end Alembic commands ###
 
 

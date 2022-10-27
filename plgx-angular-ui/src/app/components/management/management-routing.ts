@@ -3,10 +3,8 @@ import { Routes, RouterModule } from '@angular/router';;
 import { ConfigureEmailComponent } from './configure-email/configure-email.component';
 import { IntelKeysComponent } from './intel-keys/intel-keys.component';
 import { ManagementComponent } from './management.component';
-import { ResolvedAlertsComponent } from './resolved-alerts/resolved-alerts.component';
 // import { ConfigurationSettingsComponent } from './configuration-settings/configuration-settings.component';
 import { AntivirusEnginesComponent } from './antivirus-engines/antivirus-engines.component';
-import { HostDisableComponent } from './host-disable/host-disable.component';
 import { UserAdministrationComponent } from './user-administration/user-administration.component';
 import { EditUserAccessComponent } from './edit-user-access/edit-user-access.component';
 import { ChangeUserPasswordComponent } from './../change-user-password/change-user-password.component';
@@ -24,23 +22,19 @@ const routes: Routes = [
                 component: ChangeUserPasswordComponent
             },
             {
-                path: 'configure-email',
+                path: 'email',
                 component: ConfigureEmailComponent
             },
             {
                 path: 'threat-intel-keys',
                 component: IntelKeysComponent
             },
-            {
-                path: 'resolved-alerts',
-                component: ResolvedAlertsComponent
-            },
             // {
             //     path: 'configuration',
             //     component: ConfigurationSettingsComponent
             // },
             {
-                path: 'alert-configuration',
+                path: 'alert-settings',
                 component: AlertConfigurationComponent
             },
             {
@@ -48,7 +42,7 @@ const routes: Routes = [
                 component: TroubleshootingComponent
             },
             {
-                path: 'sso-configuration',
+                path: 'sso-settings',
                 component: SsoConfigurationComponent
             },
             {
@@ -56,15 +50,11 @@ const routes: Routes = [
                 component: DataPurgeComponent
             },
             {
-                path: 'vt-configuration',
+                path: 'vt-settings',
                 component: AntivirusEnginesComponent
             },
-            {
-                path: 'removed-hosts',
-                component: HostDisableComponent,
-              },
               {
-                path: 'UserAdministration',
+                path: 'user-management',
                 component: UserAdministrationComponent,
               },
               {

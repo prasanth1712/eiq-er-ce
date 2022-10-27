@@ -9,12 +9,11 @@ from flask_cors import CORS
 from flask.json import jsonify
 
 from polylogyx.blueprints.v1.external_api import blueprint as external_api_v1
-from polylogyx.blueprints.external_api import blueprint as external_api
 from polylogyx.extensions import (
     bcrypt, db, ldap_manager, login_manager,
-    mail, make_celery, migrate, sentry, cache, authorize
+    mail, make_celery, migrate, sentry, authorize, redis_client
 )
-from polylogyx.models import EmailRecipient, Settings
+from polylogyx.models import Settings
 from polylogyx.settings import ProdConfig
 from polylogyx.tasks import celery
 from datetime import datetime
@@ -39,7 +38,7 @@ def register_blueprints(app):
     # if the POLYLOGYX_NO_MANAGER environment variable isn't set,
     # register the backend blueprint. This is useful when you want
     # to only deploy the api as a standalone service.
-    app.register_blueprint(external_api, url_prefix="/services/api/v0", name="external_api")
+    #app.register_blueprint(external_api, url_prefix="/services/api/v0", name="external_api")
     app.register_blueprint(external_api_v1, url_prefix="/services/api/v1", name="external_api")
 
 
@@ -50,20 +49,16 @@ def register_extensions(app):
     migrate.init_app(app, db)
     try:
         set_email_sender(app)
-    except:
+    except Exception as e:
         print('No email address configured')
 
     mail.init_app(app)
     make_celery(app, celery)
     login_manager.init_app(app)
     sentry.init_app(app)
-    try:
-        set_email_value(app)
-    except:
-        print('cannot connect to database')
-    cache.init_app(app)
     authorize.init_app(app)
     mail.init_app(app)
+    redis_client.init_app(app)
     if app.config['ENFORCE_SSL']:
         # Due to architecture of flask-sslify,
         # its constructor expects to be launched within app context
@@ -137,18 +132,6 @@ def register_auth_method(app):
     if app.config['POLYLOGYX_AUTH_METHOD'] != 'polylogyx':
         login_manager.login_message = None
         login_manager.needs_refresh_message = None
-
-
-def set_email_value(app):
-    with app.app_context():
-        from polylogyx.settings import Config as config
-        email_recipients = db.session.query(EmailRecipient).filter(EmailRecipient.status == 'active').all()
-        email_recipient_list = []
-        config.EMAIL_RECIPIENTS = None
-        if email_recipients and len(email_recipients) > 0:
-            for emailRecipient in email_recipients:
-                email_recipient_list.append(emailRecipient.recipient)
-            config.EMAIL_RECIPIENTS = email_recipient_list
 
 
 def set_email_sender(app):

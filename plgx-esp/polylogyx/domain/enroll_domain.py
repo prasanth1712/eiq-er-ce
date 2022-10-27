@@ -8,6 +8,7 @@ from polylogyx.db.models import Node, Tag, db
 from polylogyx.utils.esp import assign_config_on_enroll, send_checkin_queries, update_system_details
 
 
+
 class EnrollDomain:
     def __init__(self, request_json, remote_addr):
         self.request_json = request_json
@@ -79,6 +80,7 @@ class EnrollDomain:
         return True
 
     def enroll(self):
+        from polylogyx.utils.cache import add_or_update_cached_host
         current_app.logger.info(self.request_json)
         if self.validate():
             self.node = self._get_node(Node.ACTIVE)
@@ -87,7 +89,6 @@ class EnrollDomain:
             if self.node:
                 self.node.update(
                     last_checkin=now,
-                    enrolled_on=now,
                     last_ip=self.remote_addr,
                 )
                 current_app.logger.info("%s -Updated existing node %s", self.remote_addr, self.node)
@@ -101,6 +102,6 @@ class EnrollDomain:
                 update_system_details(self.request_json, self.node)
                 assign_config_on_enroll(self.request_json, self.node)
                 send_checkin_queries(self.node)
-
-                return self.node.node_key, True
+            add_or_update_cached_host(node_obj=self.node)
+            return self.node.node_key, True
         return None, False

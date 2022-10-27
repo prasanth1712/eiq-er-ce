@@ -175,6 +175,7 @@ class TestEnrolling:
         assert node.last_ip == "127.0.0.2"
 
     def test_enroll_secret_tags(self, db, node, testapp):
+        testapp.app.config["POLYLOGYX_ENROLL_DEFAULT_TAGS"] = []
         testapp.app.config["POLYLOGYX_ENROLL_SECRET_TAG_DELIMITER"] = ":"
         testapp.app.config["POLYLOGYX_EXPECTS_UNIQUE_HOST_ID"] = True
         enroll_secret = testapp.app.config["POLYLOGYX_ENROLL_SECRET"][0]
@@ -250,6 +251,7 @@ class TestEnrolling:
         assert not n.tags
 
     def test_enroll_max_secret_tags(self, db, node, testapp):
+        testapp.app.config["POLYLOGYX_ENROLL_DEFAULT_TAGS"] = []
         testapp.app.config["POLYLOGYX_ENROLL_SECRET_TAG_DELIMITER"] = ":"
         testapp.app.config["POLYLOGYX_EXPECTS_UNIQUE_HOST_ID"] = True
         enroll_secret = testapp.app.config["POLYLOGYX_ENROLL_SECRET"][0]

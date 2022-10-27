@@ -1,0 +1,45 @@
+.fa-search {
+    position: relative;
+    top: -31.5px;
+    left: 288.5px;
+    /* height: 12px;
+    width: 12px; */
+    border-radius: 0px;
+    color: #999999;
+    cursor: pointer;
+    /* adding backdrop */
+    width: 27px;
+    height: 27px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+.fa-times{
+    display: none;
+    position: relative;
+    top: -49.5px;
+    left: 267.5px;
+    height: 9px;
+    width: 9px;
+    border-radius: 0px;
+    color: #999999;
+    cursor: pointer;
+}
+.fa-times.visible{
+    display: inherit;
+}
+.fa-search:hover{
+    background: #cccccc;
+}
+.fa-search:active,.fa-search:focus{
+    background: #D5ECEA;
+}
+@media screen and (max-width: 1680px)  {
+  .fa-search{
+    right: -94%;
+  }
+  .fa-times {
+    right: -86%;
+  }
+}

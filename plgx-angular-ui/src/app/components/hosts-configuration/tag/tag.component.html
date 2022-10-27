@@ -1,0 +1,153 @@
+
+
+<div class="kt-grid kt-grid--hor kt-grid--root">
+  <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
+    <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
+      <!-- begin:: Portlet/Tag -->
+      <div class="kt-portlet kt-portlet--mobile kt-portlet--responsive-mobile custom-margin-body">
+        <div class="kt-portlet__head kt-portlet__head--lg">
+          <div class="kt-portlet__head-label">
+            <span class="kt-portlet__head-icon custom-header-icon-container">
+              <i class="kt-font-brand fa fa-tags custom-header-icon"></i>
+            </span>
+            <h3 class="kt-portlet__head-title custom-header-title">
+              Tags
+            </h3>
+          </div>
+          <div class="kt-portlet__head-toolbar">
+            <div class="kt-portlet__head-wrapper">
+              <div class="">
+                <button  *AppHasRole="role.adminAccess"  type="button" class="btn btn-small" data-toggle="modal" data-target="#add_tags" aria-haspopup="true" aria-expanded="false">
+                  <i class="fa fa-plus-square"></i>
+                  Add Tag
+                </button>
+                <!-- <appbutton text="Add Tag" btnClass="btn-small" btnType="button" icon="fa-plus-square"></appbutton> -->
+                <!--Begin:: Modal-->
+                <div class="modal fade" id="add_tags" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="display: none; position: fixed; background-color: hsla(0, 0%, 0%, 0.45)">
+                  <form id="kt_form" [formGroup]="addTag" >
+                    <div class="modal-dialog modal-lg" role="document">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h3 class="">Add Tag 
+
+                          </h3>
+                          <button type="button" class="close" data-dismiss="modal" (click)="clearInput()" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body kt-scroll" data-scroll="true" data-height="" data-scrollbar-shown="true">
+                        <!--begin::Portlet-->
+                          <div class="row">
+                            <div class="col-xl-1"></div>
+                            <div class="col-xl-10">
+                              <div class="kt-section kt-section--first">
+                                <div class="kt-section__body">
+                                  <div class="form-group row">
+                                    <label class="col-3 col-form-label" for="value">Tag <i _ngcontent-cji-c4="" class="help-badge badge-pill badge-light fa fa-info" title="Accepts only alpha numeric characters with @._-"></i></label>
+                                    <div class="col-9">
+                                      <textarea [(ngModel)]="clearValue" maxlength="64" (paste)="validatePastedData($event);" (keypress)="omitSpecialChar($event)" class="form-control" formControlName="tags" name="value" placeholder="Enter tags here, one tag per line" spellcheck="false"></textarea>
+                                      <div *ngIf = "errorMessageTag != '' " class="error-msg text-danger">
+                                        {{errorMessageTag}}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="col-xl-1"></div>
+                          </div>
+                        <!--end::Portlet-->
+                        </div>
+                        <div class="modal-footer align-center">
+                          <!-- <button type="reset" class="btn btn-outline-secondary">Clear</button> -->
+
+                          <appbutton text="Cancel" btnType="button" btnClass="btn-small-opaque" (click)="Cancel()" (click)="closeModal('add_tags')"></appbutton>
+                          <appbutton text="Add" btnType="submit" btnClass="btn-small" (click)="onSubmit()" (click)="closeModal('add_tags')" ></appbutton>
+                          <!-- <button type="button" (click)="Cancel()" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                          <button type="submit" (click)="onSubmit()" data-dismiss="modal" class="btn btn-success">Add</button> -->
+
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+                <!--End:: Modal-->
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="kt-portlet__body tbl-bg custom-margin-body-inner">
+          <div class="table-wrapper" >
+            <div class="row">
+              <div class="col-md-12 row-filter-search pull-right">
+                <search class="pull-right"  (keyup.enter)="tableSearch()" (valueChange)='tableSearch()'></search>
+              </div>
+            </div>
+            <!--begin: Datatable -->
+            <table  datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table table-hover table-checkable"  >
+              <!-- class="table table-hover table-checkable row-border hover" -->
+              <thead>
+                <tr role="row" *ngIf="selectedCount > 0;">
+  								<th  class="chk-pad close-icon" (click)="removeSelectedTag()">
+  								    <i class="fa fa-times fa-lg" aria-hidden="true"></i>
+  								</th>
+  								<th style="color:#1F1F1F !important"> {{selectList.length}} selected </th>
+  								<th></th>
+                  <th></th>
+  								<th></th>
+  								<th class="pl-3" *AppHasRole="role.adminAccess"><i title="Delete selected Tag" (click)="BulkdeleteTag()"  class="fa fa fa-trash-alt delete-icon"></i></th>
+  							</tr>
+                <tr>
+                  <th *AppHasRole="role.adminAccess" class="chk-pad th-width-5">
+    							 <input type="checkbox" class="mt-2" [(ngModel)]="masterSelected"
+    											(change)="checkUncheckAll()"/>
+    							</th>
+                  <th class="pl-3 th-width-20">Tags</th>
+                  <th class="pl-0 th-width-20">Hosts</th>
+                  <th class="pl-0 th-width-20">Packs</th>
+                  <th class="pl-0 th-width-20">Queries</th>
+                  <th class="th-width-5" *AppHasRole="role.adminAccess" >Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <ng-container *ngIf="tags_data!=0">
+                  <tr *ngFor="let tag of tags_data; let i = index"  [ngClass]="{'row-selected':selectList.includes(tag.value)}">
+                    <td *AppHasRole="role.adminAccess" class="chk-pad">
+                      <input type="checkbox"
+                          [(ngModel)]="checklist[i].isSelected" class="mt-2"
+                          (change)="isAllSelected(tag.value)"/>
+                    </td>
+                    <td class="tag-link">
+                      <span class="label" data-skin="dark" data-toggle="kt-tooltip" data-placement="top" title="{{ tag.value }}">
+                        <a class="truncateTxt" [routerLink] = "['tagged', tag.value]">
+                          <p>{{ tag.value }}</p>
+                        </a>
+                      </span>
+                    </td>
+                    <td>{{ tag.nodes.length }}</td>
+                    <td>{{ tag.packs.length }}</td>
+                    <td>{{ tag.queries.length }}</td>
+                    <td *AppHasRole="role.adminAccess">
+                      <i title="Delete Tag" (click)="deleteTag(tag.value)"  class="fa fa fa-trash-alt delete-icon"></i>
+                    </td>
+                  </tr>
+                </ng-container>
+                <ng-container *ngIf="tags_data?.length == 0">
+                  <tr role="row" class="text-center" >
+                  <td colspan="6">
+                    {{this.errorMessage}}
+                  </td>
+                  </tr>
+                </ng-container>
+              </tbody>
+
+            </table>
+            <!--end: Datatable -->
+          </div>
+          <!-- <div class="" *ngIf="tags_data?.length == 0">
+            <p class="txt-clr">No tags created. You may create new tags.</p>
+          </div> -->
+        </div>
+      </div>
+      <!-- end:: Portlet/Tag -->
+    </div>
+  </div>
+</div>
