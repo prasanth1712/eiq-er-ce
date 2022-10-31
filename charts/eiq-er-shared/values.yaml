@@ -1,0 +1,65 @@
+nameOverride: ""
+fullnameOverride: "shared"
+secrets:
+  POLYLOGYX_USER: admin
+  POLYLOGYX_PASSWORD: admin
+  POLYLOGYX_USER_EMAIL: admin@example.com
+  POLYLOGYX_USER_FIRST_NAME: ""
+  POLYLOGYX_USER_LAST_NAME: ""
+
+  VT_API_KEY: ""
+  IBMxForceKey: ""
+  IBMxForcePass: ""
+  ALIENVAULT_OTX_KEY: ""
+  THREAT_INTEL_ALERT_FREQUENCY: 30
+
+  ENROLL_SECRET: secret
+
+  RABBITMQ_URL: rabbitmq
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_USERNAME: guest
+  RABBITMQ_PASSWORD: guest
+  ## this is used by rabbitmq
+  rabbitmq-password: guest
+  RABBITMQ_USE_SSL: false
+  FLOWER_USERNAME: admin
+  FLOWER_PASSWORD: admin
+  RESPONSE_PORT: 8080
+
+  RESPONSE_ADDRESS: http://response:8080
+
+  POSTGRES_ADDRESS: ""
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB_NAME: polylogyx
+  POSTGRES_DB: polylogyx
+  POSTGRES_USER: polylogyx
+  POSTGRES_PASSWORD: ""
+  POSTGRES_USE_SSL: false
+
+  RSYSLOG_FORWARDING: true
+  RSYSLOG_ADDRESS: rsyslogf
+  RSYSLOG_PORT: "514"
+
+  # PURGE_DATA_DURATION: 7
+  DATA_RETENTION_DAYS: "7"
+  ER_ADDRESS: http://plgx-esp:6000
+  LOG_LEVEL: WARNING
+  LOGFILE_SIZE: "10485760"
+  LOGFILE_BACKUP_COUNT: "10"
+  VT_MIN_MATCH_COUNT: "3"
+  VT_SCAN_RETENTION_PERIOD: "2"
+  CUSTOM_CONFIGS_LIMIT: "5"
+
+  MAX_CPU_LIMIT: ""
+  MAX_RAM_LIMIT: ""
+  MAX_EVENTS_COUNT: "2048"
+  MIN_POSTGRES_CONN_REQUIRED: ""
+  MAX_CELERY_TASK_WAIT_TIME: ""
+
+  API_KEY: ""
+  SHARED_MEMORY: 64m
+
+  HIGH_INTEL_VOLUME: false
+  POLYLOGYX_ENV: prod
+
+containerRegistrySecretJson: ""
