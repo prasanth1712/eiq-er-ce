@@ -47,5 +47,5 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/esp:latest
+          tags: [${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/esp:latest,test]
           labels: ${{ steps.meta.outputs.labels }}
