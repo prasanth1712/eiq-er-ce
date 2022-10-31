@@ -49,5 +49,5 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/esp:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/esp:test
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/esp:test_1
           labels: ${{ steps.meta.outputs.labels }}
