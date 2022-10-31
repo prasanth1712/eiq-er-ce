@@ -1,6 +1,6 @@
 FROM python:3.9.12-alpine3.15
 RUN apk add --update tmux runit libpq libffi-dev postgresql-client
-RUN apk upgrade
+#RUN apk upgrade
 RUN pip install --upgrade pip 
 COPY ./plgx-esp/requirements/prod.txt /tmp/requirements.txt
 RUN apk add --no-cache postgresql-libs && \
