@@ -5,10 +5,10 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/prasanth1712/eiq-er-ce/esp
+  repository: registry.tools.k8s.eiq.sh/plgx-engg/plgx-esp/plgx-esp
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "latest"
+  tag: "dev-95abc3c6"
 
 imagePullSecrets:
   - name: regsecret
