@@ -1,0 +1,14 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name:  {{ include "eiq-er-shared.fullname" . }}-pv
+  labels:
+    {{- include "eiq-er-shared.labels" . | nindent 4 }}
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/mnt/data/test/"

@@ -5,13 +5,10 @@
 replicaCount: 1
 
 image:
-  repository: registry.tools.k8s.eiq.sh/plgx-engg/plgx-esp/celery
+  repository: ghcr.io/prasanth1712/eiq-er-ce/esp-celery
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "dev-95abc3c6"
-
-imagePullSecrets:
-  - name: regsecret
+  tag: "latest"
 
 nameOverride: ""
 fullnameOverride: "celery"

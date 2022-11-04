@@ -28,7 +28,7 @@ secrets:
 
   RESPONSE_ADDRESS: http://response:8080
 
-  POSTGRES_ADDRESS: ""
+  POSTGRES_ADDRESS: "43.205.229.1"
   POSTGRES_PORT: "5432"
   POSTGRES_DB_NAME: polylogyx
   POSTGRES_DB: polylogyx

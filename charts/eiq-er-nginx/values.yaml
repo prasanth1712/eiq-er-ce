@@ -10,8 +10,7 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: "dev-95abc3c6"
 
-imagePullSecrets:
-  - name: regsecret
+
 nameOverride: ""
 fullnameOverride: "nginx"
 
