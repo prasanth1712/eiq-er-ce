@@ -22,7 +22,7 @@ RUN apk update && apk add  logrotate
 
 #Copy logrotate nginx configuration
 COPY logrotate_nginx /etc/logrotate.d/
-
+COPY nginx.conf /etc/nginx/
 #Copy cron job configuration
 COPY cron_logrotate /etc/cron.d/
 
