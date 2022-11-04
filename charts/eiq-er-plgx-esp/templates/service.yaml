@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "eiq-er-plgx-esp.labels" . | nindent 4 }}
 spec:
-  type: ClusterIP
+  type: NodePort
   ports:
     - port: 5555
       targetPort: 6000

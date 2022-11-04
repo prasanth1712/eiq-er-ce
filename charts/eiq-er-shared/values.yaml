@@ -33,7 +33,7 @@ secrets:
   POSTGRES_DB_NAME: polylogyx
   POSTGRES_DB: polylogyx
   POSTGRES_USER: polylogyx
-  POSTGRES_PASSWORD: ""
+  POSTGRES_PASSWORD: "polylogyx"
   POSTGRES_USE_SSL: false
 
   RSYSLOG_FORWARDING: true
@@ -60,6 +60,7 @@ secrets:
   SHARED_MEMORY: 64m
 
   HIGH_INTEL_VOLUME: false
-  POLYLOGYX_ENV: prod
+  ENV: prod
+  FLASK_APP: manage.py:app
 
 containerRegistrySecretJson: ""

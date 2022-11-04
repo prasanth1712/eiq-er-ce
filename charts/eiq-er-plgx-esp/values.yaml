@@ -5,15 +5,14 @@
 replicaCount: 1
 
 image:
-  repository: registry.tools.k8s.eiq.sh/plgx-engg/plgx-esp/plgx-esp
+  repository: ghcr.io/prasanth1712/eiq-er-ce/esp
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "dev-95abc3c6"
+  tag: "latest"
 
-imagePullSecrets:
-  - name: regsecret
+imagePullSecrets: ""
 nameOverride: ""
-fullnameOverride: "plgx-esp"
+fullnameOverride: "er-ce-esp"
 
 serviceAccount:
   # Specifies whether a service account should be created

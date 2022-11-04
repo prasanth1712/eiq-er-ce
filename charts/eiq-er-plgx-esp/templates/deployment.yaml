@@ -27,19 +27,19 @@ spec:
       serviceAccountName: {{ include "eiq-er-plgx-esp.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      volumes:
-        - name: shared
-          persistentVolumeClaim:
-            claimName: {{ .Values.sharedVolumeClainName }}
+      # volumes:
+      #   - name: shared
+      #     persistentVolumeClaim:
+      #       claimName: {{ .Values.sharedVolumeClainName }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          volumeMounts:
-            - mountPath: /src/plgx-esp/carves
-              name: shared
+          # volumeMounts:
+          #   - mountPath: /src/plgx-esp/carves
+          #     name: shared
           envFrom:
             - secretRef:
                 name: {{ .Values.existingSecretName }}
