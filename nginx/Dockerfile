@@ -8,9 +8,10 @@ RUN ng build --prod --stats-json
 RUN gzipper --verbose ../dist
 
 
+
 FROM nginx:1.23.1-alpine
 
-COPY /nginx/docker-entrypoint.sh /
+COPY docker-entrypoint.sh /
 RUN apk update && apk upgrade
 
 RUN set -x ; \
@@ -31,22 +32,15 @@ RUN apk update && apk add  logrotate
 #COPY nginx.conf /etc/nginx/nginx.conf
 
 #Copy logrotate nginx configuration
-COPY /nginx/logrotate_nginx /etc/logrotate.d/
-COPY /nginx/nginx.conf /etc/nginx/
-COPY /nginx/certificate.crt /etc/nginx/certificate.crt
-COPY /nginx/private.key /etc/nginx/private.key
+COPY logrotate_nginx /etc/logrotate.d/
+
 #Copy cron job configuration
-COPY /nginx/cron_logrotate /etc/cron.d/
+COPY cron_logrotate /etc/cron.d/
 
 # Apply cron job
 RUN /usr/bin/crontab /etc/cron.d/cron_logrotate
 
 RUN chmod -R 644 /etc/logrotate.d/logrotate_nginx
-
-COPY ./resources /resources
 COPY --from=build /dist /dist
-
-
 # Start nginx and cron as a service
 ENTRYPOINT ["sh","/docker-entrypoint.sh"]
-
