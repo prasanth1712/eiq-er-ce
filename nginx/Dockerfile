@@ -41,7 +41,7 @@ RUN /usr/bin/crontab /etc/cron.d/cron_logrotate
 
 RUN chmod -R 644 /etc/logrotate.d/logrotate_nginx
 
-COPY ../resources /resources
+COPY ./resources /resources
 COPY --from=build /dist /dist
 
 
