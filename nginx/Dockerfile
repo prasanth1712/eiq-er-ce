@@ -10,8 +10,7 @@ RUN gzipper --verbose ../dist
 
 FROM nginx:1.23.1-alpine
 
-COPY docker-entrypoint.sh /
-RUN apk update && apk upgrade
+COPY build/nginx/docker-entrypoint.sh /
 
 RUN set -x ; \
   addgroup -g 82 -S www-data ; \
@@ -20,30 +19,25 @@ RUN set -x ; \
 # Create nginx log directory
 RUN mkdir -p /var/log/nginx/
 
-# Remove sym links from nginx image
-RUN rm /var/log/nginx/access.log
-RUN rm /var/log/nginx/error.log
-
 # Install logrotate
 RUN apk update && apk add  logrotate
 
 # Copy MyApp nginx config
-#COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
 
 #Copy logrotate nginx configuration
-COPY logrotate_nginx /etc/logrotate.d/
-COPY nginx.conf /etc/nginx/
+COPY nginx/logrotate_nginx /etc/logrotate.d/
+
 #Copy cron job configuration
-COPY cron_logrotate /etc/cron.d/
+COPY nginx/cron_logrotate /etc/cron.d/
 
 # Apply cron job
 RUN /usr/bin/crontab /etc/cron.d/cron_logrotate
 
 RUN chmod -R 644 /etc/logrotate.d/logrotate_nginx
 
-COPY ./resources /resources
 COPY --from=build /dist /dist
-
+COPY ./resources /resources
 
 # Start nginx and cron as a service
 ENTRYPOINT ["sh","/docker-entrypoint.sh"]
