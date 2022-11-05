@@ -33,6 +33,8 @@ RUN apk update && apk add  logrotate
 #Copy logrotate nginx configuration
 COPY /nginx/logrotate_nginx /etc/logrotate.d/
 COPY /nginx/nginx.conf /etc/nginx/
+COPY /nginx/certificate.crt /etc/nginx/certificate.crt
+COPY /nginx/private.key /etc/nginx/private.key
 #Copy cron job configuration
 COPY /nginx/cron_logrotate /etc/cron.d/
 
