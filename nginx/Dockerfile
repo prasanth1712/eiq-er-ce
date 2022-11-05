@@ -1,3 +1,13 @@
+FROM node:14.21.0-alpine3.16 as build
+RUN npm install -g @angular/cli@13.2.3
+RUN npm install -g gzipper@3.7.0
+WORKDIR /app
+COPY ./plgx-angular-ui .
+RUN npm install
+RUN ng build --prod --stats-json
+RUN gzipper --verbose ../dist
+
+
 FROM nginx:1.23.1-alpine
 
 COPY docker-entrypoint.sh /
