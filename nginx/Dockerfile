@@ -1,14 +1,3 @@
-FROM node:14.21.0-alpine3.16 as build
-RUN npm install -g @angular/cli@13.2.3
-RUN npm install -g gzipper@3.7.0
-WORKDIR /app
-COPY ./plgx-angular-ui .
-RUN npm install
-RUN ng build --prod --stats-json
-RUN gzipper --verbose ../dist
-
-
-
 FROM nginx:1.23.1-alpine
 
 COPY docker-entrypoint.sh /
@@ -41,6 +30,6 @@ COPY cron_logrotate /etc/cron.d/
 RUN /usr/bin/crontab /etc/cron.d/cron_logrotate
 
 RUN chmod -R 644 /etc/logrotate.d/logrotate_nginx
-COPY --from=build /dist /dist
+
 # Start nginx and cron as a service
 ENTRYPOINT ["sh","/docker-entrypoint.sh"]
