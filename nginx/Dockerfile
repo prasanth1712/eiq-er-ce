@@ -10,7 +10,7 @@ RUN gzipper --verbose ../dist
 
 FROM nginx:1.23.1-alpine
 
-COPY docker-entrypoint.sh /
+COPY /nginx/docker-entrypoint.sh /
 RUN apk update && apk upgrade
 
 RUN set -x ; \
